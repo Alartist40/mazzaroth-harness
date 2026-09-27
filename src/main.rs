@@ -21,8 +21,8 @@ struct Cli {
     #[arg(long)]
     import_corpus: bool,
 
-    #[arg(long, default_value_t = true)]
-    open_browser: bool,
+    #[arg(long)]
+    no_browser: bool,
 }
 
 #[tokio::main]
@@ -65,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
     let local_url = format!("http://127.0.0.1:{}", cli.bind.port());
     info!(bind = %cli.bind, url = %local_url, "🌌 Mazzaroth Cognitive Galaxy listening. Open {} in your browser.", local_url);
 
-    if cli.open_browser {
+    if !cli.no_browser {
         let url_to_open = local_url.clone();
         tokio::spawn(async move {
             tokio::time::sleep(tokio::time::Duration::from_millis(400)).await;
