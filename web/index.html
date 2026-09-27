@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🌌 Mazzaroth — Multilingual Celestial Cognitive Galaxy</title>
+  <title>🌌 Mazzaroth — Celestial Cognitive Galaxy</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #020617;
+      background: #05020c;
       color: #f8fafc;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow: hidden;
@@ -17,85 +17,99 @@
       width: 100vw;
     }
     #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
-    
+
     .hud-overlay {
       position: absolute;
-      top: 20px;
-      left: 20px;
+      top: 24px;
+      left: 24px;
       z-index: 10;
       width: 380px;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(56, 189, 248, 0.2);
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      background: rgba(13, 6, 28, 0.75);
+      backdrop-filter: blur(25px);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(147, 51, 234, 0.15);
     }
-    h1 { font-size: 1.15rem; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; letter-spacing: 0.5px; }
-    .stats-bar { font-size: 0.78rem; color: #94a3b8; margin-bottom: 14px; display: flex; gap: 12px; }
-    .stat-pill { background: rgba(30, 41, 59, 0.8); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); }
-    
-    .input-group { margin-bottom: 10px; }
-    label { display: block; font-size: 0.72rem; text-transform: uppercase; color: #94a3b8; margin-bottom: 4px; font-weight: 600; }
+    h1 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fde047, #c084fc, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      letter-spacing: 0.8px;
+    }
+    .subtitle { font-size: 0.75rem; color: #a855f7; margin-bottom: 14px; font-weight: 500; }
+    .stats-bar { font-size: 0.76rem; color: #cbd5e1; margin-bottom: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .stat-pill { background: rgba(30, 14, 58, 0.8); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.2); }
+
+    .input-group { margin-bottom: 12px; }
+    label { display: block; font-size: 0.7rem; text-transform: uppercase; color: #cbd5e1; margin-bottom: 4px; font-weight: 700; letter-spacing: 0.5px; }
     input, textarea, select {
       width: 100%;
-      background: rgba(30, 41, 59, 0.9);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 8px;
+      background: rgba(23, 10, 48, 0.85);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      border-radius: 10px;
       color: #fff;
-      padding: 8px 12px;
+      padding: 9px 14px;
       font-size: 0.85rem;
       outline: none;
-      transition: all 0.2s;
+      transition: all 0.25s;
     }
-    input:focus, textarea:focus { border-color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
-    
+    input:focus, textarea:focus { border-color: #c084fc; box-shadow: 0 0 15px rgba(192, 132, 252, 0.3); }
+
     .btn-row { display: flex; gap: 8px; margin-top: 10px; }
     button {
       flex: 1;
-      background: linear-gradient(135deg, #0284c7, #6366f1);
+      background: linear-gradient(135deg, #9333ea, #6366f1, #38bdf8);
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       color: #fff;
-      padding: 9px;
+      padding: 10px;
       font-size: 0.82rem;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: transform 0.15s, opacity 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(147, 51, 234, 0.4);
     }
-    button:hover { opacity: 0.9; }
-    button.secondary { background: rgba(51, 65, 85, 0.8); border: 1px solid rgba(255,255,255,0.1); }
+    button:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(147, 51, 234, 0.6); }
+    button.secondary { background: rgba(30, 14, 58, 0.8); border: 1px solid rgba(168, 85, 247, 0.3); box-shadow: none; }
 
     .details-card {
       position: absolute;
-      bottom: 24px;
-      right: 24px;
+      bottom: 28px;
+      right: 28px;
       z-index: 10;
-      width: 360px;
-      background: rgba(15, 23, 42, 0.9);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      width: 380px;
+      background: rgba(13, 6, 28, 0.85);
+      backdrop-filter: blur(25px);
+      border: 1px solid rgba(250, 204, 21, 0.4);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(250, 204, 21, 0.2);
       display: none;
-      animation: fadeIn 0.3s ease;
+      animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.92) translateY(15px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
     .tier-badge {
       display: inline-block;
-      padding: 3px 10px;
+      padding: 3px 12px;
       border-radius: 9999px;
-      font-size: 0.7rem;
+      font-size: 0.72rem;
       font-weight: 800;
       text-transform: uppercase;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
     }
-    .badge-celestial { background: #eab308; color: #000; }
-    .badge-semantic { background: #0284c7; color: #fff; }
-    .badge-episodic { background: #9333ea; color: #fff; }
-    .badge-working { background: #f97316; color: #fff; }
+    .badge-celestial { background: linear-gradient(135deg, #facc15, #ea580c); color: #000; box-shadow: 0 0 12px rgba(250, 204, 21, 0.6); }
+    .badge-semantic { background: linear-gradient(135deg, #38bdf8, #6366f1); color: #fff; box-shadow: 0 0 12px rgba(56, 189, 248, 0.5); }
+    .badge-episodic { background: linear-gradient(135deg, #c084fc, #9333ea); color: #fff; box-shadow: 0 0 12px rgba(192, 132, 252, 0.5); }
+    .badge-working { background: linear-gradient(135deg, #fb923c, #f43f5e); color: #fff; }
   </style>
 </head>
 <body>
@@ -103,22 +117,24 @@
 
   <div class="hud-overlay">
     <h1>🌌 MAZZAROTH GALAXY</h1>
+    <div class="subtitle">Multilingual Celestial Cognitive Memory Matrix</div>
+
     <div class="stats-bar">
-      <span class="stat-pill" id="stat-stars">✨ 0 Stars</span>
-      <span class="stat-pill" id="stat-sectors">🪐 0 Superclusters</span>
+      <span class="stat-pill" id="stat-stars">✨ 0 Celestial Stars</span>
+      <span class="stat-pill" id="stat-sectors">🪐 0 Languages</span>
       <span class="stat-pill" id="stat-links">🔗 0 Constellations</span>
     </div>
 
     <div class="input-group">
-      <label>Search & Recall Galaxy</label>
-      <input type="text" id="search-query" placeholder="e.g. Genesis, Light, Greek, Hebrew..." onkeydown="if(event.key==='Enter') searchGalaxy()">
+      <label>Search & Navigate Galaxy</label>
+      <input type="text" id="search-query" placeholder="e.g. Genesis, Light, Greek, Hebrew, John..." onkeydown="if(event.key==='Enter') searchGalaxy()">
     </div>
     <div class="btn-row">
-      <button onclick="searchGalaxy()">🔍 Recall Concept</button>
+      <button onclick="searchGalaxy()">🔍 Warp to Star</button>
       <button class="secondary" onclick="toggleAutoRotate()">⟳ Toggle Orbit</button>
     </div>
 
-    <div style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">
+    <div style="margin-top: 14px; border-top: 1px solid rgba(168, 85, 247, 0.2); padding-top: 12px;">
       <div class="input-group">
         <label>Ignite New Memory Concept</label>
         <input type="text" id="mem-label" placeholder="Concept / Entity Name">
@@ -126,60 +142,61 @@
       <div class="input-group">
         <textarea id="mem-content" rows="2" placeholder="Full memory content..."></textarea>
       </div>
-      <div class="input-group">
-        <select id="mem-tier">
-          <option value="semantic">Semantic (Fact / Knowledge)</option>
-          <option value="episodic">Episodic (Event / Log)</option>
-          <option value="working">Working (Sensory / Perception)</option>
-          <option value="celestial">Celestial (Core Anchor)</option>
-        </select>
-      </div>
-      <button onclick="formMemory()">✨ Form Celestial Star</button>
+      <button onclick="formMemory()">✨ Form Celestial Memory</button>
     </div>
   </div>
 
   <div class="details-card" id="details-card">
-    <span class="tier-badge badge-semantic" id="card-tier">SEMANTIC</span>
-    <h2 id="card-title" style="font-size: 1.15rem; margin-bottom: 6px; color: #fff;">Concept</h2>
-    <p id="card-content" style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.45; margin-bottom: 12px; max-height: 160px; overflow-y: auto;"></p>
-    <div style="font-size: 0.75rem; color: #94a3b8; display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
-      <span id="card-mass">Mass: 0.85</span>
-      <span id="card-luminosity">Luminosity: 0.90</span>
+    <span class="tier-badge badge-celestial" id="card-tier">CELESTIAL</span>
+    <h2 id="card-title" style="font-size: 1.25rem; margin-bottom: 8px; color: #fff; font-weight: 800;">Star Name</h2>
+    <p id="card-content" style="font-size: 0.88rem; color: #e2e8f0; line-height: 1.5; margin-bottom: 14px; max-height: 180px; overflow-y: auto;"></p>
+    <div style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 10px;">
+      <span id="card-mass">Mass: 1.00</span>
+      <span id="card-luminosity">Luminosity: 1.00</span>
     </div>
   </div>
 
   <script>
     let scene, camera, renderer, controls;
     let starMeshes = [];
+    let coreSunMesh, coreCoronaMesh;
+    let spiralParticleSystem;
     let lineSegments;
     const container = document.getElementById('canvas-container');
 
     function init() {
       scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x020617, 0.0006);
+      scene.fog = new THREE.FogExp2(0x05020c, 0.0004);
 
-      camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 5000);
-      camera.position.set(0, 300, 700);
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 8000);
+      camera.position.set(0, 450, 850);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2;
       container.appendChild(renderer.domElement);
 
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.35;
+      controls.autoRotateSpeed = 0.25;
 
-      // Cosmic Lights
-      scene.add(new THREE.AmbientLight(0x1e293b, 1.8));
-      const coreLight = new THREE.PointLight(0xfacc15, 3.5, 1200);
+      // Lights
+      scene.add(new THREE.AmbientLight(0x2e1065, 2.0));
+      const coreLight = new THREE.PointLight(0xfef08a, 4.5, 2500);
       coreLight.position.set(0, 0, 0);
       scene.add(coreLight);
 
-      // Starfield Particle Dust
-      createBackgroundDust();
+      const purpleLight = new THREE.PointLight(0xa855f7, 3.0, 3000);
+      purpleLight.position.set(0, 200, 0);
+      scene.add(purpleLight);
+
+      // Build Supermassive Galactic Spiral & Central Sun
+      createGalacticSpiralDust();
+      createSupermassiveCoreSun();
 
       // Raycasting for star selection
       const raycaster = new THREE.Raycaster();
@@ -207,16 +224,93 @@
       animate();
     }
 
-    function createBackgroundDust() {
+    // Creates the glowing purple/violet/gold swirling logarithmic spiral arms
+    function createGalacticSpiralDust() {
+      const particleCount = 20000;
       const geo = new THREE.BufferGeometry();
-      const count = 5000;
-      const pos = new Float32Array(count * 3);
-      for (let i = 0; i < count * 3; i++) {
-        pos[i] = (Math.random() - 0.5) * 3000;
+      const positions = new Float32Array(particleCount * 3);
+      const colors = new Float32Array(particleCount * 3);
+
+      const numArms = 4;
+      const coreColor = new THREE.Color(0xfef08a); // Gold center
+      const midColor = new THREE.Color(0xc084fc);  // Purple mid
+      const edgeColor = new THREE.Color(0x38bdf8); // Cyan rim
+
+      for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3;
+        const armIndex = i % numArms;
+        const armAngle = (armIndex / numArms) * Math.PI * 2;
+        const radius = Math.pow(Math.random(), 1.5) * 800 + 30;
+        const spinAngle = radius * 0.0035;
+
+        // Spread / dispersion around the spiral arm
+        const randomX = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.3) * radius;
+        const randomY = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.15) * radius;
+        const randomZ = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.3) * radius;
+
+        positions[i3] = Math.cos(armAngle + spinAngle) * radius + randomX;
+        positions[i3 + 1] = randomY + Math.sin(radius * 0.01) * 15;
+        positions[i3 + 2] = Math.sin(armAngle + spinAngle) * radius + randomZ;
+
+        // Color interpolation based on radius
+        let mixedColor;
+        if (radius < 250) {
+          mixedColor = coreColor.clone().lerp(midColor, radius / 250);
+        } else {
+          mixedColor = midColor.clone().lerp(edgeColor, (radius - 250) / 550);
+        }
+
+        colors[i3] = mixedColor.r;
+        colors[i3 + 1] = mixedColor.g;
+        colors[i3 + 2] = mixedColor.b;
       }
-      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      const mat = new THREE.PointsMaterial({ color: 0x475569, size: 2.5, transparent: true, opacity: 0.6 });
-      scene.add(new THREE.Points(geo, mat));
+
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+      const mat = new THREE.PointsMaterial({
+        size: 3.5,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.75,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+
+      spiralParticleSystem = new THREE.Points(geo, mat);
+      scene.add(spiralParticleSystem);
+    }
+
+    function createSupermassiveCoreSun() {
+      // 1. Core Glowing Sun
+      const sunGeo = new THREE.SphereGeometry(18, 32, 32);
+      const sunMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      coreSunMesh = new THREE.Mesh(sunGeo, sunMat);
+      scene.add(coreSunMesh);
+
+      // 2. Volumetric Corona Halo
+      const coronaGeo = new THREE.SphereGeometry(32, 32, 32);
+      const coronaMat = new THREE.MeshBasicMaterial({
+        color: 0xfde047,
+        transparent: true,
+        opacity: 0.45,
+        blending: THREE.AdditiveBlending,
+      });
+      coreCoronaMesh = new THREE.Mesh(coronaGeo, coronaMat);
+      scene.add(coreCoronaMesh);
+
+      // 3. Outer Purple Accretion Ring
+      const ringGeo = new THREE.RingGeometry(35, 90, 64);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xa855f7,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.35,
+        blending: THREE.AdditiveBlending,
+      });
+      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+      ringMesh.rotation.x = Math.PI / 2;
+      scene.add(ringMesh);
     }
 
     async function fetchGalaxy() {
@@ -229,27 +323,42 @@
     }
 
     function updateGalaxy(galaxy) {
-      document.getElementById('stat-stars').textContent = `✨ ${galaxy.bodies.length} Stars`;
-      document.getElementById('stat-sectors').textContent = `🪐 ${galaxy.bodies.filter(b => b.tier === 'celestial').length} Sectors`;
-      document.getElementById('stat-links').textContent = `🔗 ${galaxy.lines.length} Links`;
+      document.getElementById('stat-stars').textContent = `✨ ${galaxy.bodies.length} Celestial Stars`;
+      document.getElementById('stat-sectors').textContent = `🪐 ${galaxy.bodies.filter(b => b.id.includes(':lang:')).length} Languages`;
+      document.getElementById('stat-links').textContent = `🔗 ${galaxy.lines.length} Constellations`;
 
       // Clear old meshes
       starMeshes.forEach(m => scene.remove(m));
       starMeshes = [];
       if (lineSegments) scene.remove(lineSegments);
 
-      const sphereGeo = new THREE.SphereGeometry(1, 14, 14);
+      const sphereGeo = new THREE.SphereGeometry(1, 16, 16);
 
-      // Render Stars with Glowing Coronas
       galaxy.bodies.forEach(body => {
-        const color = new THREE.Color(`rgb(${body.color.r}, ${body.color.g}, ${body.color.b})`);
-        const scale = Math.max(body.radius * 0.9, 3.5);
+        let color, scale;
+
+        if (body.id === 'celestial:core:database') {
+          color = new THREE.Color(0xfef08a);
+          scale = 20.0;
+        } else if (body.id.startsWith('celestial:lang:')) {
+          // Language Supercluster Planet Star
+          color = new THREE.Color(0xfde047); // Golden planet
+          scale = 10.0;
+        } else if (body.id.startsWith('semantic:version:')) {
+          // Version Moon Star
+          color = new THREE.Color(0x38bdf8); // Cyan star
+          scale = 6.0;
+        } else {
+          // Verse / Chapter Star
+          color = new THREE.Color(0xc084fc); // Violet star
+          scale = 3.8;
+        }
 
         const mat = new THREE.MeshStandardMaterial({
           color: color,
           emissive: color,
-          emissiveIntensity: 0.7,
-          roughness: 0.15
+          emissiveIntensity: 0.85,
+          roughness: 0.1,
         });
 
         const mesh = new THREE.Mesh(sphereGeo, mat);
@@ -260,7 +369,7 @@
         starMeshes.push(mesh);
       });
 
-      // Render Constellation Link Lines
+      // Render Glowing Constellation Rays & Filaments
       const linePositions = [];
       galaxy.lines.forEach(l => {
         const s = galaxy.bodies.find(b => b.id === l.source_id);
@@ -274,7 +383,12 @@
       if (linePositions.length > 0) {
         const lineGeo = new THREE.BufferGeometry();
         lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-        const lineMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.3 });
+        const lineMat = new THREE.LineBasicMaterial({
+          color: 0xa855f7,
+          transparent: true,
+          opacity: 0.38,
+          blending: THREE.AdditiveBlending,
+        });
         lineSegments = new THREE.LineSegments(lineGeo, lineMat);
         scene.add(lineSegments);
       }
@@ -287,12 +401,12 @@
       badge.className = `tier-badge badge-${body.tier}`;
 
       document.getElementById('card-title').textContent = body.label;
-      document.getElementById('card-content').textContent = `Star ID: ${body.id}\nOrbit Radius: ${body.orbit_radius.toFixed(1)} AU\nSpectral Class: RGB(${body.color.r}, ${body.color.g}, ${body.color.b})`;
-      document.getElementById('card-mass').textContent = `Mass / Strength: ${body.mass.toFixed(2)}`;
+      document.getElementById('card-content').textContent = `ID: ${body.id}\nOrbit Radius: ${body.orbit_radius.toFixed(1)} AU\nSpectral Class: RGB(${body.color.r}, ${body.color.g}, ${body.color.b})`;
+      document.getElementById('card-mass').textContent = `Mass / Retention: ${body.mass.toFixed(2)}`;
       document.getElementById('card-luminosity').textContent = `Activation: ${body.luminosity.toFixed(2)}`;
       card.style.display = 'block';
 
-      // Smooth camera pan towards star
+      // Smooth camera pan towards selected star
       controls.target.set(body.x, body.y, body.z);
     }
 
@@ -317,13 +431,12 @@
     async function formMemory() {
       const label = document.getElementById('mem-label').value.trim();
       const content = document.getElementById('mem-content').value.trim();
-      const tier = document.getElementById('mem-tier').value;
       if (!label) return;
 
       await fetch('/api/memory/ingest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ label, content, tier, tags: ['user_ignited'] })
+        body: JSON.stringify({ label, content, tier: 'semantic', tags: ['user_memory'] })
       });
 
       document.getElementById('mem-label').value = '';
@@ -343,6 +456,15 @@
 
     function animate() {
       requestAnimationFrame(animate);
+
+      // Rotate spiral dust particles slowly for fluid cosmic motion
+      if (spiralParticleSystem) {
+        spiralParticleSystem.rotation.y += 0.0008;
+      }
+      if (coreCoronaMesh) {
+        coreCoronaMesh.rotation.y -= 0.001;
+      }
+
       controls.update();
       renderer.render(scene, camera);
     }
