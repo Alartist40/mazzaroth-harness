@@ -19,3 +19,7 @@
 - [x] M5: Model Context Protocol (MCP) JSON-RPC 2.0 tool execution (mazzaroth_remember, mazzaroth_recall, mazzaroth_get_galaxy)
   CHECK: cargo test --test mcp_server_test -- --nocapture
   EXPECT: test_mcp_tools_and_jsonrpc_conformance ... ok
+
+- [x] M6: Large-scale multilingual corpus ingestion & 3D galactic supercluster generation
+  CHECK: cargo test --test corpus_test -- --nocapture
+  EXPECT: test_corpus_importer_and_galaxy_construction ... ok

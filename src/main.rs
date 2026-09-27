@@ -1,5 +1,5 @@
 use clap::Parser;
-use mazzaroth::{create_router, MazzarothEngine, ServerState};
+use mazzaroth::{create_router, CorpusImporter, MazzarothEngine, ServerState};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use tokio::net::TcpListener;
@@ -14,6 +14,12 @@ struct Cli {
 
     #[arg(short, long, default_value = "data/mazzaroth.db")]
     db: PathBuf,
+
+    #[arg(long, default_value = "bibles")]
+    bibles_dir: PathBuf,
+
+    #[arg(long)]
+    import_corpus: bool,
 }
 
 #[tokio::main]
@@ -31,6 +37,13 @@ async fn main() -> anyhow::Result<()> {
 
     info!(db_path = ?cli.db, "Opening Mazzaroth cognitive storage");
     let engine = MazzarothEngine::open(&cli.db)?;
+
+    // If database is new or --import-corpus is passed, import the large multilingual corpus
+    if (cli.import_corpus || engine.store.count_nodes()? <= 2) && cli.bibles_dir.exists() {
+        info!("Seeding Mazzaroth Celestial Galaxy with multilingual corpus from {:?}", cli.bibles_dir);
+        let count = CorpusImporter::import_bibles_directory(&engine, &cli.bibles_dir, 60, 20)?;
+        info!(imported_nodes = count, "Corpus seeded into Mazzaroth Galaxy");
+    }
 
     // Continuous background physics simulation thread
     let sim_engine = engine.clone();
