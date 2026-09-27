@@ -3,72 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🌌 Mazzaroth — Celestial Cognitive Galaxy</title>
+  <title>🌌 Mazzaroth — Second Brain Cognitive Galaxy</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #03010a;
+      background: #04010a;
       color: #f8fafc;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow: hidden;
       height: 100vh;
       width: 100vw;
+      user-select: none;
     }
     #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
 
-    /* Top Navigation Breadcrumbs */
-    .top-nav {
+    /* Top HUD Navigation Bar */
+    .top-bar {
       position: absolute;
-      top: 20px;
+      top: 18px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 20;
       display: flex;
       align-items: center;
-      gap: 10px;
-      background: rgba(13, 6, 28, 0.8);
-      backdrop-filter: blur(20px);
+      gap: 12px;
+      background: rgba(14, 6, 32, 0.85);
+      backdrop-filter: blur(25px);
       border: 1px solid rgba(168, 85, 247, 0.3);
-      border-radius: 30px;
-      padding: 8px 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      border-radius: 40px;
+      padding: 8px 24px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.7), 0 0 25px rgba(168, 85, 247, 0.15);
     }
-    .breadcrumb-btn {
+    .top-btn {
       background: none;
       border: none;
-      color: #94a3b8;
+      color: #cbd5e1;
       font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
-      transition: color 0.2s;
+      transition: all 0.2s;
+      padding: 4px 10px;
+      border-radius: 20px;
     }
-    .breadcrumb-btn:hover { color: #fde047; }
-    .breadcrumb-btn.active { color: #38bdf8; font-weight: 700; }
-    .nav-sep { color: #64748b; font-size: 0.8rem; }
+    .top-btn:hover { color: #fde047; background: rgba(168, 85, 247, 0.15); }
+    .top-btn.active { color: #38bdf8; background: rgba(56, 189, 248, 0.15); font-weight: 700; }
+    .top-sep { color: #64748b; font-size: 0.8rem; }
 
-    /* Left HUD Panel */
+    /* Left Sidebar */
     .hud-overlay {
       position: absolute;
       top: 24px;
       left: 24px;
       z-index: 10;
-      width: 360px;
-      background: rgba(13, 6, 28, 0.78);
-      backdrop-filter: blur(25px);
+      width: 380px;
+      background: rgba(14, 6, 32, 0.82);
+      backdrop-filter: blur(30px);
       border: 1px solid rgba(168, 85, 247, 0.25);
-      border-radius: 20px;
-      padding: 22px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(147, 51, 234, 0.15);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(147, 51, 234, 0.15);
+      max-height: calc(100vh - 48px);
+      display: flex;
+      flex-direction: column;
     }
     h1 {
-      font-size: 1.15rem;
-      font-weight: 800;
+      font-size: 1.25rem;
+      font-weight: 900;
       background: linear-gradient(135deg, #fde047, #c084fc, #38bdf8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -76,22 +82,23 @@
       align-items: center;
       gap: 10px;
       margin-bottom: 4px;
+      letter-spacing: 0.5px;
     }
-    .subtitle { font-size: 0.75rem; color: #a855f7; margin-bottom: 14px; font-weight: 500; }
+    .subtitle { font-size: 0.75rem; color: #c084fc; margin-bottom: 14px; font-weight: 500; }
     .stats-bar { font-size: 0.75rem; color: #cbd5e1; margin-bottom: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
-    .stat-pill { background: rgba(30, 14, 58, 0.85); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.2); }
+    .stat-pill { background: rgba(30, 14, 58, 0.9); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.25); }
 
     input, textarea, select {
       width: 100%;
-      background: rgba(23, 10, 48, 0.85);
+      background: rgba(23, 10, 48, 0.9);
       border: 1px solid rgba(168, 85, 247, 0.25);
-      border-radius: 10px;
+      border-radius: 12px;
       color: #fff;
-      padding: 9px 14px;
+      padding: 10px 14px;
       font-size: 0.85rem;
       outline: none;
       margin-bottom: 10px;
-      transition: all 0.2s;
+      transition: all 0.25s;
     }
     input:focus, textarea:focus { border-color: #c084fc; box-shadow: 0 0 15px rgba(192, 132, 252, 0.3); }
 
@@ -106,182 +113,197 @@
       font-size: 0.82rem;
       font-weight: 700;
       cursor: pointer;
-      transition: transform 0.15s, opacity 0.2s;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
     }
-    button.action-btn:hover { opacity: 0.95; transform: translateY(-1px); }
-    button.action-btn.secondary { background: rgba(30, 14, 58, 0.85); border: 1px solid rgba(168, 85, 247, 0.3); }
+    button.action-btn:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(147, 51, 234, 0.5); }
+    button.action-btn.secondary { background: rgba(30, 14, 58, 0.85); border: 1px solid rgba(168, 85, 247, 0.3); box-shadow: none; }
 
-    /* Language Quick List in Sidebar */
-    .language-scroll {
-      max-height: 240px;
+    /* Topic / Language Clusters */
+    .cluster-scroll {
+      flex: 1;
       overflow-y: auto;
-      margin-top: 10px;
+      margin-top: 6px;
       border-top: 1px solid rgba(168, 85, 247, 0.2);
       padding-top: 10px;
     }
-    .lang-item {
+    .cluster-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 7px 10px;
-      border-radius: 8px;
-      font-size: 0.8rem;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 0.82rem;
       color: #cbd5e1;
       cursor: pointer;
-      transition: background 0.15s, color 0.15s;
+      transition: all 0.2s;
+      margin-bottom: 4px;
     }
-    .lang-item:hover {
-      background: rgba(147, 51, 234, 0.2);
+    .cluster-item:hover {
+      background: rgba(147, 51, 234, 0.25);
       color: #fde047;
+      transform: translateX(4px);
     }
 
-    /* Right Solar System Data Inspector */
-    .data-inspector {
+    /* Right Memory Note & Knowledge Inspector */
+    .note-inspector {
       position: absolute;
       top: 24px;
       right: 24px;
       z-index: 10;
-      width: 420px;
+      width: 460px;
       max-height: calc(100vh - 48px);
-      background: rgba(13, 6, 28, 0.85);
-      backdrop-filter: blur(25px);
-      border: 1px solid rgba(250, 204, 21, 0.35);
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(250, 204, 21, 0.15);
+      background: rgba(14, 6, 32, 0.88);
+      backdrop-filter: blur(30px);
+      border: 1px solid rgba(250, 204, 21, 0.4);
+      border-radius: 24px;
+      padding: 26px;
+      box-shadow: 0 25px 65px rgba(0, 0, 0, 0.85), 0 0 45px rgba(250, 204, 21, 0.15);
       display: none;
       overflow-y: auto;
       animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
 
-    .node-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .note-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
     .badge {
       display: inline-block;
-      padding: 3px 10px;
+      padding: 4px 12px;
       border-radius: 20px;
       font-size: 0.72rem;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    .badge-core { background: #facc15; color: #000; }
-    .badge-lang { background: #38bdf8; color: #000; }
-    .badge-version { background: #c084fc; color: #000; }
-    .badge-book { background: #f43f5e; color: #fff; }
+    .badge-core { background: linear-gradient(135deg, #facc15, #ea580c); color: #000; box-shadow: 0 0 15px rgba(250, 204, 21, 0.5); }
+    .badge-lang { background: linear-gradient(135deg, #38bdf8, #6366f1); color: #000; }
+    .badge-version { background: linear-gradient(135deg, #c084fc, #9333ea); color: #fff; }
+    .badge-book { background: linear-gradient(135deg, #fb923c, #f43f5e); color: #fff; }
 
-    .inspector-title { font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
-    .inspector-meta { font-size: 0.78rem; color: #94a3b8; margin-bottom: 14px; }
+    .note-title { font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 6px; line-height: 1.3; }
+    .note-meta { font-size: 0.78rem; color: #94a3b8; margin-bottom: 14px; display: flex; gap: 12px; }
 
-    .content-box {
-      background: rgba(23, 10, 48, 0.9);
-      border: 1px solid rgba(168, 85, 247, 0.2);
-      border-radius: 12px;
-      padding: 14px;
-      font-size: 0.88rem;
-      line-height: 1.55;
-      color: #e2e8f0;
-      margin-bottom: 14px;
+    .note-content {
+      background: rgba(23, 10, 48, 0.95);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #f1f5f9;
+      margin-bottom: 16px;
       white-space: pre-wrap;
-      max-height: 280px;
+      max-height: 320px;
       overflow-y: auto;
     }
 
-    .moon-grid {
+    .tags-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .tag-pill { background: rgba(147, 51, 234, 0.2); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; }
+
+    .constellation-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-top: 10px;
+      margin-top: 8px;
     }
-    .moon-card {
-      background: rgba(30, 14, 58, 0.8);
+    .constellation-card {
+      background: rgba(30, 14, 58, 0.85);
       border: 1px solid rgba(168, 85, 247, 0.25);
       border-radius: 10px;
       padding: 10px;
       cursor: pointer;
       transition: all 0.2s;
     }
-    .moon-card:hover {
+    .constellation-card:hover {
       border-color: #38bdf8;
-      background: rgba(56, 189, 248, 0.15);
+      background: rgba(56, 189, 248, 0.2);
       transform: translateY(-2px);
     }
-    .moon-title { font-size: 0.82rem; font-weight: 700; color: #f8fafc; margin-bottom: 2px; }
-    .moon-sub { font-size: 0.7rem; color: #94a3b8; }
+    .constellation-title { font-size: 0.82rem; font-weight: 700; color: #f8fafc; margin-bottom: 2px; }
+    .constellation-sub { font-size: 0.7rem; color: #94a3b8; }
   </style>
 </head>
 <body>
   <div id="canvas-container"></div>
 
-  <!-- Breadcrumbs Top Bar -->
-  <div class="top-nav" id="top-nav">
-    <button class="breadcrumb-btn active" onclick="zoomToGalaxy()">🌌 Universal Galaxy</button>
-    <span class="nav-sep" id="sep-1" style="display:none;">›</span>
-    <button class="breadcrumb-btn" id="nav-lang" style="display:none;" onclick="zoomToCurrentLang()">🪐 Language Planet</button>
-    <span class="nav-sep" id="sep-2" style="display:none;">›</span>
-    <button class="breadcrumb-btn" id="nav-version" style="display:none;">✦ Version Moon</button>
+  <!-- Top Breadcrumbs & Galaxy Reset -->
+  <div class="top-bar">
+    <button class="top-btn active" onclick="resetToGalacticView()">🌌 Universal Galaxy</button>
+    <span class="top-sep" id="sep-1" style="display:none;">›</span>
+    <button class="top-btn" id="nav-lang" style="display:none;" onclick="zoomToCurrentCluster()">🪐 Cluster</button>
+    <span class="top-sep" id="sep-2" style="display:none;">›</span>
+    <button class="top-btn" id="nav-version" style="display:none;">✦ Star Note</button>
   </div>
 
   <!-- Left Sidebar Controls -->
   <div class="hud-overlay">
     <h1>🌌 MAZZAROTH</h1>
-    <div class="subtitle">Interactive Multilingual Cognitive Galaxy</div>
+    <div class="subtitle">AI Second Brain & Celestial Memory Matrix</div>
 
     <div class="stats-bar">
       <span class="stat-pill" id="stat-stars">✨ 0 Stars</span>
-      <span class="stat-pill" id="stat-langs">🪐 60 Languages</span>
-      <span class="stat-pill" id="stat-links">🔗 0 Links</span>
+      <span class="stat-pill" id="stat-langs">🪐 60 Clusters</span>
+      <span class="stat-pill" id="stat-links">🔗 0 Constellations</span>
     </div>
 
-    <input type="text" id="search-query" placeholder="🔍 Search e.g. Greek, Hebrew, Genesis, Light..." onkeydown="if(event.key==='Enter') searchGalaxy()">
+    <input type="text" id="search-query" placeholder="🔍 Search memory stars, concepts, scriptures..." onkeydown="if(event.key==='Enter') searchGalaxy()">
     <div class="btn-row">
-      <button class="action-btn" onclick="searchGalaxy()">🔍 Search</button>
+      <button class="action-btn" onclick="searchGalaxy()">🔍 Warp to Star</button>
       <button class="action-btn secondary" onclick="toggleAutoRotate()">⟳ Orbit</button>
-      <button class="action-btn secondary" onclick="zoomToGalaxy()">🌌 Reset</button>
+      <button class="action-btn secondary" onclick="resetToGalacticView()">🌌 Reset</button>
     </div>
 
-    <div style="font-size: 0.72rem; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; margin-top: 6px;">
-      🪐 Language Superclusters (Click to Enter Orbit)
+    <div style="font-size: 0.72rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 0.5px; margin-top: 4px;">
+      🪐 Knowledge Clusters & Focus Areas
     </div>
-    <div class="language-scroll" id="language-list"></div>
+    <div class="cluster-scroll" id="cluster-list"></div>
+
+    <div style="margin-top: 10px; border-top: 1px solid rgba(168, 85, 247, 0.2); padding-top: 10px;">
+      <input type="text" id="new-concept-label" placeholder="Ignite new thought / memory star...">
+      <button class="action-btn" style="width:100%;" onclick="formNewMemory()">✨ Ignite Memory Star</button>
+    </div>
   </div>
 
-  <!-- Right Solar System Inspector HUD -->
-  <div class="data-inspector" id="data-inspector">
+  <!-- Right Memory Note & Knowledge Inspector -->
+  <div class="note-inspector" id="note-inspector">
     <div class="node-header">
-      <span class="badge badge-lang" id="inspector-badge">LANGUAGE PLANET</span>
-      <button onclick="closeInspector()" style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer;">✕</button>
+      <span class="badge badge-lang" id="inspector-badge">SEMANTIC STAR</span>
+      <button onclick="closeInspector()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">✕</button>
     </div>
-    <div class="inspector-title" id="inspector-title">Hebrew (עִבְרִית)</div>
-    <div class="inspector-meta" id="inspector-meta">Orbit Distance: 150 AU • 3 Biblical Editions</div>
+    <div class="note-title" id="inspector-title">Concept Title</div>
+    <div class="note-meta" id="inspector-meta">
+      <span id="meta-luminosity">🔥 Recency: 1.00</span>
+      <span id="meta-retention">Mass: 0.95</span>
+    </div>
 
-    <div class="content-box" id="inspector-content">Select a moon or asteroid ring to inspect scripture texts and memory nodes.</div>
+    <div class="tags-row" id="inspector-tags"></div>
 
-    <div id="moons-section">
-      <div style="font-size: 0.75rem; text-transform: uppercase; color: #cbd5e1; font-weight: 700; margin-bottom: 6px;">
-        ✦ Orbiting Versions & Moons
+    <div class="note-content" id="inspector-content">Note content loads here...</div>
+
+    <div id="constellations-section">
+      <div style="font-size: 0.75rem; text-transform: uppercase; color: #cbd5e1; font-weight: 800; margin-bottom: 6px;">
+        🔗 Orbiting Moons & Connected Constellations
       </div>
-      <div class="moon-grid" id="moons-grid"></div>
+      <div class="constellation-grid" id="constellation-grid"></div>
     </div>
   </div>
 
   <script>
     let scene, camera, renderer, controls;
+    let galaxyGroup; // Unified rotating group containing stars, spiral dust, and links
     let starPoints, spiralDustPoints, constellationLines;
     let galaxyData = { bodies: [], lines: [] };
     let currentFocusNode = null;
-    let currentLangNode = null;
-    let activeMoons = [];
-    let saturnRingMesh = null;
+    let currentClusterNode = null;
 
     const container = document.getElementById('canvas-container');
 
     function init() {
       scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x03010a, 0.00035);
+      scene.fog = new THREE.FogExp2(0x04010a, 0.0003);
 
-      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10000);
-      camera.position.set(0, 500, 950);
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 25000);
+      camera.position.set(0, 500, 1100);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -293,25 +315,31 @@
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
+      controls.minDistance = 20;
+      controls.maxDistance = 6000;
       controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.2;
+      controls.autoRotateSpeed = 0.25;
 
       // Lights
-      scene.add(new THREE.AmbientLight(0x2e1065, 2.0));
-      const coreLight = new THREE.PointLight(0xfef08a, 4.0, 3000);
+      scene.add(new THREE.AmbientLight(0x2e1065, 2.2));
+      const coreLight = new THREE.PointLight(0xfef08a, 4.5, 4000);
       coreLight.position.set(0, 0, 0);
       scene.add(coreLight);
 
-      // Create Particle Starfield & Spiral Dust Arms
-      createCosmicDust();
+      // Create unified rotating galaxy group
+      galaxyGroup = new THREE.Group();
+      scene.add(galaxyGroup);
 
-      // Click Interaction
+      // Create Swirling 25,000 Particle Cosmic Spiral Arms
+      createCosmicSpiralDust();
+
+      // Click / Raycast
       const raycaster = new THREE.Raycaster();
-      raycaster.params.Points.threshold = 12;
+      raycaster.params.Points.threshold = 14;
       const mouse = new THREE.Vector2();
 
       window.addEventListener('click', (e) => {
-        if (e.target.closest('.hud-overlay') || e.target.closest('.data-inspector') || e.target.closest('.top-nav')) return;
+        if (e.target.closest('.hud-overlay') || e.target.closest('.note-inspector') || e.target.closest('.top-bar')) return;
         mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
@@ -321,12 +349,12 @@
           if (intersects.length > 0) {
             const idx = intersects[0].index;
             const body = galaxyData.bodies[idx];
-            if (body) onSelectBody(body);
+            if (body) onSelectStar(body);
           }
         }
       });
 
-      // Fetch Live Database
+      // Fetch Live Memory Data
       fetchGalaxy();
       setInterval(fetchGalaxy, 4000);
 
@@ -334,36 +362,36 @@
       animate();
     }
 
-    // 20,000 Particle Cosmic Spiral Dust Matching the Uploaded Painting
-    function createCosmicDust() {
-      const count = 25000;
+    // Creates the 25,000 Particle Purple/Gold Spiral Dust
+    function createCosmicSpiralDust() {
+      const count = 30000;
       const geo = new THREE.BufferGeometry();
       const pos = new Float32Array(count * 3);
       const col = new Float32Array(count * 3);
 
       const numArms = 4;
-      const coreColor = new THREE.Color(0xfef08a);
-      const midColor = new THREE.Color(0xc084fc);
-      const rimColor = new THREE.Color(0x38bdf8);
+      const coreColor = new THREE.Color(0xfef08a); // Gold center
+      const midColor = new THREE.Color(0xc084fc);  // Purple mid
+      const rimColor = new THREE.Color(0x38bdf8);  // Cyan rim
 
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
         const arm = i % numArms;
         const armAngle = (arm / numArms) * Math.PI * 2;
-        const r = Math.pow(Math.random(), 1.6) * 900 + 25;
-        const spin = r * 0.0035;
+        const r = Math.pow(Math.random(), 1.5) * 1100 + 20;
+        const spin = r * 0.003;
 
-        const rx = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.3) * r;
+        const rx = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.28) * r;
         const ry = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.12) * r;
-        const rz = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.3) * r;
+        const rz = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.28) * r;
 
         pos[i3] = Math.cos(armAngle + spin) * r + rx;
-        pos[i3 + 1] = ry + Math.sin(r * 0.01) * 18;
+        pos[i3 + 1] = ry + Math.sin(r * 0.01) * 20;
         pos[i3 + 2] = Math.sin(armAngle + spin) * r + rz;
 
         let c;
-        if (r < 250) c = coreColor.clone().lerp(midColor, r / 250);
-        else c = midColor.clone().lerp(rimColor, (r - 250) / 650);
+        if (r < 300) c = coreColor.clone().lerp(midColor, r / 300);
+        else c = midColor.clone().lerp(rimColor, (r - 300) / 800);
 
         col[i3] = c.r;
         col[i3 + 1] = c.g;
@@ -374,16 +402,16 @@
       geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
       const mat = new THREE.PointsMaterial({
-        size: 3.2,
+        size: 3.0,
         vertexColors: true,
         transparent: true,
-        opacity: 0.75,
+        opacity: 0.8,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
 
       spiralDustPoints = new THREE.Points(geo, mat);
-      scene.add(spiralDustPoints);
+      galaxyGroup.add(spiralDustPoints);
     }
 
     async function fetchGalaxy() {
@@ -391,18 +419,18 @@
         const res = await fetch('/api/memory/celestial');
         if (!res.ok) return;
         galaxyData = await res.json();
-        renderGalaxyParticles(galaxyData);
-        populateLanguageSidebar(galaxyData);
+        renderDatabaseStars(galaxyData);
+        populateClusterSidebar(galaxyData);
       } catch (e) {}
     }
 
-    // Renders data stars as glowing particle dots
-    function renderGalaxyParticles(data) {
+    // Renders database stars with recency glow
+    function renderDatabaseStars(data) {
       document.getElementById('stat-stars').textContent = `✨ ${data.bodies.length} Stars`;
       document.getElementById('stat-links').textContent = `🔗 ${data.lines.length} Links`;
 
-      if (starPoints) scene.remove(starPoints);
-      if (constellationLines) scene.remove(constellationLines);
+      if (starPoints) galaxyGroup.remove(starPoints);
+      if (constellationLines) galaxyGroup.remove(constellationLines);
 
       const count = data.bodies.length;
       const geo = new THREE.BufferGeometry();
@@ -415,14 +443,17 @@
         pos[i * 3 + 1] = b.y;
         pos[i * 3 + 2] = b.z;
 
+        // Recency Luminosity Glow: Recent memories burn brilliant white-gold, older memories settle to violet/cyan
+        const lum = Math.min(Math.max(b.luminosity || 0.8, 0.4), 1.0);
+
         if (b.id.includes(':core:')) {
-          col[i * 3] = 1.0; col[i * 3 + 1] = 0.95; col[i * 3 + 2] = 0.4;
+          col[i * 3] = 1.0 * lum; col[i * 3 + 1] = 0.95 * lum; col[i * 3 + 2] = 0.5;
         } else if (b.id.includes(':lang:')) {
-          col[i * 3] = 0.98; col[i * 3 + 1] = 0.85; col[i * 3 + 2] = 0.2; // Gold planet
+          col[i * 3] = 0.98 * lum; col[i * 3 + 1] = 0.85 * lum; col[i * 3 + 2] = 0.2; // Gold cluster
         } else if (b.id.includes(':version:')) {
-          col[i * 3] = 0.22; col[i * 3 + 1] = 0.75; col[i * 3 + 2] = 0.98; // Cyan moon
+          col[i * 3] = 0.22 * lum; col[i * 3 + 1] = 0.75 * lum; col[i * 3 + 2] = 0.98; // Cyan star
         } else {
-          col[i * 3] = 0.75; col[i * 3 + 1] = 0.52; col[i * 3 + 2] = 0.98; // Violet asteroid
+          col[i * 3] = 0.75 * lum; col[i * 3 + 1] = 0.52 * lum; col[i * 3 + 2] = 0.98; // Violet star
         }
       }
 
@@ -430,7 +461,7 @@
       geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
       const mat = new THREE.PointsMaterial({
-        size: 7.0,
+        size: 8.0,
         vertexColors: true,
         transparent: true,
         opacity: 0.95,
@@ -438,7 +469,7 @@
       });
 
       starPoints = new THREE.Points(geo, mat);
-      scene.add(starPoints);
+      galaxyGroup.add(starPoints);
 
       // Render Constellation Link Filaments
       const linePos = [];
@@ -457,128 +488,121 @@
         const lineMat = new THREE.LineBasicMaterial({
           color: 0xa855f7,
           transparent: true,
-          opacity: 0.35,
+          opacity: 0.32,
           blending: THREE.AdditiveBlending,
         });
         constellationLines = new THREE.LineSegments(lineGeo, lineMat);
-        scene.add(constellationLines);
+        galaxyGroup.add(constellationLines);
       }
     }
 
-    function populateLanguageSidebar(data) {
-      const list = document.getElementById('language-list');
-      const langs = data.bodies.filter(b => b.id.includes(':lang:'));
-      document.getElementById('stat-langs').textContent = `🪐 ${langs.length} Languages`;
+    function populateClusterSidebar(data) {
+      const list = document.getElementById('cluster-list');
+      const clusters = data.bodies.filter(b => b.id.includes(':lang:'));
+      document.getElementById('stat-langs').textContent = `🪐 ${clusters.length} Clusters`;
 
       list.innerHTML = '';
-      langs.forEach(l => {
+      clusters.forEach(c => {
         const item = document.createElement('div');
-        item.className = 'lang-item';
-        item.innerHTML = `<span>✦ ${l.label}</span><span style="color:#94a3b8; font-size:0.7rem;">ORBIT →</span>`;
-        item.onclick = () => onSelectBody(l);
+        item.className = 'cluster-item';
+        item.innerHTML = `<span>✦ ${c.label}</span><span style="color:#94a3b8; font-size:0.7rem;">ORBIT →</span>`;
+        item.onclick = () => onSelectStar(c);
         list.appendChild(item);
       });
     }
 
-    // Saturn-like Planetary Solar System Zoom on Click
-    function onSelectBody(body) {
+    // Warp & Inspect Selected Memory Star
+    function onSelectStar(body) {
       currentFocusNode = body;
-      const isLang = body.id.includes(':lang:');
-      const isVersion = body.id.includes(':version:');
+      const isCluster = body.id.includes(':lang:');
 
-      // Update Breadcrumbs
-      document.getElementById('top-nav').style.display = 'flex';
-      if (isLang) {
-        currentLangNode = body;
+      // Update Top Breadcrumbs
+      if (isCluster) {
+        currentClusterNode = body;
         document.getElementById('sep-1').style.display = 'inline';
         document.getElementById('nav-lang').style.display = 'inline';
         document.getElementById('nav-lang').textContent = `🪐 ${body.label}`;
         document.getElementById('sep-2').style.display = 'none';
         document.getElementById('nav-version').style.display = 'none';
-
-        spawnSaturnRingsAndMoons(body);
-      } else if (isVersion) {
+      } else {
         document.getElementById('sep-2').style.display = 'inline';
         document.getElementById('nav-version').style.display = 'inline';
         document.getElementById('nav-version').textContent = `✦ ${body.label}`;
       }
 
-      // Smooth Camera Fly-In
-      flyCameraTo(body.x, body.y, body.z, isLang ? 110 : 60);
+      // Smooth Camera Fly-In without clipping or collapsing
+      // Transform local coordinates into world coordinates
+      const worldPos = new THREE.Vector3(body.x, body.y, body.z);
+      galaxyGroup.localToWorld(worldPos);
 
-      // Open Data Inspector HUD
+      flyCameraTo(worldPos.x, worldPos.y, worldPos.z, isCluster ? 140 : 80);
+
+      // Open Note Inspector HUD
       showInspector(body);
     }
 
-    // Creates Saturn-like Asteroid Ring & Orbiting Moons for the selected Language Planet
-    function spawnSaturnRingsAndMoons(langBody) {
-      if (saturnRingMesh) scene.remove(saturnRingMesh);
-
-      // 1. Glowing Asteroid Ring around the Language Planet
-      const ringGeo = new THREE.RingGeometry(18, 48, 64);
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: 0x38bdf8,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.35,
-        blending: THREE.AdditiveBlending,
-      });
-      saturnRingMesh = new THREE.Mesh(ringGeo, ringMat);
-      saturnRingMesh.position.set(langBody.x, langBody.y, langBody.z);
-      saturnRingMesh.rotation.x = Math.PI / 3;
-      scene.add(saturnRingMesh);
-    }
-
     function showInspector(body) {
-      const inspector = document.getElementById('data-inspector');
+      const inspector = document.getElementById('note-inspector');
       const badge = document.getElementById('inspector-badge');
       const title = document.getElementById('inspector-title');
-      const meta = document.getElementById('inspector-meta');
       const content = document.getElementById('inspector-content');
-      const moonGrid = document.getElementById('moons-grid');
+      const tagsRow = document.getElementById('inspector-tags');
+      const grid = document.getElementById('constellation-grid');
 
       if (body.id.includes(':core:')) {
         badge.textContent = 'SUPERMASSIVE CORE';
         badge.className = 'badge badge-core';
       } else if (body.id.includes(':lang:')) {
-        badge.textContent = 'LANGUAGE PLANET';
+        badge.textContent = 'KNOWLEDGE CLUSTER';
         badge.className = 'badge badge-lang';
       } else if (body.id.includes(':version:')) {
-        badge.textContent = 'VERSION MOON';
+        badge.textContent = 'EDITION STAR';
         badge.className = 'badge badge-version';
       } else {
-        badge.textContent = 'BOOK / CHAPTER ASTEROID';
+        badge.textContent = 'MEMORY NOTE';
         badge.className = 'badge badge-book';
       }
 
       title.textContent = body.label;
-      meta.textContent = `Star ID: ${body.id} • Orbit Radius: ${body.orbit_radius.toFixed(1)} AU`;
-      content.textContent = body.content || "Cognitive celestial memory node initialized.";
+      document.getElementById('meta-luminosity').textContent = `🔥 Recency: ${(body.luminosity || 0.9).toFixed(2)}`;
+      document.getElementById('meta-retention').textContent = `Mass: ${(body.mass || 0.85).toFixed(2)}`;
 
-      // Find children moons/asteroids
-      const related = galaxyData.bodies.filter(b => {
-        return galaxyData.lines.some(l => (l.source_id === body.id && l.target_id === b.id));
+      content.textContent = body.content || "Cognitive celestial memory star active in second brain matrix.";
+
+      // Tags
+      tagsRow.innerHTML = '';
+      const tags = body.tags || ['memory', 'second-brain'];
+      tags.forEach(t => {
+        const pill = document.createElement('span');
+        pill.className = 'tag-pill';
+        pill.textContent = `#${t}`;
+        tagsRow.appendChild(pill);
       });
 
-      moonGrid.innerHTML = '';
-      if (related.length > 0) {
-        document.getElementById('moons-section').style.display = 'block';
-        related.forEach(m => {
+      // Find connected stars
+      const connected = galaxyData.bodies.filter(b => {
+        return galaxyData.lines.some(l => (l.source_id === body.id && l.target_id === b.id) || (l.target_id === body.id && l.source_id === b.id));
+      });
+
+      grid.innerHTML = '';
+      if (connected.length > 0) {
+        document.getElementById('constellations-section').style.display = 'block';
+        connected.slice(0, 8).forEach(m => {
           const card = document.createElement('div');
-          card.className = 'moon-card';
-          card.innerHTML = `<div class="moon-title">✦ ${m.label}</div><div class="moon-sub">${m.id.split(':')[1]}</div>`;
-          card.onclick = () => onSelectBody(m);
-          moonGrid.appendChild(card);
+          card.className = 'constellation-card';
+          card.innerHTML = `<div class="constellation-title">✦ ${m.label}</div><div class="constellation-sub">${m.id.split(':')[1]}</div>`;
+          card.onclick = () => onSelectStar(m);
+          grid.appendChild(card);
         });
       } else {
-        document.getElementById('moons-section').style.display = 'none';
+        document.getElementById('constellations-section').style.display = 'none';
       }
 
       inspector.style.display = 'block';
     }
 
     function closeInspector() {
-      document.getElementById('data-inspector').style.display = 'none';
+      document.getElementById('note-inspector').style.display = 'none';
     }
 
     function flyCameraTo(tx, ty, tz, distance) {
@@ -593,19 +617,18 @@
         .start();
     }
 
-    function zoomToGalaxy() {
-      if (saturnRingMesh) scene.remove(saturnRingMesh);
+    function resetToGalacticView() {
       document.getElementById('sep-1').style.display = 'none';
       document.getElementById('nav-lang').style.display = 'none';
       document.getElementById('sep-2').style.display = 'none';
       document.getElementById('nav-version').style.display = 'none';
       closeInspector();
 
-      flyCameraTo(0, 0, 0, 950);
+      flyCameraTo(0, 0, 0, 1100);
     }
 
-    function zoomToCurrentLang() {
-      if (currentLangNode) onSelectBody(currentLangNode);
+    function zoomToCurrentCluster() {
+      if (currentClusterNode) onSelectStar(currentClusterNode);
     }
 
     async function searchGalaxy() {
@@ -618,9 +641,28 @@
         if (results.length > 0) {
           const first = results[0];
           const foundBody = galaxyData.bodies.find(b => b.id === first.id);
-          if (foundBody) onSelectBody(foundBody);
+          if (foundBody) onSelectStar(foundBody);
         }
       }
+    }
+
+    async function formNewMemory() {
+      const label = document.getElementById('new-concept-label').value.trim();
+      if (!label) return;
+
+      await fetch('/api/memory/ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          label: label,
+          content: `New memory node created in second brain matrix: ${label}`,
+          tier: 'semantic',
+          tags: ['second-brain', 'agent-context']
+        })
+      });
+
+      document.getElementById('new-concept-label').value = '';
+      fetchGalaxy();
     }
 
     function toggleAutoRotate() {
@@ -637,11 +679,9 @@
       requestAnimationFrame(animate);
       TWEEN.update();
 
-      if (spiralDustPoints) {
-        spiralDustPoints.rotation.y += 0.0006;
-      }
-      if (saturnRingMesh) {
-        saturnRingMesh.rotation.z += 0.005;
+      // Rotate entire galaxy uniformly in cosmic harmony
+      if (galaxyGroup && controls.autoRotate) {
+        galaxyGroup.rotation.y += 0.0007;
       }
 
       controls.update();
