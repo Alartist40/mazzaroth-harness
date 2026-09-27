@@ -20,6 +20,9 @@ struct Cli {
 
     #[arg(long)]
     import_corpus: bool,
+
+    #[arg(long, default_value_t = true)]
+    open_browser: bool,
 }
 
 #[tokio::main]
@@ -41,7 +44,7 @@ async fn main() -> anyhow::Result<()> {
     // If database is new or --import-corpus is passed, import the large multilingual corpus
     if (cli.import_corpus || engine.store.count_nodes()? <= 2) && cli.bibles_dir.exists() {
         info!("Seeding Mazzaroth Celestial Galaxy with multilingual corpus from {:?}", cli.bibles_dir);
-        let count = CorpusImporter::import_bibles_directory(&engine, &cli.bibles_dir, 60, 20)?;
+        let count = CorpusImporter::import_bibles_directory(&engine, &cli.bibles_dir, 60, 10)?;
         info!(imported_nodes = count, "Corpus seeded into Mazzaroth Galaxy");
     }
 
@@ -59,7 +62,18 @@ async fn main() -> anyhow::Result<()> {
     let router = create_router(state);
 
     let listener = TcpListener::bind(&cli.bind).await?;
-    info!(bind = %cli.bind, "🌌 Mazzaroth Cognitive Galaxy listening. Open http://localhost:8080 to view the 3D universe.");
+    let local_url = format!("http://127.0.0.1:{}", cli.bind.port());
+    info!(bind = %cli.bind, url = %local_url, "🌌 Mazzaroth Cognitive Galaxy listening. Open {} in your browser.", local_url);
+
+    if cli.open_browser {
+        let url_to_open = local_url.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(tokio::time::Duration::from_millis(400)).await;
+            let _ = std::process::Command::new("xdg-open")
+                .arg(&url_to_open)
+                .spawn();
+        });
+    }
 
     axum::serve(listener, router).await?;
     Ok(())

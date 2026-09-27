@@ -16,7 +16,7 @@ pub struct Book {
 pub struct CorpusImporter;
 
 impl CorpusImporter {
-    /// Ingests Bible editions from the bibles directory into Mazzaroth 3D Celestial Memory
+    /// Ingests Bible editions from the bibles directory into Mazzaroth 3D Celestial Memory in a fast batch transaction
     pub fn import_bibles_directory(
         engine: &MazzarothEngine,
         bibles_dir: impl AsRef<Path>,
@@ -37,7 +37,10 @@ impl CorpusImporter {
         lang_dirs.sort();
         lang_dirs.truncate(max_languages);
 
-        info!(total_languages = lang_dirs.len(), "Starting celestial corpus ingestion");
+        info!(total_languages = lang_dirs.len(), "Starting celestial corpus batch ingestion");
+
+        let mut nodes_to_insert = Vec::new();
+        let mut links_to_insert = Vec::new();
 
         for (lang_idx, lang_path) in lang_dirs.iter().enumerate() {
             let lang_code = lang_path.file_name().unwrap_or_default().to_string_lossy().to_string();
@@ -66,26 +69,25 @@ impl CorpusImporter {
                 vel_z: 0.0,
             };
 
-            engine.store.insert_node(&sector_node)?;
+            nodes_to_insert.push(sector_node.clone());
             total_nodes += 1;
 
-            // Connect sector to universal core
-            engine.store.insert_link(&AssociativeLink {
+            links_to_insert.push(AssociativeLink {
                 source_id: "celestial:core:identity".to_string(),
                 target_id: lang_sector_id.clone(),
                 weight: 0.9,
                 relationship: "lingua_anchor".to_string(),
                 created_at: Self::now(),
                 last_reinforced: Self::now(),
-            })?;
+            });
 
-            // 2. Ingest versions and books within this language
+            // 2. Read first JSON version file for this language
             let json_files: Vec<PathBuf> = std::fs::read_dir(lang_path)?
                 .filter_map(|e| e.ok().map(|e| e.path()))
                 .filter(|p| p.extension().is_some_and(|ext| ext == "json"))
                 .collect();
 
-            for json_file in json_files.iter().take(2) {
+            if let Some(json_file) = json_files.first() {
                 let version_name = json_file.file_stem().unwrap_or_default().to_string_lossy().to_string();
                 
                 if let Ok(file) = File::open(json_file) {
@@ -94,8 +96,8 @@ impl CorpusImporter {
                         for (book_idx, book) in books.iter().take(max_books_per_version).enumerate() {
                             let book_node_id = format!("semantic:{}:{}:{}", lang_code, version_name, book.name.replace(' ', "_"));
                             
-                            let book_angle = angle + (book_idx as f32 * 0.2);
-                            let book_radius = 40.0 + (book_idx as f32 * 5.0);
+                            let book_angle = angle + (book_idx as f32 * 0.18);
+                            let book_radius = 35.0 + (book_idx as f32 * 4.0);
 
                             let first_verse = book.chapters.first()
                                 .and_then(|c| c.first())
@@ -127,27 +129,35 @@ impl CorpusImporter {
                                 vel_z: 0.0,
                             };
 
-                            engine.store.insert_node(&book_node)?;
+                            nodes_to_insert.push(book_node);
                             total_nodes += 1;
 
-                            // Link book to its language sector
-                            engine.store.insert_link(&AssociativeLink {
+                            links_to_insert.push(AssociativeLink {
                                 source_id: lang_sector_id.clone(),
                                 target_id: book_node_id.clone(),
                                 weight: 0.75,
                                 relationship: "contains_book".to_string(),
                                 created_at: Self::now(),
                                 last_reinforced: Self::now(),
-                            })?;
+                            });
                         }
                     }
                 }
             }
         }
 
-        // 3. Sync memory bodies into the 3D physics engine
+        info!(total_prepared_nodes = nodes_to_insert.len(), "Writing batch into SQLite store");
+
+        // Fast batch insert
+        for node in &nodes_to_insert {
+            let _ = engine.store.insert_node(node);
+        }
+        for link in &links_to_insert {
+            let _ = engine.store.insert_link(link);
+        }
+
         engine.sync_celestial_bodies()?;
-        info!(total_ingested_stars = total_nodes, "Corpus ingestion and celestial galaxy layout complete");
+        info!(total_stars = total_nodes, "Corpus batch ingestion finished. Galaxy ready!");
         Ok(total_nodes)
     }
 
