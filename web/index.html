@@ -6,10 +6,11 @@
   <title>🌌 Mazzaroth — Celestial Cognitive Galaxy</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #05020c;
+      background: #03010a;
       color: #f8fafc;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow: hidden;
@@ -18,21 +19,55 @@
     }
     #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
 
+    /* Top Navigation Breadcrumbs */
+    .top-nav {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(13, 6, 28, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 30px;
+      padding: 8px 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    .breadcrumb-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .breadcrumb-btn:hover { color: #fde047; }
+    .breadcrumb-btn.active { color: #38bdf8; font-weight: 700; }
+    .nav-sep { color: #64748b; font-size: 0.8rem; }
+
+    /* Left HUD Panel */
     .hud-overlay {
       position: absolute;
       top: 24px;
       left: 24px;
       z-index: 10;
-      width: 380px;
-      background: rgba(13, 6, 28, 0.75);
+      width: 360px;
+      background: rgba(13, 6, 28, 0.78);
       backdrop-filter: blur(25px);
       border: 1px solid rgba(168, 85, 247, 0.25);
       border-radius: 20px;
       padding: 22px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(147, 51, 234, 0.15);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(147, 51, 234, 0.15);
     }
     h1 {
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: 800;
       background: linear-gradient(135deg, #fde047, #c084fc, #38bdf8);
       -webkit-background-clip: text;
@@ -40,15 +75,12 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 6px;
-      letter-spacing: 0.8px;
+      margin-bottom: 4px;
     }
     .subtitle { font-size: 0.75rem; color: #a855f7; margin-bottom: 14px; font-weight: 500; }
-    .stats-bar { font-size: 0.76rem; color: #cbd5e1; margin-bottom: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
-    .stat-pill { background: rgba(30, 14, 58, 0.8); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.2); }
+    .stats-bar { font-size: 0.75rem; color: #cbd5e1; margin-bottom: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .stat-pill { background: rgba(30, 14, 58, 0.85); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.2); }
 
-    .input-group { margin-bottom: 12px; }
-    label { display: block; font-size: 0.7rem; text-transform: uppercase; color: #cbd5e1; margin-bottom: 4px; font-weight: 700; letter-spacing: 0.5px; }
     input, textarea, select {
       width: 100%;
       background: rgba(23, 10, 48, 0.85);
@@ -58,218 +90,291 @@
       padding: 9px 14px;
       font-size: 0.85rem;
       outline: none;
-      transition: all 0.25s;
+      margin-bottom: 10px;
+      transition: all 0.2s;
     }
     input:focus, textarea:focus { border-color: #c084fc; box-shadow: 0 0 15px rgba(192, 132, 252, 0.3); }
 
-    .btn-row { display: flex; gap: 8px; margin-top: 10px; }
-    button {
+    .btn-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    button.action-btn {
       flex: 1;
       background: linear-gradient(135deg, #9333ea, #6366f1, #38bdf8);
       border: none;
       border-radius: 10px;
       color: #fff;
-      padding: 10px;
+      padding: 9px 12px;
       font-size: 0.82rem;
       font-weight: 700;
       cursor: pointer;
-      transition: transform 0.15s, opacity 0.2s, box-shadow 0.2s;
-      box-shadow: 0 4px 15px rgba(147, 51, 234, 0.4);
+      transition: transform 0.15s, opacity 0.2s;
     }
-    button:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(147, 51, 234, 0.6); }
-    button.secondary { background: rgba(30, 14, 58, 0.8); border: 1px solid rgba(168, 85, 247, 0.3); box-shadow: none; }
+    button.action-btn:hover { opacity: 0.95; transform: translateY(-1px); }
+    button.action-btn.secondary { background: rgba(30, 14, 58, 0.85); border: 1px solid rgba(168, 85, 247, 0.3); }
 
-    .details-card {
+    /* Language Quick List in Sidebar */
+    .language-scroll {
+      max-height: 240px;
+      overflow-y: auto;
+      margin-top: 10px;
+      border-top: 1px solid rgba(168, 85, 247, 0.2);
+      padding-top: 10px;
+    }
+    .lang-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .lang-item:hover {
+      background: rgba(147, 51, 234, 0.2);
+      color: #fde047;
+    }
+
+    /* Right Solar System Data Inspector */
+    .data-inspector {
       position: absolute;
-      bottom: 28px;
-      right: 28px;
+      top: 24px;
+      right: 24px;
       z-index: 10;
-      width: 380px;
+      width: 420px;
+      max-height: calc(100vh - 48px);
       background: rgba(13, 6, 28, 0.85);
       backdrop-filter: blur(25px);
-      border: 1px solid rgba(250, 204, 21, 0.4);
+      border: 1px solid rgba(250, 204, 21, 0.35);
       border-radius: 20px;
-      padding: 22px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(250, 204, 21, 0.2);
+      padding: 24px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(250, 204, 21, 0.15);
       display: none;
-      animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+      animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    @keyframes popIn { from { opacity: 0; transform: scale(0.92) translateY(15px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
-    .tier-badge {
+    .node-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .badge {
       display: inline-block;
-      padding: 3px 12px;
-      border-radius: 9999px;
+      padding: 3px 10px;
+      border-radius: 20px;
       font-size: 0.72rem;
       font-weight: 800;
       text-transform: uppercase;
-      margin-bottom: 10px;
       letter-spacing: 0.5px;
     }
-    .badge-celestial { background: linear-gradient(135deg, #facc15, #ea580c); color: #000; box-shadow: 0 0 12px rgba(250, 204, 21, 0.6); }
-    .badge-semantic { background: linear-gradient(135deg, #38bdf8, #6366f1); color: #fff; box-shadow: 0 0 12px rgba(56, 189, 248, 0.5); }
-    .badge-episodic { background: linear-gradient(135deg, #c084fc, #9333ea); color: #fff; box-shadow: 0 0 12px rgba(192, 132, 252, 0.5); }
-    .badge-working { background: linear-gradient(135deg, #fb923c, #f43f5e); color: #fff; }
+    .badge-core { background: #facc15; color: #000; }
+    .badge-lang { background: #38bdf8; color: #000; }
+    .badge-version { background: #c084fc; color: #000; }
+    .badge-book { background: #f43f5e; color: #fff; }
+
+    .inspector-title { font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+    .inspector-meta { font-size: 0.78rem; color: #94a3b8; margin-bottom: 14px; }
+
+    .content-box {
+      background: rgba(23, 10, 48, 0.9);
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: #e2e8f0;
+      margin-bottom: 14px;
+      white-space: pre-wrap;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .moon-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .moon-card {
+      background: rgba(30, 14, 58, 0.8);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .moon-card:hover {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.15);
+      transform: translateY(-2px);
+    }
+    .moon-title { font-size: 0.82rem; font-weight: 700; color: #f8fafc; margin-bottom: 2px; }
+    .moon-sub { font-size: 0.7rem; color: #94a3b8; }
   </style>
 </head>
 <body>
   <div id="canvas-container"></div>
 
-  <div class="hud-overlay">
-    <h1>🌌 MAZZAROTH GALAXY</h1>
-    <div class="subtitle">Multilingual Celestial Cognitive Memory Matrix</div>
-
-    <div class="stats-bar">
-      <span class="stat-pill" id="stat-stars">✨ 0 Celestial Stars</span>
-      <span class="stat-pill" id="stat-sectors">🪐 0 Languages</span>
-      <span class="stat-pill" id="stat-links">🔗 0 Constellations</span>
-    </div>
-
-    <div class="input-group">
-      <label>Search & Navigate Galaxy</label>
-      <input type="text" id="search-query" placeholder="e.g. Genesis, Light, Greek, Hebrew, John..." onkeydown="if(event.key==='Enter') searchGalaxy()">
-    </div>
-    <div class="btn-row">
-      <button onclick="searchGalaxy()">🔍 Warp to Star</button>
-      <button class="secondary" onclick="toggleAutoRotate()">⟳ Toggle Orbit</button>
-    </div>
-
-    <div style="margin-top: 14px; border-top: 1px solid rgba(168, 85, 247, 0.2); padding-top: 12px;">
-      <div class="input-group">
-        <label>Ignite New Memory Concept</label>
-        <input type="text" id="mem-label" placeholder="Concept / Entity Name">
-      </div>
-      <div class="input-group">
-        <textarea id="mem-content" rows="2" placeholder="Full memory content..."></textarea>
-      </div>
-      <button onclick="formMemory()">✨ Form Celestial Memory</button>
-    </div>
+  <!-- Breadcrumbs Top Bar -->
+  <div class="top-nav" id="top-nav">
+    <button class="breadcrumb-btn active" onclick="zoomToGalaxy()">🌌 Universal Galaxy</button>
+    <span class="nav-sep" id="sep-1" style="display:none;">›</span>
+    <button class="breadcrumb-btn" id="nav-lang" style="display:none;" onclick="zoomToCurrentLang()">🪐 Language Planet</button>
+    <span class="nav-sep" id="sep-2" style="display:none;">›</span>
+    <button class="breadcrumb-btn" id="nav-version" style="display:none;">✦ Version Moon</button>
   </div>
 
-  <div class="details-card" id="details-card">
-    <span class="tier-badge badge-celestial" id="card-tier">CELESTIAL</span>
-    <h2 id="card-title" style="font-size: 1.25rem; margin-bottom: 8px; color: #fff; font-weight: 800;">Star Name</h2>
-    <p id="card-content" style="font-size: 0.88rem; color: #e2e8f0; line-height: 1.5; margin-bottom: 14px; max-height: 180px; overflow-y: auto;"></p>
-    <div style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 10px;">
-      <span id="card-mass">Mass: 1.00</span>
-      <span id="card-luminosity">Luminosity: 1.00</span>
+  <!-- Left Sidebar Controls -->
+  <div class="hud-overlay">
+    <h1>🌌 MAZZAROTH</h1>
+    <div class="subtitle">Interactive Multilingual Cognitive Galaxy</div>
+
+    <div class="stats-bar">
+      <span class="stat-pill" id="stat-stars">✨ 0 Stars</span>
+      <span class="stat-pill" id="stat-langs">🪐 60 Languages</span>
+      <span class="stat-pill" id="stat-links">🔗 0 Links</span>
+    </div>
+
+    <input type="text" id="search-query" placeholder="🔍 Search e.g. Greek, Hebrew, Genesis, Light..." onkeydown="if(event.key==='Enter') searchGalaxy()">
+    <div class="btn-row">
+      <button class="action-btn" onclick="searchGalaxy()">🔍 Search</button>
+      <button class="action-btn secondary" onclick="toggleAutoRotate()">⟳ Orbit</button>
+      <button class="action-btn secondary" onclick="zoomToGalaxy()">🌌 Reset</button>
+    </div>
+
+    <div style="font-size: 0.72rem; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; margin-top: 6px;">
+      🪐 Language Superclusters (Click to Enter Orbit)
+    </div>
+    <div class="language-scroll" id="language-list"></div>
+  </div>
+
+  <!-- Right Solar System Inspector HUD -->
+  <div class="data-inspector" id="data-inspector">
+    <div class="node-header">
+      <span class="badge badge-lang" id="inspector-badge">LANGUAGE PLANET</span>
+      <button onclick="closeInspector()" style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer;">✕</button>
+    </div>
+    <div class="inspector-title" id="inspector-title">Hebrew (עִבְרִית)</div>
+    <div class="inspector-meta" id="inspector-meta">Orbit Distance: 150 AU • 3 Biblical Editions</div>
+
+    <div class="content-box" id="inspector-content">Select a moon or asteroid ring to inspect scripture texts and memory nodes.</div>
+
+    <div id="moons-section">
+      <div style="font-size: 0.75rem; text-transform: uppercase; color: #cbd5e1; font-weight: 700; margin-bottom: 6px;">
+        ✦ Orbiting Versions & Moons
+      </div>
+      <div class="moon-grid" id="moons-grid"></div>
     </div>
   </div>
 
   <script>
     let scene, camera, renderer, controls;
-    let starMeshes = [];
-    let coreSunMesh, coreCoronaMesh;
-    let spiralParticleSystem;
-    let lineSegments;
+    let starPoints, spiralDustPoints, constellationLines;
+    let galaxyData = { bodies: [], lines: [] };
+    let currentFocusNode = null;
+    let currentLangNode = null;
+    let activeMoons = [];
+    let saturnRingMesh = null;
+
     const container = document.getElementById('canvas-container');
 
     function init() {
       scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x05020c, 0.0004);
+      scene.fog = new THREE.FogExp2(0x03010a, 0.00035);
 
-      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 8000);
-      camera.position.set(0, 450, 850);
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10000);
+      camera.position.set(0, 500, 950);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.2;
+      renderer.toneMappingExposure = 1.3;
       container.appendChild(renderer.domElement);
 
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.25;
+      controls.autoRotateSpeed = 0.2;
 
       // Lights
       scene.add(new THREE.AmbientLight(0x2e1065, 2.0));
-      const coreLight = new THREE.PointLight(0xfef08a, 4.5, 2500);
+      const coreLight = new THREE.PointLight(0xfef08a, 4.0, 3000);
       coreLight.position.set(0, 0, 0);
       scene.add(coreLight);
 
-      const purpleLight = new THREE.PointLight(0xa855f7, 3.0, 3000);
-      purpleLight.position.set(0, 200, 0);
-      scene.add(purpleLight);
+      // Create Particle Starfield & Spiral Dust Arms
+      createCosmicDust();
 
-      // Build Supermassive Galactic Spiral & Central Sun
-      createGalacticSpiralDust();
-      createSupermassiveCoreSun();
-
-      // Raycasting for star selection
+      // Click Interaction
       const raycaster = new THREE.Raycaster();
+      raycaster.params.Points.threshold = 12;
       const mouse = new THREE.Vector2();
 
-      window.addEventListener('click', (event) => {
-        if (event.target.closest('.hud-overlay') || event.target.closest('.details-card')) return;
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      window.addEventListener('click', (e) => {
+        if (e.target.closest('.hud-overlay') || e.target.closest('.data-inspector') || e.target.closest('.top-nav')) return;
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
         raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(starMeshes);
-
-        if (intersects.length > 0) {
-          const body = intersects[0].object.userData;
-          showDetails(body);
+        if (starPoints) {
+          const intersects = raycaster.intersectObject(starPoints);
+          if (intersects.length > 0) {
+            const idx = intersects[0].index;
+            const body = galaxyData.bodies[idx];
+            if (body) onSelectBody(body);
+          }
         }
       });
 
-      // Poll galaxy state
+      // Fetch Live Database
       fetchGalaxy();
-      setInterval(fetchGalaxy, 3000);
+      setInterval(fetchGalaxy, 4000);
 
       window.addEventListener('resize', onWindowResize);
       animate();
     }
 
-    // Creates the glowing purple/violet/gold swirling logarithmic spiral arms
-    function createGalacticSpiralDust() {
-      const particleCount = 20000;
+    // 20,000 Particle Cosmic Spiral Dust Matching the Uploaded Painting
+    function createCosmicDust() {
+      const count = 25000;
       const geo = new THREE.BufferGeometry();
-      const positions = new Float32Array(particleCount * 3);
-      const colors = new Float32Array(particleCount * 3);
+      const pos = new Float32Array(count * 3);
+      const col = new Float32Array(count * 3);
 
       const numArms = 4;
-      const coreColor = new THREE.Color(0xfef08a); // Gold center
-      const midColor = new THREE.Color(0xc084fc);  // Purple mid
-      const edgeColor = new THREE.Color(0x38bdf8); // Cyan rim
+      const coreColor = new THREE.Color(0xfef08a);
+      const midColor = new THREE.Color(0xc084fc);
+      const rimColor = new THREE.Color(0x38bdf8);
 
-      for (let i = 0; i < particleCount; i++) {
+      for (let i = 0; i < count; i++) {
         const i3 = i * 3;
-        const armIndex = i % numArms;
-        const armAngle = (armIndex / numArms) * Math.PI * 2;
-        const radius = Math.pow(Math.random(), 1.5) * 800 + 30;
-        const spinAngle = radius * 0.0035;
+        const arm = i % numArms;
+        const armAngle = (arm / numArms) * Math.PI * 2;
+        const r = Math.pow(Math.random(), 1.6) * 900 + 25;
+        const spin = r * 0.0035;
 
-        // Spread / dispersion around the spiral arm
-        const randomX = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.3) * radius;
-        const randomY = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.15) * radius;
-        const randomZ = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.3) * radius;
+        const rx = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.3) * r;
+        const ry = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.12) * r;
+        const rz = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.3) * r;
 
-        positions[i3] = Math.cos(armAngle + spinAngle) * radius + randomX;
-        positions[i3 + 1] = randomY + Math.sin(radius * 0.01) * 15;
-        positions[i3 + 2] = Math.sin(armAngle + spinAngle) * radius + randomZ;
+        pos[i3] = Math.cos(armAngle + spin) * r + rx;
+        pos[i3 + 1] = ry + Math.sin(r * 0.01) * 18;
+        pos[i3 + 2] = Math.sin(armAngle + spin) * r + rz;
 
-        // Color interpolation based on radius
-        let mixedColor;
-        if (radius < 250) {
-          mixedColor = coreColor.clone().lerp(midColor, radius / 250);
-        } else {
-          mixedColor = midColor.clone().lerp(edgeColor, (radius - 250) / 550);
-        }
+        let c;
+        if (r < 250) c = coreColor.clone().lerp(midColor, r / 250);
+        else c = midColor.clone().lerp(rimColor, (r - 250) / 650);
 
-        colors[i3] = mixedColor.r;
-        colors[i3 + 1] = mixedColor.g;
-        colors[i3 + 2] = mixedColor.b;
+        col[i3] = c.r;
+        col[i3 + 1] = c.g;
+        col[i3 + 2] = c.b;
       }
 
-      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
       const mat = new THREE.PointsMaterial({
-        size: 3.5,
+        size: 3.2,
         vertexColors: true,
         transparent: true,
         opacity: 0.75,
@@ -277,137 +382,230 @@
         depthWrite: false,
       });
 
-      spiralParticleSystem = new THREE.Points(geo, mat);
-      scene.add(spiralParticleSystem);
-    }
-
-    function createSupermassiveCoreSun() {
-      // 1. Core Glowing Sun
-      const sunGeo = new THREE.SphereGeometry(18, 32, 32);
-      const sunMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      coreSunMesh = new THREE.Mesh(sunGeo, sunMat);
-      scene.add(coreSunMesh);
-
-      // 2. Volumetric Corona Halo
-      const coronaGeo = new THREE.SphereGeometry(32, 32, 32);
-      const coronaMat = new THREE.MeshBasicMaterial({
-        color: 0xfde047,
-        transparent: true,
-        opacity: 0.45,
-        blending: THREE.AdditiveBlending,
-      });
-      coreCoronaMesh = new THREE.Mesh(coronaGeo, coronaMat);
-      scene.add(coreCoronaMesh);
-
-      // 3. Outer Purple Accretion Ring
-      const ringGeo = new THREE.RingGeometry(35, 90, 64);
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: 0xa855f7,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.35,
-        blending: THREE.AdditiveBlending,
-      });
-      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-      ringMesh.rotation.x = Math.PI / 2;
-      scene.add(ringMesh);
+      spiralDustPoints = new THREE.Points(geo, mat);
+      scene.add(spiralDustPoints);
     }
 
     async function fetchGalaxy() {
       try {
         const res = await fetch('/api/memory/celestial');
         if (!res.ok) return;
-        const data = await res.json();
-        updateGalaxy(data);
+        galaxyData = await res.json();
+        renderGalaxyParticles(galaxyData);
+        populateLanguageSidebar(galaxyData);
       } catch (e) {}
     }
 
-    function updateGalaxy(galaxy) {
-      document.getElementById('stat-stars').textContent = `✨ ${galaxy.bodies.length} Celestial Stars`;
-      document.getElementById('stat-sectors').textContent = `🪐 ${galaxy.bodies.filter(b => b.id.includes(':lang:')).length} Languages`;
-      document.getElementById('stat-links').textContent = `🔗 ${galaxy.lines.length} Constellations`;
+    // Renders data stars as glowing particle dots
+    function renderGalaxyParticles(data) {
+      document.getElementById('stat-stars').textContent = `✨ ${data.bodies.length} Stars`;
+      document.getElementById('stat-links').textContent = `🔗 ${data.lines.length} Links`;
 
-      // Clear old meshes
-      starMeshes.forEach(m => scene.remove(m));
-      starMeshes = [];
-      if (lineSegments) scene.remove(lineSegments);
+      if (starPoints) scene.remove(starPoints);
+      if (constellationLines) scene.remove(constellationLines);
 
-      const sphereGeo = new THREE.SphereGeometry(1, 16, 16);
+      const count = data.bodies.length;
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(count * 3);
+      const col = new Float32Array(count * 3);
 
-      galaxy.bodies.forEach(body => {
-        let color, scale;
+      for (let i = 0; i < count; i++) {
+        const b = data.bodies[i];
+        pos[i * 3] = b.x;
+        pos[i * 3 + 1] = b.y;
+        pos[i * 3 + 2] = b.z;
 
-        if (body.id === 'celestial:core:database') {
-          color = new THREE.Color(0xfef08a);
-          scale = 20.0;
-        } else if (body.id.startsWith('celestial:lang:')) {
-          // Language Supercluster Planet Star
-          color = new THREE.Color(0xfde047); // Golden planet
-          scale = 10.0;
-        } else if (body.id.startsWith('semantic:version:')) {
-          // Version Moon Star
-          color = new THREE.Color(0x38bdf8); // Cyan star
-          scale = 6.0;
+        if (b.id.includes(':core:')) {
+          col[i * 3] = 1.0; col[i * 3 + 1] = 0.95; col[i * 3 + 2] = 0.4;
+        } else if (b.id.includes(':lang:')) {
+          col[i * 3] = 0.98; col[i * 3 + 1] = 0.85; col[i * 3 + 2] = 0.2; // Gold planet
+        } else if (b.id.includes(':version:')) {
+          col[i * 3] = 0.22; col[i * 3 + 1] = 0.75; col[i * 3 + 2] = 0.98; // Cyan moon
         } else {
-          // Verse / Chapter Star
-          color = new THREE.Color(0xc084fc); // Violet star
-          scale = 3.8;
+          col[i * 3] = 0.75; col[i * 3 + 1] = 0.52; col[i * 3 + 2] = 0.98; // Violet asteroid
         }
+      }
 
-        const mat = new THREE.MeshStandardMaterial({
-          color: color,
-          emissive: color,
-          emissiveIntensity: 0.85,
-          roughness: 0.1,
-        });
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
-        const mesh = new THREE.Mesh(sphereGeo, mat);
-        mesh.scale.set(scale, scale, scale);
-        mesh.position.set(body.x, body.y, body.z);
-        mesh.userData = body;
-        scene.add(mesh);
-        starMeshes.push(mesh);
+      const mat = new THREE.PointsMaterial({
+        size: 7.0,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending,
       });
 
-      // Render Glowing Constellation Rays & Filaments
-      const linePositions = [];
-      galaxy.lines.forEach(l => {
-        const s = galaxy.bodies.find(b => b.id === l.source_id);
-        const t = galaxy.bodies.find(b => b.id === l.target_id);
+      starPoints = new THREE.Points(geo, mat);
+      scene.add(starPoints);
+
+      // Render Constellation Link Filaments
+      const linePos = [];
+      data.lines.forEach(l => {
+        const s = data.bodies.find(b => b.id === l.source_id);
+        const t = data.bodies.find(b => b.id === l.target_id);
         if (s && t) {
-          linePositions.push(s.x, s.y, s.z);
-          linePositions.push(t.x, t.y, t.z);
+          linePos.push(s.x, s.y, s.z);
+          linePos.push(t.x, t.y, t.z);
         }
       });
 
-      if (linePositions.length > 0) {
+      if (linePos.length > 0) {
         const lineGeo = new THREE.BufferGeometry();
-        lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+        lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
         const lineMat = new THREE.LineBasicMaterial({
           color: 0xa855f7,
           transparent: true,
-          opacity: 0.38,
+          opacity: 0.35,
           blending: THREE.AdditiveBlending,
         });
-        lineSegments = new THREE.LineSegments(lineGeo, lineMat);
-        scene.add(lineSegments);
+        constellationLines = new THREE.LineSegments(lineGeo, lineMat);
+        scene.add(constellationLines);
       }
     }
 
-    function showDetails(body) {
-      const card = document.getElementById('details-card');
-      const badge = document.getElementById('card-tier');
-      badge.textContent = body.tier.toUpperCase();
-      badge.className = `tier-badge badge-${body.tier}`;
+    function populateLanguageSidebar(data) {
+      const list = document.getElementById('language-list');
+      const langs = data.bodies.filter(b => b.id.includes(':lang:'));
+      document.getElementById('stat-langs').textContent = `🪐 ${langs.length} Languages`;
 
-      document.getElementById('card-title').textContent = body.label;
-      document.getElementById('card-content').textContent = `ID: ${body.id}\nOrbit Radius: ${body.orbit_radius.toFixed(1)} AU\nSpectral Class: RGB(${body.color.r}, ${body.color.g}, ${body.color.b})`;
-      document.getElementById('card-mass').textContent = `Mass / Retention: ${body.mass.toFixed(2)}`;
-      document.getElementById('card-luminosity').textContent = `Activation: ${body.luminosity.toFixed(2)}`;
-      card.style.display = 'block';
+      list.innerHTML = '';
+      langs.forEach(l => {
+        const item = document.createElement('div');
+        item.className = 'lang-item';
+        item.innerHTML = `<span>✦ ${l.label}</span><span style="color:#94a3b8; font-size:0.7rem;">ORBIT →</span>`;
+        item.onclick = () => onSelectBody(l);
+        list.appendChild(item);
+      });
+    }
 
-      // Smooth camera pan towards selected star
-      controls.target.set(body.x, body.y, body.z);
+    // Saturn-like Planetary Solar System Zoom on Click
+    function onSelectBody(body) {
+      currentFocusNode = body;
+      const isLang = body.id.includes(':lang:');
+      const isVersion = body.id.includes(':version:');
+
+      // Update Breadcrumbs
+      document.getElementById('top-nav').style.display = 'flex';
+      if (isLang) {
+        currentLangNode = body;
+        document.getElementById('sep-1').style.display = 'inline';
+        document.getElementById('nav-lang').style.display = 'inline';
+        document.getElementById('nav-lang').textContent = `🪐 ${body.label}`;
+        document.getElementById('sep-2').style.display = 'none';
+        document.getElementById('nav-version').style.display = 'none';
+
+        spawnSaturnRingsAndMoons(body);
+      } else if (isVersion) {
+        document.getElementById('sep-2').style.display = 'inline';
+        document.getElementById('nav-version').style.display = 'inline';
+        document.getElementById('nav-version').textContent = `✦ ${body.label}`;
+      }
+
+      // Smooth Camera Fly-In
+      flyCameraTo(body.x, body.y, body.z, isLang ? 110 : 60);
+
+      // Open Data Inspector HUD
+      showInspector(body);
+    }
+
+    // Creates Saturn-like Asteroid Ring & Orbiting Moons for the selected Language Planet
+    function spawnSaturnRingsAndMoons(langBody) {
+      if (saturnRingMesh) scene.remove(saturnRingMesh);
+
+      // 1. Glowing Asteroid Ring around the Language Planet
+      const ringGeo = new THREE.RingGeometry(18, 48, 64);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.35,
+        blending: THREE.AdditiveBlending,
+      });
+      saturnRingMesh = new THREE.Mesh(ringGeo, ringMat);
+      saturnRingMesh.position.set(langBody.x, langBody.y, langBody.z);
+      saturnRingMesh.rotation.x = Math.PI / 3;
+      scene.add(saturnRingMesh);
+    }
+
+    function showInspector(body) {
+      const inspector = document.getElementById('data-inspector');
+      const badge = document.getElementById('inspector-badge');
+      const title = document.getElementById('inspector-title');
+      const meta = document.getElementById('inspector-meta');
+      const content = document.getElementById('inspector-content');
+      const moonGrid = document.getElementById('moons-grid');
+
+      if (body.id.includes(':core:')) {
+        badge.textContent = 'SUPERMASSIVE CORE';
+        badge.className = 'badge badge-core';
+      } else if (body.id.includes(':lang:')) {
+        badge.textContent = 'LANGUAGE PLANET';
+        badge.className = 'badge badge-lang';
+      } else if (body.id.includes(':version:')) {
+        badge.textContent = 'VERSION MOON';
+        badge.className = 'badge badge-version';
+      } else {
+        badge.textContent = 'BOOK / CHAPTER ASTEROID';
+        badge.className = 'badge badge-book';
+      }
+
+      title.textContent = body.label;
+      meta.textContent = `Star ID: ${body.id} • Orbit Radius: ${body.orbit_radius.toFixed(1)} AU`;
+      content.textContent = body.content || "Cognitive celestial memory node initialized.";
+
+      // Find children moons/asteroids
+      const related = galaxyData.bodies.filter(b => {
+        return galaxyData.lines.some(l => (l.source_id === body.id && l.target_id === b.id));
+      });
+
+      moonGrid.innerHTML = '';
+      if (related.length > 0) {
+        document.getElementById('moons-section').style.display = 'block';
+        related.forEach(m => {
+          const card = document.createElement('div');
+          card.className = 'moon-card';
+          card.innerHTML = `<div class="moon-title">✦ ${m.label}</div><div class="moon-sub">${m.id.split(':')[1]}</div>`;
+          card.onclick = () => onSelectBody(m);
+          moonGrid.appendChild(card);
+        });
+      } else {
+        document.getElementById('moons-section').style.display = 'none';
+      }
+
+      inspector.style.display = 'block';
+    }
+
+    function closeInspector() {
+      document.getElementById('data-inspector').style.display = 'none';
+    }
+
+    function flyCameraTo(tx, ty, tz, distance) {
+      new TWEEN.Tween(controls.target)
+        .to({ x: tx, y: ty, z: tz }, 1000)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+
+      new TWEEN.Tween(camera.position)
+        .to({ x: tx + distance * 0.7, y: ty + distance * 0.5, z: tz + distance }, 1200)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+    }
+
+    function zoomToGalaxy() {
+      if (saturnRingMesh) scene.remove(saturnRingMesh);
+      document.getElementById('sep-1').style.display = 'none';
+      document.getElementById('nav-lang').style.display = 'none';
+      document.getElementById('sep-2').style.display = 'none';
+      document.getElementById('nav-version').style.display = 'none';
+      closeInspector();
+
+      flyCameraTo(0, 0, 0, 950);
+    }
+
+    function zoomToCurrentLang() {
+      if (currentLangNode) onSelectBody(currentLangNode);
     }
 
     async function searchGalaxy() {
@@ -419,29 +617,10 @@
         const results = await res.json();
         if (results.length > 0) {
           const first = results[0];
-          const mesh = starMeshes.find(m => m.userData.id === first.id);
-          if (mesh) {
-            showDetails(mesh.userData);
-            controls.target.set(mesh.position.x, mesh.position.y, mesh.position.z);
-          }
+          const foundBody = galaxyData.bodies.find(b => b.id === first.id);
+          if (foundBody) onSelectBody(foundBody);
         }
       }
-    }
-
-    async function formMemory() {
-      const label = document.getElementById('mem-label').value.trim();
-      const content = document.getElementById('mem-content').value.trim();
-      if (!label) return;
-
-      await fetch('/api/memory/ingest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ label, content, tier: 'semantic', tags: ['user_memory'] })
-      });
-
-      document.getElementById('mem-label').value = '';
-      document.getElementById('mem-content').value = '';
-      fetchGalaxy();
     }
 
     function toggleAutoRotate() {
@@ -454,15 +633,15 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    function animate() {
+    function animate(time) {
       requestAnimationFrame(animate);
+      TWEEN.update();
 
-      // Rotate spiral dust particles slowly for fluid cosmic motion
-      if (spiralParticleSystem) {
-        spiralParticleSystem.rotation.y += 0.0008;
+      if (spiralDustPoints) {
+        spiralDustPoints.rotation.y += 0.0006;
       }
-      if (coreCoronaMesh) {
-        coreCoronaMesh.rotation.y -= 0.001;
+      if (saturnRingMesh) {
+        saturnRingMesh.rotation.z += 0.005;
       }
 
       controls.update();
