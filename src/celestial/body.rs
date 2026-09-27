@@ -13,6 +13,8 @@ pub struct SpectralColor {
 pub struct CelestialBody {
     pub id: String,
     pub label: String,
+    pub content: String,
+    pub tags: Vec<String>,
     pub tier: MemoryTier,
     pub x: f32,
     pub y: f32,
@@ -27,6 +29,8 @@ pub struct CelestialBody {
     pub orbit_speed: f32,
     pub orbit_angle: f32,
     pub color: SpectralColor,
+    pub created_at: i64,
+    pub last_accessed: i64,
 }
 
 impl CelestialBody {
@@ -59,6 +63,8 @@ impl CelestialBody {
         Self {
             id: node.id.clone(),
             label: node.label.clone(),
+            content: node.content.clone(),
+            tags: node.tags.clone(),
             tier: node.tier,
             x: node.pos_x,
             y: node.pos_y,
@@ -73,6 +79,8 @@ impl CelestialBody {
             orbit_speed,
             orbit_angle: 0.0,
             color,
+            created_at: node.created_at,
+            last_accessed: node.last_accessed,
         }
     }
 }

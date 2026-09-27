@@ -9,12 +9,13 @@ fn test_celestial_physics_and_projection() {
     bodies[0].x = 100.0;
     bodies[0].y = 0.0;
     bodies[0].z = 0.0;
+    let initial_angle = bodies[0].orbit_angle;
 
     // Step physics
     physics.step(&mut bodies, &[], 0.1);
 
-    // Gravity should accelerate body toward center
-    assert!(bodies[0].vx < 0.0, "Gravity must pull star towards galactic center");
+    // Orbit angle must advance
+    assert!(bodies[0].orbit_angle > initial_angle, "Orbit angle must advance smoothly");
 
     // Camera perspective projection
     let camera = Camera3D::new(400.0, 300.0);

@@ -314,3 +314,34 @@ impl MazzarothStore {
         Ok(count as usize)
     }
 }
+
+impl MazzarothStore {
+    pub fn get_links_for_node(&self, node_id: &str) -> Result<Vec<AssociativeLink>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT source_id, target_id, weight, relationship, created_at, last_reinforced
+            FROM links
+            WHERE source_id = ?1 OR target_id = ?1
+            ORDER BY weight DESC
+            "#,
+        )?;
+
+        let rows = stmt.query_map(params![node_id], |row| {
+            Ok(AssociativeLink {
+                source_id: row.get(0)?,
+                target_id: row.get(1)?,
+                weight: row.get(2)?,
+                relationship: row.get(3)?,
+                created_at: row.get(4)?,
+                last_reinforced: row.get(5)?,
+            })
+        })?;
+
+        let mut links = Vec::new();
+        for r in rows {
+            links.push(r?);
+        }
+        Ok(links)
+    }
+}

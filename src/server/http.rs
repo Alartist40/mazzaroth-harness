@@ -5,7 +5,8 @@ use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Json};
 use axum::routing::{get, post};
 use axum::Router;
-use serde::{Deserialize};
+use serde::Deserialize;
+use serde_json::json;
 use tower_http::cors::CorsLayer;
 
 #[derive(Debug, Deserialize)]
@@ -22,6 +23,11 @@ pub struct RecallQuery {
     pub limit: Option<usize>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct NodeQuery {
+    pub id: String,
+}
+
 #[derive(Clone)]
 pub struct ServerState {
     pub engine: MazzarothEngine,
@@ -33,6 +39,7 @@ pub fn create_router(state: ServerState) -> Router {
         .route("/health", get(|| async { "OK" }))
         .route("/api/memory/ingest", post(handle_ingest))
         .route("/api/memory/recall", get(handle_recall))
+        .route("/api/memory/node", get(handle_get_single_node))
         .route("/api/memory/celestial", get(handle_celestial))
         .route("/api/memory/nodes", get(handle_all_nodes))
         .route("/api/mcp", post(crate::server::mcp::handle_mcp_post))
@@ -69,6 +76,35 @@ async fn handle_recall(
     let limit = query.limit.unwrap_or(10);
     match state.engine.recall(&query.q, limit) {
         Ok(nodes) => Ok(Json(serde_json::to_value(nodes).unwrap())),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+async fn handle_get_single_node(
+    State(state): State<ServerState>,
+    Query(query): Query<NodeQuery>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    match state.engine.store.get_node(&query.id) {
+        Ok(Some(node)) => {
+            let links = state.engine.store.get_links_for_node(&query.id).unwrap_or_default();
+            Ok(Json(json!({
+                "id": node.id,
+                "label": node.label,
+                "content": node.content,
+                "tags": node.tags,
+                "tier": node.tier,
+                "strength": node.strength,
+                "activation": node.activation,
+                "access_count": node.access_count,
+                "created_at": node.created_at,
+                "last_accessed": node.last_accessed,
+                "pos_x": node.pos_x,
+                "pos_y": node.pos_y,
+                "pos_z": node.pos_z,
+                "links": links,
+            })))
+        }
+        Ok(None) => Err(StatusCode::NOT_FOUND),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }

@@ -48,16 +48,6 @@ async fn main() -> anyhow::Result<()> {
         info!(imported_nodes = count, "Corpus seeded into Mazzaroth Galaxy");
     }
 
-    // Continuous background physics simulation thread
-    let sim_engine = engine.clone();
-    tokio::spawn(async move {
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(50));
-        loop {
-            interval.tick().await;
-            let _ = sim_engine.step_physics(0.05);
-        }
-    });
-
     let state = ServerState { engine };
     let router = create_router(state);
 
