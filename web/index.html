@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌌 Mazzaroth — Celestial Cognitive Memory Galaxy</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #030712;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+    #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+    
+    .hud-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      width: 360px;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    h1 { font-size: 1.1rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .input-group { margin-bottom: 12px; }
+    label { display: block; font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; margin-bottom: 4px; }
+    input, textarea, select {
+      width: 100%;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #fff;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    input:focus, textarea:focus { border-color: #38bdf8; }
+    button {
+      width: 100%;
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      padding: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+    
+    .details-card {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10;
+      width: 340px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 16px;
+      padding: 18px;
+      display: none;
+    }
+    .tier-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .badge-celestial { background: #eab308; color: #000; }
+    .badge-semantic { background: #0284c7; color: #fff; }
+    .badge-episodic { background: #9333ea; color: #fff; }
+    .badge-working { background: #f97316; color: #fff; }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <div class="hud-overlay">
+    <h1>🌌 MAZZAROTH COGNITIVE GALAXY</h1>
+    <div class="input-group">
+      <label>Memory Concept</label>
+      <input type="text" id="mem-label" placeholder="e.g. Sovereign AI Architecture">
+    </div>
+    <div class="input-group">
+      <label>Details / Thoughts</label>
+      <textarea id="mem-content" rows="2" placeholder="Describe the episode or knowledge..."></textarea>
+    </div>
+    <div class="input-group">
+      <label>Memory Tier</label>
+      <select id="mem-tier">
+        <option value="episodic">Episodic (Temporal Event)</option>
+        <option value="semantic">Semantic (Fact / Concept)</option>
+        <option value="working">Working (Sensory Perception)</option>
+        <option value="celestial">Celestial (Core Axiom)</option>
+      </select>
+    </div>
+    <button onclick="formMemory()">✨ Ignite Memory Star</button>
+  </div>
+
+  <div class="details-card" id="details-card">
+    <span class="tier-badge" id="card-tier">SEMANTIC</span>
+    <h2 id="card-title" style="font-size: 1.1rem; margin-bottom: 6px;">Concept</h2>
+    <p id="card-content" style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 10px;"></p>
+    <div style="font-size: 0.75rem; color: #94a3b8; display: flex; justify-content: space-between;">
+      <span id="card-retention">Mass: 0.80</span>
+      <span id="card-activation">Luminosity: 1.00</span>
+    </div>
+  </div>
+
+  <script>
+    let scene, camera, renderer, controls;
+    let starMeshes = [];
+    let lineSegments;
+    const container = document.getElementById('canvas-container');
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x030712, 0.001);
+
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 3000);
+      camera.position.set(0, 200, 450);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.5;
+
+      // Ambient & Point Lights
+      scene.add(new THREE.AmbientLight(0x334155, 1.5));
+      const coreLight = new THREE.PointLight(0xfacc15, 3, 800);
+      coreLight.position.set(0, 0, 0);
+      scene.add(coreLight);
+
+      // Deep Space Starfield
+      createBackgroundDust();
+
+      // Fetch Live Mazzaroth Galaxy
+      fetchGalaxy();
+      setInterval(fetchGalaxy, 2000);
+
+      window.addEventListener('resize', onWindowResize);
+      animate();
+    }
+
+    function createBackgroundDust() {
+      const geo = new THREE.BufferGeometry();
+      const count = 3000;
+      const pos = new Float32Array(count * 3);
+      for (let i = 0; i < count * 3; i++) {
+        pos[i] = (Math.random() - 0.5) * 2000;
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({ color: 0x64748b, size: 2, transparent: true, opacity: 0.6 });
+      scene.add(new THREE.Points(geo, mat));
+    }
+
+    async function fetchGalaxy() {
+      try {
+        const res = await fetch('/api/memory/celestial');
+        if (!res.ok) return;
+        const data = await res.json();
+        updateGalaxy(data);
+      } catch (e) {}
+    }
+
+    function updateGalaxy(galaxy) {
+      // Clear old meshes
+      starMeshes.forEach(m => scene.remove(m));
+      starMeshes = [];
+      if (lineSegments) scene.remove(lineSegments);
+
+      // Add stars
+      galaxy.bodies.forEach(body => {
+        const color = new THREE.Color(`rgb(${body.color.r}, ${body.color.g}, ${body.color.b})`);
+        const radius = Math.max(body.radius * 0.8, 3.0);
+
+        // Core star sphere
+        const geo = new THREE.SphereGeometry(radius, 16, 16);
+        const mat = new THREE.MeshStandardMaterial({
+          color: color,
+          emissive: color,
+          emissiveIntensity: 0.6,
+          roughness: 0.2
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(body.x, body.y, body.z);
+        mesh.userData = body;
+        scene.add(mesh);
+        starMeshes.push(mesh);
+      });
+
+      // Add constellation lines
+      const linePositions = [];
+      galaxy.lines.forEach(l => {
+        const s = galaxy.bodies.find(b => b.id === l.source_id);
+        const t = galaxy.bodies.find(b => b.id === l.target_id);
+        if (s && t) {
+          linePositions.push(s.x, s.y, s.z);
+          linePositions.push(t.x, t.y, t.z);
+        }
+      });
+
+      if (linePositions.length > 0) {
+        const lineGeo = new THREE.BufferGeometry();
+        lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+        const lineMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.35 });
+        lineSegments = new THREE.LineSegments(lineGeo, lineMat);
+        scene.add(lineSegments);
+      }
+    }
+
+    async function formMemory() {
+      const label = document.getElementById('mem-label').value;
+      const content = document.getElementById('mem-content').value;
+      const tier = document.getElementById('mem-tier').value;
+      if (!label) return;
+
+      await fetch('/api/memory/ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label, content, tier, tags: ['web'] })
+      });
+
+      document.getElementById('mem-label').value = '';
+      document.getElementById('mem-content').value = '';
+      fetchGalaxy();
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
