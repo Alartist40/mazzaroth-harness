@@ -10,7 +10,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #04010a;
+      background: #060214;
       color: #f8fafc;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "SF Pro Display", sans-serif;
       overflow: hidden;
@@ -452,7 +452,8 @@
   <script>
     let scene, camera, renderer, controls;
     let galaxyGroup;
-    let starPoints, spiralDustPoints, spiralRibbonMesh, sparklePoints;
+    let starPoints, constellationLinesMesh;
+    let vectorCoreMesh, vectorArmsGroup, sparklePoints, backgroundDustPoints;
     let dynamicActiveEdges = null; // Dynamically created ONLY on selection
     let galaxyData = { bodies: [], lines: [] };
     let currentFocusNode = null;
@@ -466,28 +467,31 @@
         id: 'galaxy',
         label: '🌌 Celestial Galaxy',
         api: '/api/memory/celestial',
-        hasDust: true,
+        hasVectorArms: true,
         mount: () => {
-          if (spiralDustPoints) spiralDustPoints.visible = true;
-          if (spiralRibbonMesh) spiralRibbonMesh.visible = true;
+          if (vectorArmsGroup) vectorArmsGroup.visible = true;
+          if (vectorCoreMesh) vectorCoreMesh.visible = true;
           if (sparklePoints) sparklePoints.visible = true;
+          if (backgroundDustPoints) backgroundDustPoints.visible = true;
           document.getElementById('cluster-header-text').textContent = '🪐 Knowledge Clusters & Focus Sectors';
         },
         unmount: () => {
-          if (spiralDustPoints) spiralDustPoints.visible = false;
-          if (spiralRibbonMesh) spiralRibbonMesh.visible = false;
+          if (vectorArmsGroup) vectorArmsGroup.visible = false;
+          if (vectorCoreMesh) vectorCoreMesh.visible = false;
           if (sparklePoints) sparklePoints.visible = false;
+          if (backgroundDustPoints) backgroundDustPoints.visible = false;
         }
       },
       constellations: {
         id: 'constellations',
         label: '✨ Classical Constellations',
         api: '/api/sections/constellations',
-        hasDust: false,
+        hasVectorArms: false,
         mount: () => {
-          if (spiralDustPoints) spiralDustPoints.visible = false;
-          if (spiralRibbonMesh) spiralRibbonMesh.visible = false;
+          if (vectorArmsGroup) vectorArmsGroup.visible = false;
+          if (vectorCoreMesh) vectorCoreMesh.visible = false;
           if (sparklePoints) sparklePoints.visible = false;
+          if (backgroundDustPoints) backgroundDustPoints.visible = false;
           document.getElementById('cluster-header-text').textContent = '✨ Constellation Catalog (32)';
         },
         unmount: () => {}
@@ -498,16 +502,16 @@
 
     function init() {
       scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x04010a, 0.00022);
+      scene.fog = new THREE.FogExp2(0x060214, 0.0002);
 
-      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 25000);
-      camera.position.set(0, 520, 1150);
+      camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 1, 25000);
+      camera.position.set(0, 560, 1100);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.35;
+      renderer.toneMappingExposure = 1.4;
       container.appendChild(renderer.domElement);
 
       controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -518,9 +522,9 @@
       controls.autoRotate = true;
       controls.autoRotateSpeed = 0.25;
 
-      // Lights
-      scene.add(new THREE.AmbientLight(0x2e1065, 2.4));
-      const coreLight = new THREE.PointLight(0xfef08a, 5.5, 4500);
+      // Deep cosmic lighting
+      scene.add(new THREE.AmbientLight(0x311042, 2.5));
+      const coreLight = new THREE.PointLight(0xfff59d, 5.5, 4500);
       coreLight.position.set(0, 0, 0);
       scene.add(coreLight);
 
@@ -528,14 +532,14 @@
       galaxyGroup = new THREE.Group();
       scene.add(galaxyGroup);
 
-      // 1. Image Vibrant Multi-Layered Spiral Ribbons (Matching uploaded blueprint image)
-      buildSpiralRibbons();
+      // 1. Build the Flat-Vector Galaxy Core & Stylized Nested Orbital Arm Bands (Exact Image Match)
+      buildVectorGalaxyVisuals();
 
-      // 2. Swirling 30,000 Particle Cosmic Spiral Dust
-      createCosmicSpiralDust();
-
-      // 3. Discrete 4-Point Sparkle Cross Stars
+      // 2. Discrete 4-Point Sparkle Cross Stars
       buildSparkleStars();
+
+      // 3. Subtle background cosmic dust & distant mini-galaxies
+      buildBackgroundCosmicAccents();
 
       // Click / Raycast Selection
       const raycaster = new THREE.Raycaster();
@@ -566,148 +570,111 @@
       animate(0);
     }
 
-    // Image-matched Flat-Vector Style Glowing Spiral Arm Ribbons (Blueprint Palette)
-    function buildSpiralRibbons() {
-      const numArms = 4;
-      const steps = 120;
-      const ribbonPositions = [];
-      const ribbonColors = [];
+    // Exact Match to Uploaded Vector Illustration: Bold stylized layered rounded ribbons & radiant core capsule
+    function buildVectorGalaxyVisuals() {
+      vectorArmsGroup = new THREE.Group();
+      galaxyGroup.add(vectorArmsGroup);
 
-      // Vibrant Vector Palette matching user's uploaded image:
-      // Galactic Core (#ffffff / #fef08a) -> Warm Golden Yellow (#facc15) -> Tangerine Orange (#fb923c) -> Magenta / Coral (#e11d48) -> Vibrant Purple (#a855f7) -> Deep Violet / Indigo (#312e81)
-      const cCore = new THREE.Color('#fffbeb');
-      const cGold = new THREE.Color('#facc15');
-      const cOrange = new THREE.Color('#f97316');
-      const cMagenta = new THREE.Color('#e11d48');
-      const cPurple = new THREE.Color('#a855f7');
-      const cIndigo = new THREE.Color('#312e81');
+      // 1. Central Luminous Oval Core (White & Golden Sunburst Capsule)
+      const coreCanvas = document.createElement('canvas');
+      coreCanvas.width = 256;
+      coreCanvas.height = 256;
+      const cctx = coreCanvas.getContext('2d');
+      const cgrad = cctx.createRadialGradient(128, 128, 10, 128, 128, 120);
+      cgrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      cgrad.addColorStop(0.25, 'rgba(255, 238, 88, 0.95)');
+      cgrad.addColorStop(0.55, 'rgba(255, 112, 67, 0.85)');
+      cgrad.addColorStop(0.85, 'rgba(233, 30, 99, 0.4)');
+      cgrad.addColorStop(1, 'rgba(156, 39, 176, 0)');
+      cctx.fillStyle = cgrad;
+      cctx.fillRect(0, 0, 256, 256);
 
-      function getRibbonColor(t) {
-        if (t < 0.15) return cCore.clone().lerp(cGold, t / 0.15);
-        if (t < 0.35) return cGold.clone().lerp(cOrange, (t - 0.15) / 0.2);
-        if (t < 0.60) return cOrange.clone().lerp(cMagenta, (t - 0.35) / 0.25);
-        if (t < 0.82) return cMagenta.clone().lerp(cPurple, (t - 0.60) / 0.22);
-        return cPurple.clone().lerp(cIndigo, (t - 0.82) / 0.18);
-      }
-
-      for (let arm = 0; arm < numArms; arm++) {
-        const armAngle = (arm / numArms) * Math.PI * 2;
-        for (let s = 0; s < steps; s++) {
-          const t0 = s / steps;
-          const t1 = (s + 1) / steps;
-          const r0 = 20.0 + t0 * 840.0;
-          const r1 = 20.0 + t1 * 840.0;
-
-          const spin0 = r0 * 0.003;
-          const spin1 = r1 * 0.003;
-          const ang0 = armAngle + spin0;
-          const ang1 = armAngle + spin1;
-
-          const y0 = Math.sin(r0 * 0.01) * 18.0;
-          const y1 = Math.sin(r1 * 0.01) * 18.0;
-
-          const w0 = 14.0 + 42.0 * t0;
-          const w1 = 14.0 + 42.0 * t1;
-
-          // Perpendicular offset in XZ plane
-          const perpX0 = -Math.sin(ang0) * (w0 * 0.5);
-          const perpZ0 = Math.cos(ang0) * (w0 * 0.5);
-          const perpX1 = -Math.sin(ang1) * (w1 * 0.5);
-          const perpZ1 = Math.cos(ang1) * (w1 * 0.5);
-
-          const cx0 = Math.cos(ang0) * r0;
-          const cz0 = Math.sin(ang0) * r0;
-          const cx1 = Math.cos(ang1) * r1;
-          const cz1 = Math.sin(ang1) * r1;
-
-          const p0 = [cx0 - perpX0, y0, cz0 - perpZ0];
-          const p1 = [cx0 + perpX0, y0, cz0 + perpZ0];
-          const p2 = [cx1 - perpX1, y1, cz1 - perpZ1];
-          const p3 = [cx1 + perpX1, y1, cz1 + perpZ1];
-
-          const col0 = getRibbonColor(t0);
-          const col1 = getRibbonColor(t1);
-
-          ribbonPositions.push(...p0, ...p1, ...p2);
-          ribbonColors.push(col0.r, col0.g, col0.b, col0.r, col0.g, col0.b, col1.r, col1.g, col1.b);
-
-          ribbonPositions.push(...p1, ...p3, ...p2);
-          ribbonColors.push(col0.r, col0.g, col0.b, col1.r, col1.g, col1.b, col1.r, col1.g, col1.b);
-        }
-      }
-
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute('position', new THREE.Float32BufferAttribute(ribbonPositions, 3));
-      geo.setAttribute('color', new THREE.Float32BufferAttribute(ribbonColors, 3));
-
-      const mat = new THREE.MeshBasicMaterial({
-        vertexColors: true,
+      const coreTex = new THREE.CanvasTexture(coreCanvas);
+      const coreGeo = new THREE.PlaneGeometry(240, 150);
+      const coreMat = new THREE.MeshBasicMaterial({
+        map: coreTex,
         transparent: true,
-        opacity: 0.38,
+        opacity: 0.95,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
         side: THREE.DoubleSide
       });
+      vectorCoreMesh = new THREE.Mesh(coreGeo, coreMat);
+      vectorCoreMesh.rotation.x = -Math.PI / 2;
+      vectorArmsGroup.add(vectorCoreMesh);
 
-      spiralRibbonMesh = new THREE.Mesh(geo, mat);
-      galaxyGroup.add(spiralRibbonMesh);
-    }
+      // 2. Bold Stylized Nested Spiral Arm Bands (Orange -> Magenta -> Purple -> Violet)
+      const armLayers = [
+        { rStart: 60, rEnd: 240, width: 32, colStart: '#ffd54f', colEnd: '#ff7043', opacity: 0.92, segments: 40 },
+        { rStart: 180, rEnd: 420, width: 44, colStart: '#ff7043', colEnd: '#e91e63', opacity: 0.88, segments: 45 },
+        { rStart: 340, rEnd: 620, width: 52, colStart: '#e91e63', colEnd: '#9c27b0', opacity: 0.85, segments: 50 },
+        { rStart: 500, rEnd: 820, width: 58, colStart: '#9c27b0', colEnd: '#4a148c', opacity: 0.80, segments: 55 }
+      ];
 
-    // Creates the 30,000 Particle Purple/Gold Spiral Dust
-    function createCosmicSpiralDust() {
-      const count = 30000;
-      const geo = new THREE.BufferGeometry();
-      const pos = new Float32Array(count * 3);
-      const col = new Float32Array(count * 3);
+      const numSpokes = 4;
+      armLayers.forEach((layer, layerIdx) => {
+        for (let spoke = 0; spoke < numSpokes; spoke++) {
+          const spokeAngle = (spoke / numSpokes) * Math.PI * 2 + layerIdx * 0.4;
+          const pos = [];
+          const cols = [];
 
-      const numArms = 4;
-      const coreColor = new THREE.Color(0xfef08a);
-      const midColor = new THREE.Color(0xc084fc);
-      const rimColor = new THREE.Color(0x38bdf8);
+          const cStart = new THREE.Color(layer.colStart);
+          const cEnd = new THREE.Color(layer.colEnd);
 
-      for (let i = 0; i < count; i++) {
-        const i3 = i * 3;
-        const arm = i % numArms;
-        const armAngle = (arm / numArms) * Math.PI * 2;
-        const r = Math.pow(Math.random(), 1.5) * 1100 + 20;
-        const spin = r * 0.003;
+          for (let i = 0; i <= layer.segments; i++) {
+            const t = i / layer.segments;
+            const r = layer.rStart + (layer.rEnd - layer.rStart) * t;
+            const spin = r * 0.003;
+            const ang = spokeAngle + spin;
 
-        const rx = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.28) * r;
-        const ry = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.12) * r;
-        const rz = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.28) * r;
+            const cx = Math.cos(ang) * r;
+            const cz = Math.sin(ang) * r;
+            const cy = Math.sin(r * 0.01) * 14.0;
 
-        pos[i3] = Math.cos(armAngle + spin) * r + rx;
-        pos[i3 + 1] = ry + Math.sin(r * 0.01) * 18;
-        pos[i3 + 2] = Math.sin(armAngle + spin) * r + rz;
+            const w = layer.width * (0.8 + 0.4 * Math.sin(t * Math.PI));
 
-        let c;
-        if (r < 300) c = coreColor.clone().lerp(midColor, r / 300);
-        else c = midColor.clone().lerp(rimColor, (r - 300) / 800);
+            const perpX = -Math.sin(ang) * (w * 0.5);
+            const perpZ = Math.cos(ang) * (w * 0.5);
 
-        col[i3] = c.r;
-        col[i3 + 1] = c.g;
-        col[i3 + 2] = c.b;
-      }
+            const c = cStart.clone().lerp(cEnd, t);
 
-      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+            // Create smooth strip quad
+            pos.push(cx - perpX, cy, cz - perpZ);
+            pos.push(cx + perpX, cy, cz + perpZ);
+            cols.push(c.r, c.g, c.b, c.r, c.g, c.b);
+          }
 
-      const mat = new THREE.PointsMaterial({
-        size: 3.0,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.72,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
+          // Build index buffer for strip
+          const indices = [];
+          for (let i = 0; i < layer.segments; i++) {
+            const i2 = i * 2;
+            indices.push(i2, i2 + 1, i2 + 2);
+            indices.push(i2 + 1, i2 + 3, i2 + 2);
+          }
+
+          const geo = new THREE.BufferGeometry();
+          geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+          geo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+          geo.setIndex(indices);
+
+          const mat = new THREE.MeshBasicMaterial({
+            vertexColors: true,
+            transparent: true,
+            opacity: layer.opacity,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            side: THREE.DoubleSide
+          });
+
+          const armMesh = new THREE.Mesh(geo, mat);
+          vectorArmsGroup.add(armMesh);
+        }
       });
-
-      spiralDustPoints = new THREE.Points(geo, mat);
-      galaxyGroup.add(spiralDustPoints);
     }
 
-    // Discrete 4-Point Sparkle Cross Stars (Matching Vector Illustration)
+    // 4-Point Sparkle Cross Stars (Matching Vector Illustration)
     function buildSparkleStars() {
-      const count = 350;
+      const count = 360;
       const geo = new THREE.BufferGeometry();
       const pos = new Float32Array(count * 3);
       const col = new Float32Array(count * 3);
@@ -719,35 +686,35 @@
 
       const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 28);
       grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      grad.addColorStop(0.25, 'rgba(253, 224, 71, 0.85)');
-      grad.addColorStop(0.6, 'rgba(192, 132, 252, 0.3)');
+      grad.addColorStop(0.3, 'rgba(255, 238, 88, 0.9)');
+      grad.addColorStop(0.65, 'rgba(233, 30, 99, 0.3)');
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 64, 64);
 
       ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
       ctx.beginPath();
-      ctx.moveTo(0, 32); ctx.lineTo(32, 30); ctx.lineTo(64, 32); ctx.lineTo(32, 34); ctx.closePath();
+      ctx.moveTo(0, 32); ctx.lineTo(32, 29); ctx.lineTo(64, 32); ctx.lineTo(32, 35); ctx.closePath();
       ctx.fill();
 
       ctx.beginPath();
-      ctx.moveTo(32, 0); ctx.lineTo(30, 32); ctx.lineTo(32, 64); ctx.lineTo(34, 32); ctx.closePath();
+      ctx.moveTo(32, 0); ctx.lineTo(29, 32); ctx.lineTo(32, 64); ctx.lineTo(35, 32); ctx.closePath();
       ctx.fill();
 
       const sparkleTex = new THREE.CanvasTexture(sparkleCanvas);
 
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
-        const r = Math.pow(Math.random(), 1.2) * 580 + 15;
+        const r = Math.pow(Math.random(), 1.2) * 600 + 20;
         const ang = Math.random() * Math.PI * 2;
-        const y = (Math.random() - 0.5) * 35.0 + Math.sin(r * 0.01) * 15.0;
+        const y = (Math.random() - 0.5) * 35.0 + Math.sin(r * 0.01) * 14.0;
 
         pos[i3] = Math.cos(ang) * r;
         pos[i3 + 1] = y;
         pos[i3 + 2] = Math.sin(ang) * r;
 
-        const isGold = Math.random() < 0.6;
-        col[i3] = isGold ? 1.0 : 0.85;
+        const isGold = Math.random() < 0.65;
+        col[i3] = isGold ? 1.0 : 0.9;
         col[i3 + 1] = isGold ? 0.95 : 0.9;
         col[i3 + 2] = isGold ? 0.6 : 1.0;
       }
@@ -756,17 +723,56 @@
       geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
       const mat = new THREE.PointsMaterial({
-        size: 14.0,
+        size: 15.0,
         map: sparkleTex,
         vertexColors: true,
         transparent: true,
-        opacity: 0.9,
+        opacity: 0.95,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
 
       sparklePoints = new THREE.Points(geo, mat);
       galaxyGroup.add(sparklePoints);
+    }
+
+    // Subtle background cosmic accents & mini-galaxies matching illustration background
+    function buildBackgroundCosmicAccents() {
+      const count = 1800;
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(count * 3);
+      const col = new Float32Array(count * 3);
+
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        const r = Math.random() * 2400 + 400;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = (Math.random() - 0.5) * Math.PI * 0.6;
+
+        pos[i3] = Math.cos(theta) * Math.cos(phi) * r;
+        pos[i3 + 1] = Math.sin(phi) * r * 0.5;
+        pos[i3 + 2] = Math.sin(theta) * Math.cos(phi) * r;
+
+        // Violet and deep purple accent dots
+        col[i3] = 0.58 + Math.random() * 0.4;
+        col[i3 + 1] = 0.2 + Math.random() * 0.3;
+        col[i3 + 2] = 0.85 + Math.random() * 0.15;
+      }
+
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+
+      const mat = new THREE.PointsMaterial({
+        size: 2.5,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.6,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+
+      backgroundDustPoints = new THREE.Points(geo, mat);
+      galaxyGroup.add(backgroundDustPoints);
     }
 
     async function fetchGalaxy() {
@@ -810,45 +816,27 @@
       resetToGalacticView();
     }
 
-    function dustPalette(r) {
-      const coreC = new THREE.Color(0xfef08a);
-      const midC = new THREE.Color(0xc084fc);
-      const rimC = new THREE.Color(0x38bdf8);
-      if (r < 300) return coreC.clone().lerp(midC, r / 300);
-      return midC.clone().lerp(rimC, Math.min(1.0, (r - 300) / 800));
-    }
-
-    function mix(c1, c2, factor) {
-      return {
-        r: c1.r * (1 - factor) + c2.r * factor,
-        g: c1.g * (1 - factor) + c2.g * factor,
-        b: c1.b * (1 - factor) + c2.b * factor,
-      };
-    }
-
     function getStarColor(b) {
       const r = Math.sqrt(b.x * b.x + b.z * b.z);
       const falloff = Math.max(0.0, 1.0 - (r / 900.0));
-      const radiusFade = 0.35 + 0.65 * falloff;
-      const lum = (b.luminosity || 0.85) * radiusFade;
+      const radiusFade = 0.4 + 0.6 * falloff;
+      const lum = (b.luminosity || 0.9) * radiusFade;
 
-      let tierCol;
+      let c = { r: 1.0, g: 0.95, b: 0.6 };
       if (b.id.includes(':core:')) {
-        tierCol = { r: 1.0, g: 0.98, b: 0.6 };
+        c = { r: 1.0, g: 1.0, b: 0.9 };
       } else if (b.id.includes(':lang:')) {
-        tierCol = { r: 0.98, g: 0.85, b: 0.2 };
+        c = { r: 1.0, g: 0.85, b: 0.2 };
       } else if (b.id.includes(':version:')) {
-        tierCol = { r: 0.22, g: 0.75, b: 0.98 };
+        c = { r: 0.22, g: 0.82, b: 1.0 };
       } else {
-        tierCol = { r: 0.75, g: 0.52, b: 0.98 };
+        c = { r: 0.9, g: 0.4, b: 0.98 };
       }
 
-      const dp = dustPalette(r);
-      const blended = mix(tierCol, dp, 0.45);
       return {
-        r: blended.r * lum,
-        g: blended.g * lum,
-        b: blended.b * lum,
+        r: c.r * lum,
+        g: c.g * lum,
+        b: c.b * lum,
       };
     }
 
@@ -864,11 +852,15 @@
       colAttr.needsUpdate = true;
     }
 
-    // Passive State: Renders Discrete Memory Star Nodes (ZERO cluttering lines in passive state)
+    // Renders Database Stars & Handles Constellation Line Preservation
     function renderDatabaseStars(data) {
       document.getElementById('stat-total-nodes').textContent = `${data.bodies.length} ENTRIES`;
 
       if (starPoints) galaxyGroup.remove(starPoints);
+      if (constellationLinesMesh) {
+        galaxyGroup.remove(constellationLinesMesh);
+        constellationLinesMesh = null;
+      }
       if (dynamicActiveEdges) {
         galaxyGroup.remove(dynamicActiveEdges);
         dynamicActiveEdges = null;
@@ -895,19 +887,56 @@
       geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
       const mat = new THREE.PointsMaterial({
-        size: 5.0,
+        size: 5.5,
         vertexColors: true,
         transparent: true,
-        opacity: 0.85,
+        opacity: 0.92,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
 
       starPoints = new THREE.Points(geo, mat);
       galaxyGroup.add(starPoints);
+
+      // IN CONSTELLATIONS MODE: RENDER ALL CONSTELLATION LINES PERMANENTLY!
+      if (currentSection === 'constellations' && data.lines && data.lines.length > 0) {
+        const bodyMap = new Map();
+        data.bodies.forEach(b => bodyMap.set(b.id, b));
+
+        const lpos = [];
+        const lcol = [];
+
+        data.lines.forEach(l => {
+          const s = bodyMap.get(l.source_id);
+          const t = bodyMap.get(l.target_id);
+          if (s && t) {
+            lpos.push(s.x, s.y, s.z);
+            lpos.push(t.x, t.y, t.z);
+
+            // Glowing cyan constellation line
+            lcol.push(0.22, 0.75, 0.98);
+            lcol.push(0.22, 0.75, 0.98);
+          }
+        });
+
+        if (lpos.length > 0) {
+          const lgeo = new THREE.BufferGeometry();
+          lgeo.setAttribute('position', new THREE.Float32BufferAttribute(lpos, 3));
+          lgeo.setAttribute('color', new THREE.Float32BufferAttribute(lcol, 3));
+          const lmat = new THREE.LineBasicMaterial({
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.85,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          });
+          constellationLinesMesh = new THREE.LineSegments(lgeo, lmat);
+          galaxyGroup.add(constellationLinesMesh);
+        }
+      }
     }
 
-    // Selection State: Dynamically renders radiant blue-green edges for the active star ONLY
+    // Selection State: Dynamically renders radiant blue-green edges for the active star ONLY in Galaxy mode
     function renderActiveSelectionEdges(selectedBody) {
       if (dynamicActiveEdges) {
         galaxyGroup.remove(dynamicActiveEdges);
@@ -933,7 +962,6 @@
             linePos.push(s.x, s.y, s.z);
             linePos.push(t.x, t.y, t.z);
 
-            // Bright radiant glow on active selection edges
             lineCol.push(edgeR, edgeG, edgeB);
             lineCol.push(edgeR, edgeG, edgeB);
           }
@@ -950,7 +978,6 @@
           opacity: 0.95,
           blending: THREE.AdditiveBlending,
           depthWrite: false,
-          linewidth: 2,
         });
         dynamicActiveEdges = new THREE.LineSegments(lineGeo, lineMat);
         galaxyGroup.add(dynamicActiveEdges);
@@ -1036,8 +1063,10 @@
         document.getElementById('nav-version').textContent = `✦ ${body.label}`;
       }
 
-      // 1. Dynamic Radiant Edge Rendering for this node
-      renderActiveSelectionEdges(body);
+      // 1. Dynamic Radiant Edge Rendering for this node in Galaxy mode
+      if (currentSection === 'galaxy') {
+        renderActiveSelectionEdges(body);
+      }
 
       // 2. Transform local coordinates into world coordinates and fly camera
       const worldPos = new THREE.Vector3(body.x, body.y, body.z);
@@ -1184,7 +1213,6 @@
         const px = cx + Math.cos(ang) * (p.r * 1.3);
         const py = cy + Math.sin(ang) * (p.r * 0.45);
 
-        // Planet Dot with Luminous Glow
         ctx.fillStyle = p.col;
         ctx.shadowColor = p.col;
         ctx.shadowBlur = 8;
@@ -1193,7 +1221,6 @@
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // Label
         ctx.font = '8px monospace';
         ctx.fillStyle = 'rgba(203, 213, 225, 0.7)';
         ctx.fillText(p.label, px + 5, py - 4);
@@ -1209,7 +1236,6 @@
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
 
-      // Futuristic Grid Lines
       ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
       ctx.lineWidth = 1;
       for (let x = 0; x < w; x += 25) {
@@ -1281,7 +1307,7 @@
       document.getElementById('nav-version').style.display = 'none';
       closeInspector();
 
-      flyCameraTo(0, 0, 0, 1150);
+      flyCameraTo(0, 0, 0, 1100);
     }
 
     function zoomToCurrentCluster() {
@@ -1344,7 +1370,7 @@
 
       // Sparkle cross pulse
       if (sparklePoints && sparklePoints.material) {
-        sparklePoints.material.size = 13.0 + Math.sin(time * 0.004) * 2.5;
+        sparklePoints.material.size = 14.0 + Math.sin(time * 0.004) * 2.5;
       }
 
       controls.update();
@@ -1353,7 +1379,6 @@
       // Selection State: HUD Callout Brackets & Animated Technical Diagram Components
       const inspector = document.getElementById('note-inspector');
       if (inspector.style.display !== 'none' && currentFocusNode) {
-        // Draw 2D Blueprint Components
         drawPlanetarySystemDiagram(currentFocusNode, time);
         drawMemoryDepthPattern(currentFocusNode, time);
 
