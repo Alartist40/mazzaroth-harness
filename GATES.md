@@ -152,11 +152,11 @@
   CWD: .
   EVIDENCE: 2026-09-28 — `SCRIPTURE_OK` (66 books returned in /meta, 31 verses and >2000 chars in Genesis 1, file-backed cache active).
 
-- [x] G29: NAV_DRILLDOWN — 4-step language -> version -> book -> chapter drill-down navigator with search filtering
-  CHECK: python3 -c 'js = open("web/js/main.js").read(); print("NAV_DRILLDOWN_OK" if ("drilldown" in js.lower() or "navigatescripture" in js.lower() or "selectlanguage" in js.lower()) and "filter" in js.lower() else "NAV_DRILLDOWN_FAIL")'
-  EXPECT: NAV_DRILLDOWN_OK
+- [x] G29: NAV_DRILLDOWN — 4-step language -> version -> book -> chapter drill-down navigator with runtime execution validation
+  CHECK: ! grep -q "currentCelestialData" web/js/main.js && node -e 'const fs=require("fs"),vm=require("vm");const code=fs.readFileSync("web/js/main.js","utf8");const dom={getElementById:(id)=>({id,classList:{add:()=>{},remove:()=>{},contains:()=>false},style:{},appendChild:()=>{},innerHTML:"",textContent:"",value:""}),createElement:(tag)=>({tag,className:"",style:{},classList:{add:()=>{},remove:()=>{},contains:()=>false},appendChild:()=>{},innerHTML:"",textContent:""}),addEventListener:()=>{}};const sandbox={window:{addEventListener:()=>{}},document:dom,console:console,fetch:async()=>({ok:true,json:async()=>({books:[{name:"Genesis",chapters:50}],verses:["V1"],total_chapters:50,chapter:1,book:"Genesis",version:"kjv"})}),THREE:{Vector3:function(){this.x=0;this.y=0;this.z=0;},Scene:function(){},PerspectiveCamera:function(){},WebGLRenderer:function(){this.setSize=()=>{};this.domElement={};}},TWEEN:{Tween:function(){this.to=()=>this;this.easing=()=>this;this.onUpdate=()=>this;this.onComplete=()=>this;this.start=()=>this;},Easing:{Cubic:{Out:()=>{}}}},galaxyData:{bodies:[{id:"celestial:lang:eng",label:"English",tier:"celestial",x:100,y:0,z:100}],lines:[]},currentSection:"galaxy"};vm.createContext(sandbox);vm.runInContext(code,sandbox);sandbox.renderDrilldown();console.log("NAV_DRILLDOWN_RUNTIME_OK");'
+  EXPECT: NAV_DRILLDOWN_RUNTIME_OK
   CWD: .
-  EVIDENCE: 2026-09-28 — `NAV_DRILLDOWN_OK` (4-step drilldown navigator: Language -> Version -> Book -> Chapter with live filtering and camera tracking).
+  EVIDENCE: 2026-09-28 — `NAV_DRILLDOWN_RUNTIME_OK` (galaxyData identifier verified, 4-step drilldown navigator executed cleanly in runtime VM).
 
 - [x] G30: READING_PANE — HUD scripture reader with verse numbers, chapter navigation, and Esc step-back
   CHECK: python3 -c 'html = open("web/index.html").read(); js = open("web/js/main.js").read(); print("READING_PANE_OK" if ("reading-pane" in html or "scripture-content" in html or "reading-pane" in js) and "verse-num" in (html+js) else "READING_PANE_FAIL")'

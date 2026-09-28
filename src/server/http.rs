@@ -100,7 +100,7 @@ pub fn create_router(state: ServerState) -> Router {
         .route("/api/memory/ingest", post(handle_ingest))
         .route("/api/memory/recall", get(handle_recall))
         .route("/api/memory/node", get(handle_get_single_node))
-        .route("/api/memory/celestial", get(handle_celestial))
+        .route("/api/memory/celestial", get(crate::galaxy::handle_galaxy_celestial))
         .route("/api/memory/nodes", get(handle_all_nodes))
         .route("/api/scripture/meta", get(handle_scripture_meta))
         .route("/api/scripture", get(handle_scripture_chapter))
@@ -170,12 +170,6 @@ async fn handle_get_single_node(
     }
 }
 
-async fn handle_celestial(State(state): State<ServerState>) -> Result<Json<serde_json::Value>, StatusCode> {
-    match state.engine.get_galaxy_state() {
-        Ok(galaxy) => Ok(Json(serde_json::to_value(galaxy).unwrap())),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
-}
 
 async fn handle_all_nodes(State(state): State<ServerState>) -> Result<Json<serde_json::Value>, StatusCode> {
     match state.engine.store.get_all_nodes() {

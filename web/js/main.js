@@ -440,7 +440,7 @@ let scene, camera, renderer, controls;
 
     function renderConstellationsList() {
       const list = document.getElementById("cluster-list");
-      if (!list || !currentCelestialData) return;
+      if (!list || !galaxyData) return;
       list.innerHTML = "";
       const q = (drilldownState.filterQuery || "").toLowerCase().trim();
 
@@ -448,7 +448,7 @@ let scene, camera, renderer, controls;
       const zodiacBodies = [];
       const asterismBodies = [];
 
-      currentCelestialData.bodies.forEach(b => {
+      galaxyData.bodies.forEach(b => {
         const matchZodiac = zodiacSigns.some(z => b.id.toLowerCase().includes(z));
         if (matchZodiac) {
           zodiacBodies.push(b);
@@ -511,7 +511,7 @@ let scene, camera, renderer, controls;
         badge.textContent = "STEP 1: SELECT LANGUAGE";
         if (backBtn) backBtn.classList.add("is-hidden");
 
-        const langBodies = (currentCelestialData ? currentCelestialData.bodies : []).filter(b => b.id.includes(":lang:"));
+        const langBodies = (galaxyData ? galaxyData.bodies : []).filter(b => b.id.includes(":lang:"));
         let filtered = langBodies;
         if (q) {
           filtered = langBodies.filter(b => b.label.toLowerCase().includes(q) || b.id.toLowerCase().includes(q));
@@ -601,7 +601,7 @@ let scene, camera, renderer, controls;
       drilldownState.filterQuery = "";
       document.getElementById("search-query").value = "";
 
-      const vBody = currentCelestialData ? currentCelestialData.bodies.find(b => b.id.includes(`:${drilldownState.lang}:`) && b.id.toLowerCase().includes(version.toLowerCase())) : null;
+      const vBody = galaxyData ? galaxyData.bodies.find(b => b.id.includes(`:${drilldownState.lang}:`) && b.id.toLowerCase().includes(version.toLowerCase())) : null;
       if (vBody) onSelectStar(vBody);
       renderDrilldown();
     }
@@ -613,7 +613,7 @@ let scene, camera, renderer, controls;
       drilldownState.filterQuery = "";
       document.getElementById("search-query").value = "";
 
-      const bBody = currentCelestialData ? currentCelestialData.bodies.find(b => b.id.toLowerCase().includes(bookName.toLowerCase())) : null;
+      const bBody = galaxyData ? galaxyData.bodies.find(b => b.id.toLowerCase().includes(bookName.toLowerCase())) : null;
       if (bBody) onSelectStar(bBody);
       renderDrilldown();
     }
@@ -818,6 +818,10 @@ let scene, camera, renderer, controls;
 
     function openHud(body) {
       const hud = document.getElementById('hud-panel');
+      const metaView = document.getElementById('hud-metadata-view');
+      const readingPane = document.getElementById('reading-pane');
+      if (metaView) metaView.classList.remove('is-hidden');
+      if (readingPane) readingPane.classList.add('is-hidden');
       const uiName = document.getElementById('node-name');
       const uiId = document.getElementById('node-id');
       const uiClass = document.getElementById('node-class');
