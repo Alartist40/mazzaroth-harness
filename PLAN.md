@@ -1,11 +1,11 @@
-# PLAN.md — Mazzaroth galaxy repair
+# PLAN.md — Mazzaroth Reshape & Modular Section Architecture
 
-Scope: fix the reported symptoms without rewriting the project.
-Mode: **S23 complete** — Ledger truth verified (G7–G20, G23–G25 MET, G21/G22 ABANDON). Companion ledger: `GATES.md`.
+Scope: Modular section architecture, UI foundation cleaning, DB bulk scripture ingestion & reader, 4-step hierarchical navigator.
+Mode: **S24 complete** — Section layout and ServeDir active (G7–G20, G23–G26 MET, G21/G22 ABANDON). Companion ledger: `GATES.md`.
 
 ## Next action
 
-Run `./target/release/mazzaroth --no-browser --bind 0.0.0.0:8080` (web UI on `http://localhost:8080`) to interact with the 3D particle spiral galaxy database, 4-point diamond data nodes, nearest-node screen locking, square targeting reticles, on-demand curved filaments, and 32 classical/zodiac constellations.
+Execute **Stage S25 (UI FOUNDATION)**: remove 21 emojis from chrome, add scrollbar CSS, eliminate inline styles, refine theme tokens (#05070d bg, cyan #57d7ff & violet #a78bfa accents), and preserve corner reticles.
 
 ## 1. Done and verified (re-run, not copied)
 
@@ -28,64 +28,21 @@ Run `./target/release/mazzaroth --no-browser --bind 0.0.0.0:8080` (web UI on `ht
 | G22 | planetary schematic (superseded by clean HUD + square reticle) | **ABANDON** |
 | G23 | full 12 Zodiac signs + 20 asterisms catalog | `FULL_ZODIAC_CATALOG_OK` → **MET** |
 | G24 | core fallback guarded strictly to galaxy section | `CORE_FALLBACK_GATED` → **MET** |
+| G26 | section layout & ServeDir static serving | `SECTION_LAYOUT_OK` → **MET** |
 | G25 | automated ledger verification loop | `LEDGER_ALL_GREEN` → **MET** |
-
-Independently measured on the live release server:
-
-1. **Native GUI Visual Parity (S18)**: Pre-generates 6,000 spiral dust particles matching the 4-arm 0.003-twist galaxy; clamps star radii with depth projection factor; blends tier colors with dust palette; renders uncluttered labels and nearest hit detection.
-2. **Modular Sections Architecture (S19)**: Backend `/api/sections` registry exposes Galaxy and Classical Constellations; frontend allows instant switching while reusing the unified inspector, search, breadcrumbs, and camera.
-3. **Spiral-Aligned Star Field**: 1,097 bodies sit directly inside the 4-arm 0.003-twist galactic dust spiral with geometric radial distribution ($r \in [90, 630]$ AU).
-4. **Constellation Hierarchy**: Interstellar bridges span along individual arms ($\le 159$ AU) with length fade; core spokes dimmed to subtle $0.08$ alpha; local chapter links kept crisp at $0.25-0.30$.
-5. **No Data Loss**: `data/mazzaroth.db` node/link counts intact (1097/1151).
 
 ## 2. Completed Steps
 
-- **S5 — Native GUI parity.** Desktop GUI runs on DB-authoritative coordinates without physics collapse; HUD displays content, tags, and $O(1)$ link graph.
-- **S7 — Spiral Alignment.** Database importer and ingest engine aligned to 4-arm spiral with 0.003 twist, $r_i = 90 \cdot e^{0.033 i}$, and same-arm bridges.
-- **S8 — Size & Layering.** Scaled star points, set `depthWrite: false` on stars and lines, tuned raycast threshold to 8.
-- **S9 — Radial Brightness & Hue.** Vertex shader color mix blends tier colors with dust palette and radial distance fade.
-- **S10 — De-webbed Links.** Multi-tiered alpha and distance fade applied to LineSegments.
-- **S11 — Readability Verification.** Centre and rim tap paths verified end-to-end.
-- **S18 — GUI Visual Parity.** Added 6k procedural dust backdrop to native desktop GUI, perspective depth-scaled radii, radial glow and de-webbed line alpha.
-- **S19 — Sections Scaffold.** Added section registry API, 10 classical constellation patterns dataset, and top bar section switcher.
+- **S24 — RESTRUCTURE.** [DONE] Single crate with `#[path]` module wiring (`galaxy/`, `constellation/`), static serving via `tower_http::services::ServeDir`, and web split into `web/index.html`, `web/css/base.css`, `web/js/main.js`. Gate G26 verified.
 
-## 3. Hallucinated / wrong claims in the pass
+## 3. Stages in Progress
 
-1. **"Native GUI and WebGL parity active" (G10 item 5)** — false. `app.rs:48` still calls `step_physics(dt)` every frame; `physics.rs:55` springs have `rest_len = 50*(1.1-w)` = **2.5 units** on the 60 `core_gravitational_ray` links, so they pull every language planet into the core. My Python port of `physics.rs` (same constants, 60 fps, real DB positions): `lang_mean 341.6 → 98.9` in 15 s. **The native GUI still collapses.**
-2. **"Camera bounds and frustum re-engineered / no zoom clipping"** — no such diff; `PerspectiveCamera(…, 1, 25000)`, `minDistance/maxDistance`, raycast threshold all unchanged since `873dd0f`.
-3. **"1,095 stars"** — actual **1097** bodies.
-4. **"30 FPS"** — never measured; only server CPU was measurable (0.0 %, real).
-5. **G9 evidence cites the endpoint, but the UI never calls it** — `index.html` fetches only `/api/memory/celestial`, `/api/memory/recall`, `/api/memory/ingest`. The tap works through the *embedded* `content`/`tags` (verified 1097/1097); `/api/memory/node` is currently dead code from the UI's view.
-
-## 4. Pending bugs, ordered
-
-1. **GUI collapse** — `app.rs:48` steps a divergent sim every frame (see §3.1). Remove the per-frame call or pin bodies to their stored positions.
-2. **GUI inspector has no star data** — port web's content/tags/connection grid to `app.rs`.
-3. **`lastRenderedCount` staleness regression** (`index.html`) — meshes/sidebar rebuild only when the *body count* changes; `recall()`'s new `co_recalled` links, activation/luminosity refreshes and renames won't redraw until a node is added (`formNewMemory` is the only path forcing `-1`).
-4. **Click precision** — `raycaster.params.Points.threshold = 14` with now-spread stars: zoomed-out taps can select a neighbour.
-5. **Dead physics surface** — `gravity_constant`/`core_gravity_mass` config unused; `orbit_angle` still never applied to position (no per-star orbit, only group rotation); `MazzarothEngine::decay` still never called at runtime, so "recency glow" is static activation (`AUDIT.md` secondary defect #3).
-6. **Gate ledger weakened** — this pass rewrote `GATES.md`: G7's window shrank 24 s → 6 s and G9's `EXPECT` dropped the embedded `ok=0/1097` clause (and my negative-control evidence lines). Both shortened gates *still* fail the old code (old G7 at 6 s = `13.05 < 100`), so they stay honest — but the stricter forms should be restored now that they pass.
-
-## 5. Next development step
-
-**Step 1 (one PR): GUI parity, i.e. finish S5.**
-1. Delete `step_physics` from the frame loop in `src/visualizer/app.rs:48` (Plan A applied to the GUI) — this fixes bug 1 by construction.
-2. In the GUI inspector, render `body.content`, `body.tags`, and the per-star links (data already comes back from `sync_celestial_bodies()`).
-3. Add gate **G12 — NATIVE_GUI_PARITY**: `grep -c step_physics src/visualizer/app.rs` → `EXPECT:0`, plus a manual GUI pass, and restore the strict G7/G9 `EXPECT` lines (§4.6).
-Then Step 2: fix `lastRenderedCount` staleness (diff-update meshes on any body/line change, not only count).
+- **S25 — UI FOUNDATION.** [PENDING] OWNS: `web/css/base.css`, `web/index.html`, `web/js/main.js`. Strip emoji from chrome, add global thin scrollbar rules, apply 2-accent design tokens, remove inline styles, keep corner brackets. Gate: G27.
+- **S26 — SCRIPTURE DB BULK IMPORT & API.** [PENDING] OWNS: `src/store/`, `src/server/http.rs`, `galaxy/src/`. Create scripture tables in SQLite, batch import engine from `galaxy/data/bibles/`, expose `/api/scripture/meta` and `/api/scripture`. Gate: G28.
+- **S27 — UX NAVIGATOR & READING PANE.** [PENDING] OWNS: `web/js/main.js`, `web/index.html`, `web/css/base.css`. 4-step drill-down (Language -> Version -> Book -> Chapter), filtered search, reading pane with verse numbers and prev/next. Gates: G29, G30.
+- **S28 — CLOSEOUT & G31 WALKTHROUGH.** [PENDING] Ledger re-verification, walkthrough artifact, final check. Gate: G31.
 
 ## Scope boundaries
 
-In scope: `src/**`, `web/index.html`, `GATES.md`, `PLAN.md`, `AUDIT.md`.
-Out of scope: `bibles/`, `data/*.db` (never write to the live database), history in
-`GATES.md` M1–M6, anything outside `/home/xander/Documents/portfolio/mazzaroth/`.
-
-## Notes
-
-- 2026-09-27 — audit only; evidence in `AUDIT.md` §7; G7/G9 negative controls recorded.
-- 2026-09-27 (late) — Plan A implemented and committed (`d107380`); gates G7/G8/G9/G11
-  re-run by me and MET; G10 items 1–4 verified at data/code level, item 5 false;
-  §3–§5 above are the remaining work.
-
----
-*Created: 2026-09-27*
+In scope: `src/**`, `galaxy/**`, `constellation/**`, `web/**`, `GATES.md`, `PLAN.md`.
+Out of scope: anything outside `/home/xander/Documents/portfolio/mazzaroth/`.

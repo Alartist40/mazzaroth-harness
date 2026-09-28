@@ -4,7 +4,11 @@ use std::path::Path;
 #[test]
 fn test_corpus_importer_and_galaxy_construction() {
     let engine = MazzarothEngine::in_memory().unwrap();
-    let bibles_dir = Path::new("bibles");
+    let bibles_dir = if Path::new("galaxy/data/bibles").exists() {
+        Path::new("galaxy/data/bibles")
+    } else {
+        Path::new("bibles")
+    };
 
     if bibles_dir.exists() {
         let count = CorpusImporter::import_bibles_directory(&engine, bibles_dir, 5, 3).unwrap();

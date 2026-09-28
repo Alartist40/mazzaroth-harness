@@ -6,6 +6,12 @@ pub mod server;
 pub mod visualizer;
 pub mod corpus;
 
+#[path = "../galaxy/src/lib.rs"]
+pub mod galaxy;
+
+#[path = "../constellation/src/lib.rs"]
+pub mod constellation;
+
 pub use cognitive::{AssociativeLink, CognitiveDecayEngine, MemoryNode, MemoryTier};
 pub use celestial::{build_constellation_lines, Camera3D, CelestialBody, CelestialPhysicsEngine, ConstellationLine};
 pub use store::MazzarothStore;

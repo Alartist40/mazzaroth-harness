@@ -1,0 +1,2312 @@
+[
+  {
+    "id": "aries",
+    "label": "Aries (The Ram)",
+    "stars": [
+      {
+        "id": "hamal",
+        "name": "Hamal (\u03b1 Ari)",
+        "x": -280.0,
+        "y": 160.0,
+        "z": 110.0,
+        "desc": "Principal star in the head of the Ram",
+        "tags": [
+          "zodiac",
+          "aries"
+        ]
+      },
+      {
+        "id": "sheratan",
+        "name": "Sheratan (\u03b2 Ari)",
+        "x": -310.0,
+        "y": 140.0,
+        "z": 120.0,
+        "desc": "Second brightest star in Aries",
+        "tags": [
+          "zodiac",
+          "aries"
+        ]
+      },
+      {
+        "id": "mesarthim",
+        "name": "Mesarthim (\u03b3 Ari)",
+        "x": -330.0,
+        "y": 130.0,
+        "z": 125.0,
+        "desc": "First discovered telescopic binary star",
+        "tags": [
+          "zodiac",
+          "aries"
+        ]
+      },
+      {
+        "id": "botein",
+        "name": "Botein (\u03b4 Ari)",
+        "x": -250.0,
+        "y": 150.0,
+        "z": 100.0,
+        "desc": "Orange giant star in the tail of Aries",
+        "tags": [
+          "zodiac",
+          "aries"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        0,
+        3
+      ]
+    ]
+  },
+  {
+    "id": "taurus",
+    "label": "Taurus (The Bull)",
+    "stars": [
+      {
+        "id": "aldebaran",
+        "name": "Aldebaran (\u03b1 Tau)",
+        "x": -220.0,
+        "y": 50.0,
+        "z": 120.0,
+        "desc": "The glowing Eye of the Bull",
+        "tags": [
+          "zodiac",
+          "taurus",
+          "giant"
+        ]
+      },
+      {
+        "id": "elnath",
+        "name": "Elnath (\u03b2 Tau)",
+        "x": -180.0,
+        "y": 130.0,
+        "z": 80.0,
+        "desc": "Tip of the Northern Horn",
+        "tags": [
+          "zodiac",
+          "taurus"
+        ]
+      },
+      {
+        "id": "tianguan",
+        "name": "Zeta Tauri",
+        "x": -160.0,
+        "y": 80.0,
+        "z": 100.0,
+        "desc": "Tip of the Southern Horn",
+        "tags": [
+          "zodiac",
+          "taurus"
+        ]
+      },
+      {
+        "id": "alcyone",
+        "name": "Alcyone (Pleiades)",
+        "x": -260.0,
+        "y": 90.0,
+        "z": 150.0,
+        "desc": "Central star of the Seven Sisters",
+        "tags": [
+          "zodiac",
+          "taurus",
+          "pleiades"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        0,
+        3
+      ]
+    ]
+  },
+  {
+    "id": "gemini",
+    "label": "Gemini (The Twins)",
+    "stars": [
+      {
+        "id": "pollux",
+        "name": "Pollux (\u03b2 Gem)",
+        "x": -80.0,
+        "y": 200.0,
+        "z": 190.0,
+        "desc": "Immortal twin brother, giant star with exoplanet",
+        "tags": [
+          "zodiac",
+          "gemini"
+        ]
+      },
+      {
+        "id": "castor",
+        "name": "Castor (\u03b1 Gem)",
+        "x": -60.0,
+        "y": 230.0,
+        "z": 210.0,
+        "desc": "Mortal twin brother, complex sextuple system",
+        "tags": [
+          "zodiac",
+          "gemini"
+        ]
+      },
+      {
+        "id": "alhena",
+        "name": "Alhena (\u03b3 Gem)",
+        "x": -120.0,
+        "y": 100.0,
+        "z": 150.0,
+        "desc": "Bright star at the foot of Pollux",
+        "tags": [
+          "zodiac",
+          "gemini"
+        ]
+      },
+      {
+        "id": "wasat",
+        "name": "Wasat (\u03b4 Gem)",
+        "x": -80.0,
+        "y": 150.0,
+        "z": 170.0,
+        "desc": "Middle star of the Twins",
+        "tags": [
+          "zodiac",
+          "gemini"
+        ]
+      },
+      {
+        "id": "mebsuta",
+        "name": "Mebsuta (\u03b5 Gem)",
+        "x": -40.0,
+        "y": 180.0,
+        "z": 190.0,
+        "desc": "Outstretched arm star of Castor",
+        "tags": [
+          "zodiac",
+          "gemini"
+        ]
+      }
+    ],
+    "links": [
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        1,
+        4
+      ]
+    ]
+  },
+  {
+    "id": "cancer",
+    "label": "Cancer (The Crab)",
+    "stars": [
+      {
+        "id": "acubens",
+        "name": "Acubens (\u03b1 Cnc)",
+        "x": 80.0,
+        "y": 80.0,
+        "z": 190.0,
+        "desc": "The southern claw of the Crab",
+        "tags": [
+          "zodiac",
+          "cancer"
+        ]
+      },
+      {
+        "id": "altarf",
+        "name": "Altarf (\u03b2 Cnc)",
+        "x": 120.0,
+        "y": 50.0,
+        "z": 170.0,
+        "desc": "Brightest star in Cancer",
+        "tags": [
+          "zodiac",
+          "cancer"
+        ]
+      },
+      {
+        "id": "asellus_borealis",
+        "name": "Asellus Borealis",
+        "x": 100.0,
+        "y": 130.0,
+        "z": 210.0,
+        "desc": "Northern Donkey Star flanking the Beehive Cluster",
+        "tags": [
+          "zodiac",
+          "cancer"
+        ]
+      },
+      {
+        "id": "asellus_australis",
+        "name": "Asellus Australis",
+        "x": 110.0,
+        "y": 100.0,
+        "z": 200.0,
+        "desc": "Southern Donkey Star flanking Praesepe",
+        "tags": [
+          "zodiac",
+          "cancer"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        3
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        3,
+        1
+      ]
+    ]
+  },
+  {
+    "id": "leo",
+    "label": "Leo (The Lion)",
+    "stars": [
+      {
+        "id": "regulus",
+        "name": "Regulus (\u03b1 Leo)",
+        "x": 240.0,
+        "y": 80.0,
+        "z": 150.0,
+        "desc": "Heart of the Lion, Little King",
+        "tags": [
+          "zodiac",
+          "leo",
+          "quadruple"
+        ]
+      },
+      {
+        "id": "denebola",
+        "name": "Denebola (\u03b2 Leo)",
+        "x": 320.0,
+        "y": 120.0,
+        "z": 90.0,
+        "desc": "Tail of the Lion",
+        "tags": [
+          "zodiac",
+          "leo"
+        ]
+      },
+      {
+        "id": "algieba",
+        "name": "Algieba (\u03b3 Leo)",
+        "x": 260.0,
+        "y": 140.0,
+        "z": 130.0,
+        "desc": "Mane star, beautiful binary",
+        "tags": [
+          "zodiac",
+          "leo"
+        ]
+      },
+      {
+        "id": "zosma",
+        "name": "Zosma (\u03b4 Leo)",
+        "x": 300.0,
+        "y": 150.0,
+        "z": 100.0,
+        "desc": "Back of the Lion",
+        "tags": [
+          "zodiac",
+          "leo"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        1,
+        0
+      ]
+    ]
+  },
+  {
+    "id": "virgo",
+    "label": "Virgo (The Maiden)",
+    "stars": [
+      {
+        "id": "spica",
+        "name": "Spica (\u03b1 Vir)",
+        "x": 290.0,
+        "y": -110.0,
+        "z": 50.0,
+        "desc": "Ear of wheat, brilliant blue binary star",
+        "tags": [
+          "zodiac",
+          "virgo"
+        ]
+      },
+      {
+        "id": "zavijava",
+        "name": "Zavijava (\u03b2 Vir)",
+        "x": 260.0,
+        "y": 30.0,
+        "z": 110.0,
+        "desc": "Corner of the Maiden",
+        "tags": [
+          "zodiac",
+          "virgo"
+        ]
+      },
+      {
+        "id": "porrima",
+        "name": "Porrima (\u03b3 Vir)",
+        "x": 280.0,
+        "y": -20.0,
+        "z": 80.0,
+        "desc": "Goddess of Prophecy binary",
+        "tags": [
+          "zodiac",
+          "virgo"
+        ]
+      },
+      {
+        "id": "auva",
+        "name": "Auva (\u03b4 Vir)",
+        "x": 300.0,
+        "y": -40.0,
+        "z": 60.0,
+        "desc": "Red giant in Virgo",
+        "tags": [
+          "zodiac",
+          "virgo"
+        ]
+      },
+      {
+        "id": "vindemiatrix",
+        "name": "Vindemiatrix (\u03b5 Vir)",
+        "x": 310.0,
+        "y": 30.0,
+        "z": 70.0,
+        "desc": "The Grape Gatherer",
+        "tags": [
+          "zodiac",
+          "virgo"
+        ]
+      }
+    ],
+    "links": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        2,
+        4
+      ]
+    ]
+  },
+  {
+    "id": "libra",
+    "label": "Libra (The Scales)",
+    "stars": [
+      {
+        "id": "zubeneschamali",
+        "name": "Zubeneschamali (\u03b2 Lib)",
+        "x": 220.0,
+        "y": -140.0,
+        "z": 120.0,
+        "desc": "Northern Claw, emerald-tinted blue star",
+        "tags": [
+          "zodiac",
+          "libra"
+        ]
+      },
+      {
+        "id": "zubenelgenubi",
+        "name": "Zubenelgenubi (\u03b1 Lib)",
+        "x": 180.0,
+        "y": -160.0,
+        "z": 140.0,
+        "desc": "Southern Claw visual binary",
+        "tags": [
+          "zodiac",
+          "libra"
+        ]
+      },
+      {
+        "id": "zubenhakrabi",
+        "name": "Zubenelakrab (\u03b3 Lib)",
+        "x": 230.0,
+        "y": -180.0,
+        "z": 110.0,
+        "desc": "Claw of the Scorpion scale",
+        "tags": [
+          "zodiac",
+          "libra"
+        ]
+      },
+      {
+        "id": "brachium",
+        "name": "Brachium (\u03c3 Lib)",
+        "x": 200.0,
+        "y": -210.0,
+        "z": 130.0,
+        "desc": "Red giant base of the balance",
+        "tags": [
+          "zodiac",
+          "libra"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        1
+      ]
+    ]
+  },
+  {
+    "id": "scorpius",
+    "label": "Scorpius (The Scorpion)",
+    "stars": [
+      {
+        "id": "antares",
+        "name": "Antares (\u03b1 Sco)",
+        "x": 80.0,
+        "y": -220.0,
+        "z": 180.0,
+        "desc": "Rival of Mars, red supergiant heart",
+        "tags": [
+          "zodiac",
+          "scorpius",
+          "supergiant"
+        ]
+      },
+      {
+        "id": "graffias",
+        "name": "Graffias (\u03b2 Sco)",
+        "x": 60.0,
+        "y": -170.0,
+        "z": 190.0,
+        "desc": "Head claw of the Scorpion",
+        "tags": [
+          "zodiac",
+          "scorpius"
+        ]
+      },
+      {
+        "id": "dschubba",
+        "name": "Dschubba (\u03b4 Sco)",
+        "x": 70.0,
+        "y": -190.0,
+        "z": 195.0,
+        "desc": "Forehead star of the Scorpion",
+        "tags": [
+          "zodiac",
+          "scorpius"
+        ]
+      },
+      {
+        "id": "shaula",
+        "name": "Shaula (\u03bb Sco)",
+        "x": 140.0,
+        "y": -290.0,
+        "z": 150.0,
+        "desc": "The stinger star of the Scorpion",
+        "tags": [
+          "zodiac",
+          "scorpius"
+        ]
+      },
+      {
+        "id": "sargas",
+        "name": "Sargas (\u03b8 Sco)",
+        "x": 110.0,
+        "y": -280.0,
+        "z": 170.0,
+        "desc": "Tail curve star of the Scorpion",
+        "tags": [
+          "zodiac",
+          "scorpius"
+        ]
+      }
+    ],
+    "links": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        4,
+        3
+      ]
+    ]
+  },
+  {
+    "id": "sagittarius",
+    "label": "Sagittarius (The Archer)",
+    "stars": [
+      {
+        "id": "kaus_australis",
+        "name": "Kaus Australis (\u03b5 Sgr)",
+        "x": -30.0,
+        "y": -260.0,
+        "z": 210.0,
+        "desc": "Southern base of the Archer Bow",
+        "tags": [
+          "zodiac",
+          "sagittarius"
+        ]
+      },
+      {
+        "id": "nunki",
+        "name": "Nunki (\u03c3 Sgr)",
+        "x": -10.0,
+        "y": -210.0,
+        "z": 240.0,
+        "desc": "Vane of the Arrow, oldest named star",
+        "tags": [
+          "zodiac",
+          "sagittarius"
+        ]
+      },
+      {
+        "id": "ascella",
+        "name": "Ascella (\u03b6 Sgr)",
+        "x": -40.0,
+        "y": -240.0,
+        "z": 220.0,
+        "desc": "Armpit star of the Archer",
+        "tags": [
+          "zodiac",
+          "sagittarius"
+        ]
+      },
+      {
+        "id": "kaus_media",
+        "name": "Kaus Media (\u03b4 Sgr)",
+        "x": -60.0,
+        "y": -230.0,
+        "z": 200.0,
+        "desc": "Middle star of the Bow",
+        "tags": [
+          "zodiac",
+          "sagittarius"
+        ]
+      },
+      {
+        "id": "kaus_borealis",
+        "name": "Kaus Borealis (\u03bb Sgr)",
+        "x": -70.0,
+        "y": -200.0,
+        "z": 210.0,
+        "desc": "Top peak of the Teapot",
+        "tags": [
+          "zodiac",
+          "sagittarius"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        4,
+        3
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        3,
+        2
+      ]
+    ]
+  },
+  {
+    "id": "capricornus",
+    "label": "Capricornus (The Sea Goat)",
+    "stars": [
+      {
+        "id": "deneb_algedi",
+        "name": "Deneb Algedi (\u03b4 Cap)",
+        "x": -180.0,
+        "y": -180.0,
+        "z": 160.0,
+        "desc": "Tail of the Goat, eclipse binary",
+        "tags": [
+          "zodiac",
+          "capricorn"
+        ]
+      },
+      {
+        "id": "nashira",
+        "name": "Nashira (\u03b3 Cap)",
+        "x": -190.0,
+        "y": -160.0,
+        "z": 170.0,
+        "desc": "Bringer of Good Tidings",
+        "tags": [
+          "zodiac",
+          "capricorn"
+        ]
+      },
+      {
+        "id": "dabih",
+        "name": "Dabih (\u03b2 Cap)",
+        "x": -230.0,
+        "y": -120.0,
+        "z": 190.0,
+        "desc": "The Slaughterer multiple star system",
+        "tags": [
+          "zodiac",
+          "capricorn"
+        ]
+      },
+      {
+        "id": "algedi",
+        "name": "Algedi (\u03b1 Cap)",
+        "x": -240.0,
+        "y": -100.0,
+        "z": 200.0,
+        "desc": "Head of the Goat optical binary",
+        "tags": [
+          "zodiac",
+          "capricorn"
+        ]
+      }
+    ],
+    "links": [
+      [
+        3,
+        2
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        3
+      ]
+    ]
+  },
+  {
+    "id": "aquarius",
+    "label": "Aquarius (The Water Bearer)",
+    "stars": [
+      {
+        "id": "sadalsuud",
+        "name": "Sadalsuud (\u03b2 Aqr)",
+        "x": -280.0,
+        "y": -40.0,
+        "z": 160.0,
+        "desc": "Luckiest of the Lucky yellow supergiant",
+        "tags": [
+          "zodiac",
+          "aquarius"
+        ]
+      },
+      {
+        "id": "sadalmelik",
+        "name": "Sadalmelik (\u03b1 Aqr)",
+        "x": -270.0,
+        "y": 0.0,
+        "z": 140.0,
+        "desc": "Lucky Star of the King",
+        "tags": [
+          "zodiac",
+          "aquarius"
+        ]
+      },
+      {
+        "id": "sadachbia",
+        "name": "Sadachbia (\u03b3 Aqr)",
+        "x": -290.0,
+        "y": 10.0,
+        "z": 130.0,
+        "desc": "Lucky Star of Hidden Things",
+        "tags": [
+          "zodiac",
+          "aquarius"
+        ]
+      },
+      {
+        "id": "skat",
+        "name": "Skat (\u03b4 Aqr)",
+        "x": -320.0,
+        "y": -90.0,
+        "z": 110.0,
+        "desc": "The Shin star of the Water Bearer",
+        "tags": [
+          "zodiac",
+          "aquarius"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        0,
+        3
+      ]
+    ]
+  },
+  {
+    "id": "pisces",
+    "label": "Pisces (The Fishes)",
+    "stars": [
+      {
+        "id": "alrescha",
+        "name": "Alrescha (\u03b1 Psc)",
+        "x": -310.0,
+        "y": 60.0,
+        "z": 60.0,
+        "desc": "The Knot uniting the two celestial cord ribbons",
+        "tags": [
+          "zodiac",
+          "pisces"
+        ]
+      },
+      {
+        "id": "fumalsamakah",
+        "name": "Fumalsamakah (\u03b2 Psc)",
+        "x": -340.0,
+        "y": 100.0,
+        "z": 40.0,
+        "desc": "Snout of the Western Fish",
+        "tags": [
+          "zodiac",
+          "pisces"
+        ]
+      },
+      {
+        "id": "torcular",
+        "name": "Torcular (\u03bf Psc)",
+        "x": -290.0,
+        "y": 90.0,
+        "z": 80.0,
+        "desc": "Northern chord of the Fishes",
+        "tags": [
+          "zodiac",
+          "pisces"
+        ]
+      },
+      {
+        "id": "linteum",
+        "name": "Delta Piscium",
+        "x": -270.0,
+        "y": 110.0,
+        "z": 90.0,
+        "desc": "Eastern Fish anchor",
+        "tags": [
+          "zodiac",
+          "pisces"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        3
+      ]
+    ]
+  },
+  {
+    "id": "orion",
+    "label": "Orion (The Hunter)",
+    "stars": [
+      {
+        "id": "betelgeuse",
+        "name": "Betelgeuse (\u03b1 Ori)",
+        "x": -160.0,
+        "y": 120.0,
+        "z": 220.0,
+        "desc": "Red Supergiant in Orion shoulder",
+        "tags": [
+          "asterism",
+          "orion",
+          "supergiant"
+        ]
+      },
+      {
+        "id": "rigel",
+        "name": "Rigel (\u03b2 Ori)",
+        "x": -100.0,
+        "y": -120.0,
+        "z": 240.0,
+        "desc": "Blue Supergiant in Orion foot",
+        "tags": [
+          "asterism",
+          "orion",
+          "supergiant"
+        ]
+      },
+      {
+        "id": "bellatrix",
+        "name": "Bellatrix (\u03b3 Ori)",
+        "x": -100.0,
+        "y": 100.0,
+        "z": 200.0,
+        "desc": "Amazon Star in Orion",
+        "tags": [
+          "asterism",
+          "orion"
+        ]
+      },
+      {
+        "id": "saiph",
+        "name": "Saiph (\u03ba Ori)",
+        "x": -150.0,
+        "y": -110.0,
+        "z": 210.0,
+        "desc": "Southern star in Orion",
+        "tags": [
+          "asterism",
+          "orion"
+        ]
+      },
+      {
+        "id": "alnitak",
+        "name": "Alnitak (\u03b6 Ori)",
+        "x": -130.0,
+        "y": 0.0,
+        "z": 220.0,
+        "desc": "Eastern star of Orion Belt",
+        "tags": [
+          "asterism",
+          "orion",
+          "belt"
+        ]
+      },
+      {
+        "id": "alnilam",
+        "name": "Alnilam (\u03b5 Ori)",
+        "x": -120.0,
+        "y": 5.0,
+        "z": 215.0,
+        "desc": "Center star of Orion Belt",
+        "tags": [
+          "asterism",
+          "orion",
+          "belt"
+        ]
+      },
+      {
+        "id": "mintaka",
+        "name": "Mintaka (\u03b4 Ori)",
+        "x": -110.0,
+        "y": 10.0,
+        "z": 210.0,
+        "desc": "Western star of Orion Belt",
+        "tags": [
+          "asterism",
+          "orion",
+          "belt"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        6
+      ],
+      [
+        6,
+        5
+      ],
+      [
+        5,
+        4
+      ],
+      [
+        4,
+        0
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        1,
+        3
+      ]
+    ]
+  },
+  {
+    "id": "ursa_major",
+    "label": "Ursa Major (Big Dipper)",
+    "stars": [
+      {
+        "id": "dubhe",
+        "name": "Dubhe (\u03b1 UMa)",
+        "x": 180.0,
+        "y": 220.0,
+        "z": -150.0,
+        "desc": "Pointer star to Polaris",
+        "tags": [
+          "asterism",
+          "ursa_major",
+          "dipper"
+        ]
+      },
+      {
+        "id": "merak",
+        "name": "Merak (\u03b2 UMa)",
+        "x": 160.0,
+        "y": 170.0,
+        "z": -140.0,
+        "desc": "Pointer star to Polaris",
+        "tags": [
+          "asterism",
+          "ursa_major",
+          "dipper"
+        ]
+      },
+      {
+        "id": "phecda",
+        "name": "Phecda (\u03b3 UMa)",
+        "x": 220.0,
+        "y": 160.0,
+        "z": -160.0,
+        "desc": "Bowl star of Big Dipper",
+        "tags": [
+          "asterism",
+          "ursa_major",
+          "dipper"
+        ]
+      },
+      {
+        "id": "megrez",
+        "name": "Megrez (\u03b4 UMa)",
+        "x": 230.0,
+        "y": 200.0,
+        "z": -170.0,
+        "desc": "Connecting star of the handle",
+        "tags": [
+          "asterism",
+          "ursa_major",
+          "dipper"
+        ]
+      },
+      {
+        "id": "alioth",
+        "name": "Alioth (\u03b5 UMa)",
+        "x": 280.0,
+        "y": 210.0,
+        "z": -180.0,
+        "desc": "Brightest star in Ursa Major",
+        "tags": [
+          "asterism",
+          "ursa_major",
+          "dipper"
+        ]
+      },
+      {
+        "id": "mizar",
+        "name": "Mizar (\u03b6 UMa)",
+        "x": 320.0,
+        "y": 230.0,
+        "z": -190.0,
+        "desc": "Famous visual double star with Alcor",
+        "tags": [
+          "asterism",
+          "ursa_major",
+          "dipper"
+        ]
+      },
+      {
+        "id": "alkaid",
+        "name": "Alkaid (\u03b7 UMa)",
+        "x": 360.0,
+        "y": 220.0,
+        "z": -200.0,
+        "desc": "Tip of the Great Bear tail",
+        "tags": [
+          "asterism",
+          "ursa_major",
+          "dipper"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        4,
+        5
+      ],
+      [
+        5,
+        6
+      ]
+    ]
+  },
+  {
+    "id": "ursa_minor",
+    "label": "Ursa Minor (Little Dipper)",
+    "stars": [
+      {
+        "id": "polaris",
+        "name": "Polaris (\u03b1 UMi)",
+        "x": 0.0,
+        "y": 380.0,
+        "z": -100.0,
+        "desc": "The North Star, celestial anchor of rotation",
+        "tags": [
+          "asterism",
+          "ursa_minor",
+          "pole"
+        ]
+      },
+      {
+        "id": "kochab",
+        "name": "Kochab (\u03b2 UMi)",
+        "x": 40.0,
+        "y": 320.0,
+        "z": -120.0,
+        "desc": "Guardian of the Celestial Pole",
+        "tags": [
+          "asterism",
+          "ursa_minor"
+        ]
+      },
+      {
+        "id": "pherkad",
+        "name": "Pherkad (\u03b3 UMi)",
+        "x": 60.0,
+        "y": 330.0,
+        "z": -130.0,
+        "desc": "The Dim One in the Little Bear",
+        "tags": [
+          "asterism",
+          "ursa_minor"
+        ]
+      },
+      {
+        "id": "yildun",
+        "name": "Yildun (\u03b4 UMi)",
+        "x": 20.0,
+        "y": 360.0,
+        "z": -110.0,
+        "desc": "Handle star of the Little Dipper",
+        "tags": [
+          "asterism",
+          "ursa_minor"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        3
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        1,
+        2
+      ]
+    ]
+  },
+  {
+    "id": "cassiopeia",
+    "label": "Cassiopeia (The Queen)",
+    "stars": [
+      {
+        "id": "schedar",
+        "name": "Schedar (\u03b1 Cas)",
+        "x": -260.0,
+        "y": 280.0,
+        "z": -100.0,
+        "desc": "Brightest star in Cassiopeia W",
+        "tags": [
+          "asterism",
+          "cassiopeia"
+        ]
+      },
+      {
+        "id": "caph",
+        "name": "Caph (\u03b2 Cas)",
+        "x": -300.0,
+        "y": 260.0,
+        "z": -90.0,
+        "desc": "Western tip of the W",
+        "tags": [
+          "asterism",
+          "cassiopeia"
+        ]
+      },
+      {
+        "id": "gamma_cas",
+        "name": "Navi (\u03b3 Cas)",
+        "x": -240.0,
+        "y": 310.0,
+        "z": -120.0,
+        "desc": "Center peak of Cassiopeia W",
+        "tags": [
+          "asterism",
+          "cassiopeia"
+        ]
+      },
+      {
+        "id": "ruchbah",
+        "name": "Ruchbah (\u03b4 Cas)",
+        "x": -200.0,
+        "y": 290.0,
+        "z": -110.0,
+        "desc": "Knee star of Cassiopeia",
+        "tags": [
+          "asterism",
+          "cassiopeia"
+        ]
+      },
+      {
+        "id": "segin",
+        "name": "Segin (\u03b5 Cas)",
+        "x": -170.0,
+        "y": 310.0,
+        "z": -130.0,
+        "desc": "Eastern tip of Cassiopeia W",
+        "tags": [
+          "asterism",
+          "cassiopeia"
+        ]
+      }
+    ],
+    "links": [
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        4
+      ]
+    ]
+  },
+  {
+    "id": "cygnus",
+    "label": "Cygnus (Northern Cross)",
+    "stars": [
+      {
+        "id": "deneb",
+        "name": "Deneb (\u03b1 Cyg)",
+        "x": 50.0,
+        "y": 320.0,
+        "z": 100.0,
+        "desc": "Supergiant star in the Summer Triangle",
+        "tags": [
+          "asterism",
+          "cygnus",
+          "summer_triangle"
+        ]
+      },
+      {
+        "id": "albireo",
+        "name": "Albireo (\u03b2 Cyg)",
+        "x": -50.0,
+        "y": 200.0,
+        "z": 60.0,
+        "desc": "Famous gold and blue binary star",
+        "tags": [
+          "asterism",
+          "cygnus"
+        ]
+      },
+      {
+        "id": "sadr",
+        "name": "Sadr (\u03b3 Cyg)",
+        "x": 0.0,
+        "y": 270.0,
+        "z": 80.0,
+        "desc": "Center of the Northern Cross",
+        "tags": [
+          "asterism",
+          "cygnus"
+        ]
+      },
+      {
+        "id": "gienah",
+        "name": "Gienah (\u03b5 Cyg)",
+        "x": 60.0,
+        "y": 250.0,
+        "z": 50.0,
+        "desc": "Eastern wing of Cygnus",
+        "tags": [
+          "asterism",
+          "cygnus"
+        ]
+      },
+      {
+        "id": "fawaris",
+        "name": "Delta Cygni",
+        "x": -60.0,
+        "y": 280.0,
+        "z": 110.0,
+        "desc": "Western wing of Cygnus",
+        "tags": [
+          "asterism",
+          "cygnus"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        4,
+        2
+      ],
+      [
+        2,
+        3
+      ]
+    ]
+  },
+  {
+    "id": "lyra",
+    "label": "Lyra (The Harp)",
+    "stars": [
+      {
+        "id": "vega",
+        "name": "Vega (\u03b1 Lyr)",
+        "x": -40.0,
+        "y": 290.0,
+        "z": 130.0,
+        "desc": "The standard star of zero magnitude",
+        "tags": [
+          "asterism",
+          "lyra",
+          "summer_triangle"
+        ]
+      },
+      {
+        "id": "sheliak",
+        "name": "Sheliak (\u03b2 Lyr)",
+        "x": -30.0,
+        "y": 260.0,
+        "z": 150.0,
+        "desc": "Prototype eclipsing binary variable",
+        "tags": [
+          "asterism",
+          "lyra"
+        ]
+      },
+      {
+        "id": "sulafat",
+        "name": "Sulafat (\u03b3 Lyr)",
+        "x": -10.0,
+        "y": 250.0,
+        "z": 160.0,
+        "desc": "The Tortoise shell star",
+        "tags": [
+          "asterism",
+          "lyra"
+        ]
+      },
+      {
+        "id": "delta_lyr",
+        "name": "Delta Lyrae",
+        "x": -20.0,
+        "y": 280.0,
+        "z": 140.0,
+        "desc": "Visual double in Lyra diamond",
+        "tags": [
+          "asterism",
+          "lyra"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        3
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ]
+    ]
+  },
+  {
+    "id": "pegasus",
+    "label": "Pegasus (The Great Square)",
+    "stars": [
+      {
+        "id": "markab",
+        "name": "Markab (\u03b1 Peg)",
+        "x": 120.0,
+        "y": 180.0,
+        "z": -260.0,
+        "desc": "Corner of the Great Square",
+        "tags": [
+          "asterism",
+          "pegasus"
+        ]
+      },
+      {
+        "id": "scheat",
+        "name": "Scheat (\u03b2 Peg)",
+        "x": 130.0,
+        "y": 240.0,
+        "z": -280.0,
+        "desc": "Red giant corner of the Great Square",
+        "tags": [
+          "asterism",
+          "pegasus"
+        ]
+      },
+      {
+        "id": "algenib",
+        "name": "Algenib (\u03b3 Peg)",
+        "x": 190.0,
+        "y": 170.0,
+        "z": -240.0,
+        "desc": "Wing corner of the Great Square",
+        "tags": [
+          "asterism",
+          "pegasus"
+        ]
+      },
+      {
+        "id": "enif",
+        "name": "Enif (\u03b5 Peg)",
+        "x": 50.0,
+        "y": 150.0,
+        "z": -280.0,
+        "desc": "Nose star of the winged horse",
+        "tags": [
+          "asterism",
+          "pegasus"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        0,
+        3
+      ]
+    ]
+  },
+  {
+    "id": "andromeda",
+    "label": "Andromeda (The Chained Maiden)",
+    "stars": [
+      {
+        "id": "alpheratz",
+        "name": "Alpheratz (\u03b1 And)",
+        "x": 200.0,
+        "y": 230.0,
+        "z": -260.0,
+        "desc": "Shared anchor star with Pegasus Square",
+        "tags": [
+          "asterism",
+          "andromeda"
+        ]
+      },
+      {
+        "id": "mirach",
+        "name": "Mirach (\u03b2 And)",
+        "x": 240.0,
+        "y": 270.0,
+        "z": -230.0,
+        "desc": "Guide star to the Andromeda Galaxy (M31)",
+        "tags": [
+          "asterism",
+          "andromeda"
+        ]
+      },
+      {
+        "id": "almach",
+        "name": "Almach (\u03b3 And)",
+        "x": 280.0,
+        "y": 310.0,
+        "z": -200.0,
+        "desc": "Multi-color quadruple star system",
+        "tags": [
+          "asterism",
+          "andromeda"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ]
+    ]
+  },
+  {
+    "id": "draco",
+    "label": "Draco (The Dragon)",
+    "stars": [
+      {
+        "id": "thuban",
+        "name": "Thuban (\u03b1 Dra)",
+        "x": 120.0,
+        "y": 360.0,
+        "z": -80.0,
+        "desc": "Ancient North Pole Star of Egypt",
+        "tags": [
+          "asterism",
+          "draco",
+          "pole"
+        ]
+      },
+      {
+        "id": "rastaban",
+        "name": "Rastaban (\u03b2 Dra)",
+        "x": 80.0,
+        "y": 310.0,
+        "z": 20.0,
+        "desc": "Eye of the Dragon",
+        "tags": [
+          "asterism",
+          "draco"
+        ]
+      },
+      {
+        "id": "eltanin",
+        "name": "Eltanin (\u03b3 Dra)",
+        "x": 90.0,
+        "y": 290.0,
+        "z": 40.0,
+        "desc": "Head of the Dragon",
+        "tags": [
+          "asterism",
+          "draco"
+        ]
+      },
+      {
+        "id": "alwaid",
+        "name": "Nu Draconis",
+        "x": 110.0,
+        "y": 300.0,
+        "z": 30.0,
+        "desc": "Nose of the Dragon",
+        "tags": [
+          "asterism",
+          "draco"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        1
+      ]
+    ]
+  },
+  {
+    "id": "crux",
+    "label": "Crux (Southern Cross)",
+    "stars": [
+      {
+        "id": "acrux",
+        "name": "Acrux (\u03b1 Cru)",
+        "x": -80.0,
+        "y": -320.0,
+        "z": -120.0,
+        "desc": "Brightest star in the Southern Cross",
+        "tags": [
+          "asterism",
+          "crux"
+        ]
+      },
+      {
+        "id": "mimosa",
+        "name": "Mimosa (\u03b2 Cru)",
+        "x": -50.0,
+        "y": -300.0,
+        "z": -100.0,
+        "desc": "Eastern jewel of the Southern Cross",
+        "tags": [
+          "asterism",
+          "crux"
+        ]
+      },
+      {
+        "id": "gacrux",
+        "name": "Gacrux (\u03b3 Cru)",
+        "x": -80.0,
+        "y": -270.0,
+        "z": -130.0,
+        "desc": "Red giant head of the Cross",
+        "tags": [
+          "asterism",
+          "crux"
+        ]
+      },
+      {
+        "id": "imodi",
+        "name": "Delta Crucis",
+        "x": -100.0,
+        "y": -290.0,
+        "z": -110.0,
+        "desc": "Western arm of the Cross",
+        "tags": [
+          "asterism",
+          "crux"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        2
+      ],
+      [
+        3,
+        1
+      ]
+    ]
+  },
+  {
+    "id": "centaurus",
+    "label": "Centaurus (The Centaur)",
+    "stars": [
+      {
+        "id": "rigil_kent",
+        "name": "Alpha Centauri",
+        "x": -120.0,
+        "y": -340.0,
+        "z": -70.0,
+        "desc": "Nearest star system to our Sun",
+        "tags": [
+          "asterism",
+          "centaurus"
+        ]
+      },
+      {
+        "id": "hadar",
+        "name": "Hadar (\u03b2 Cen)",
+        "x": -90.0,
+        "y": -330.0,
+        "z": -80.0,
+        "desc": "Southern Pointer to Crux",
+        "tags": [
+          "asterism",
+          "centaurus"
+        ]
+      },
+      {
+        "id": "menkent",
+        "name": "Menkent (\u03b8 Cen)",
+        "x": -140.0,
+        "y": -260.0,
+        "z": -40.0,
+        "desc": "Shoulder of the Centaur",
+        "tags": [
+          "asterism",
+          "centaurus"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ]
+    ]
+  },
+  {
+    "id": "hercules",
+    "label": "Hercules (The Kneeler)",
+    "stars": [
+      {
+        "id": "rasalgethi",
+        "name": "Rasalgethi (\u03b1 Her)",
+        "x": 10.0,
+        "y": 140.0,
+        "z": 140.0,
+        "desc": "Head of the Kneeler, red supergiant binary",
+        "tags": [
+          "asterism",
+          "hercules"
+        ]
+      },
+      {
+        "id": "kornephoros",
+        "name": "Kornephoros (\u03b2 Her)",
+        "x": 30.0,
+        "y": 160.0,
+        "z": 160.0,
+        "desc": "Club bearer star of Hercules",
+        "tags": [
+          "asterism",
+          "hercules"
+        ]
+      },
+      {
+        "id": "sarir",
+        "name": "Zeta Herculis",
+        "x": 50.0,
+        "y": 190.0,
+        "z": 130.0,
+        "desc": "Keystone star of the Hercules Quadrangle",
+        "tags": [
+          "asterism",
+          "hercules"
+        ]
+      },
+      {
+        "id": "pi_her",
+        "name": "Pi Herculis",
+        "x": 20.0,
+        "y": 210.0,
+        "z": 110.0,
+        "desc": "Top corner of the Keystone",
+        "tags": [
+          "asterism",
+          "hercules"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        0
+      ]
+    ]
+  },
+  {
+    "id": "cepheus",
+    "label": "Cepheus (The King)",
+    "stars": [
+      {
+        "id": "alderamin",
+        "name": "Alderamin (\u03b1 Cep)",
+        "x": -180.0,
+        "y": 360.0,
+        "z": -160.0,
+        "desc": "Future North Star in 7500 AD",
+        "tags": [
+          "asterism",
+          "cepheus"
+        ]
+      },
+      {
+        "id": "alfirk",
+        "name": "Alfirk (\u03b2 Cep)",
+        "x": -220.0,
+        "y": 370.0,
+        "z": -140.0,
+        "desc": "Prototype pulsating star",
+        "tags": [
+          "asterism",
+          "cepheus"
+        ]
+      },
+      {
+        "id": "errai",
+        "name": "Errai (\u03b3 Cep)",
+        "x": -150.0,
+        "y": 390.0,
+        "z": -180.0,
+        "desc": "First exoplanet discovered around giant star",
+        "tags": [
+          "asterism",
+          "cepheus"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ]
+    ]
+  },
+  {
+    "id": "perseus",
+    "label": "Perseus (The Hero)",
+    "stars": [
+      {
+        "id": "mirfak",
+        "name": "Mirfak (\u03b1 Per)",
+        "x": -160.0,
+        "y": 240.0,
+        "z": 10.0,
+        "desc": "Brightest star in Perseus constellation",
+        "tags": [
+          "asterism",
+          "perseus"
+        ]
+      },
+      {
+        "id": "algol",
+        "name": "Algol (\u03b2 Per)",
+        "x": -190.0,
+        "y": 200.0,
+        "z": 30.0,
+        "desc": "The Demon Star, famous eclipsing variable",
+        "tags": [
+          "asterism",
+          "perseus",
+          "variable"
+        ]
+      },
+      {
+        "id": "menkib",
+        "name": "Menkib (\u03be Per)",
+        "x": -130.0,
+        "y": 210.0,
+        "z": 0.0,
+        "desc": "Ionizing star of California Nebula",
+        "tags": [
+          "asterism",
+          "perseus"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ]
+    ]
+  },
+  {
+    "id": "bootes",
+    "label": "Bootes (The Herdsman)",
+    "stars": [
+      {
+        "id": "arcturus",
+        "name": "Arcturus (\u03b1 Boo)",
+        "x": 180.0,
+        "y": 190.0,
+        "z": 20.0,
+        "desc": "Brightest star in northern celestial hemisphere",
+        "tags": [
+          "asterism",
+          "bootes",
+          "giant"
+        ]
+      },
+      {
+        "id": "nekkar",
+        "name": "Nekkar (\u03b2 Boo)",
+        "x": 200.0,
+        "y": 240.0,
+        "z": -10.0,
+        "desc": "Head of the Herdsman",
+        "tags": [
+          "asterism",
+          "bootes"
+        ]
+      },
+      {
+        "id": "izhar",
+        "name": "Izar (\u03b5 Boo)",
+        "x": 190.0,
+        "y": 220.0,
+        "z": 10.0,
+        "desc": "Pulcherrima, most beautiful double star",
+        "tags": [
+          "asterism",
+          "bootes"
+        ]
+      },
+      {
+        "id": "muphrid",
+        "name": "Muphrid (\u03b7 Boo)",
+        "x": 160.0,
+        "y": 170.0,
+        "z": 40.0,
+        "desc": "Foot star of the Herdsman",
+        "tags": [
+          "asterism",
+          "bootes"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        3
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        1
+      ]
+    ]
+  },
+  {
+    "id": "vela",
+    "label": "Vela (The Sails)",
+    "stars": [
+      {
+        "id": "suhail",
+        "name": "Suhail (\u03b3 Vel)",
+        "x": -120.0,
+        "y": -280.0,
+        "z": -180.0,
+        "desc": "Regor, Spectral Gem of Southern Skies",
+        "tags": [
+          "asterism",
+          "vela"
+        ]
+      },
+      {
+        "id": "al_suhail",
+        "name": "Al Suhail (\u03bb Vel)",
+        "x": -150.0,
+        "y": -250.0,
+        "z": -160.0,
+        "desc": "Supergiant orange masthead",
+        "tags": [
+          "asterism",
+          "vela"
+        ]
+      },
+      {
+        "id": "markeb",
+        "name": "Markeb (\u03ba Vel)",
+        "x": -90.0,
+        "y": -300.0,
+        "z": -190.0,
+        "desc": "Anchor of the Sails",
+        "tags": [
+          "asterism",
+          "vela"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ]
+    ]
+  },
+  {
+    "id": "puppis",
+    "label": "Puppis (The Stern)",
+    "stars": [
+      {
+        "id": "naos",
+        "name": "Naos (\u03b6 Pup)",
+        "x": -160.0,
+        "y": -220.0,
+        "z": -220.0,
+        "desc": "Hottest O-type star visible to naked eye",
+        "tags": [
+          "asterism",
+          "puppis"
+        ]
+      },
+      {
+        "id": "ahadi",
+        "name": "Pi Puppis",
+        "x": -190.0,
+        "y": -200.0,
+        "z": -200.0,
+        "desc": "Orange supergiant in the Stern",
+        "tags": [
+          "asterism",
+          "puppis"
+        ]
+      },
+      {
+        "id": "tseen_ke",
+        "name": "Xi Puppis",
+        "x": -140.0,
+        "y": -230.0,
+        "z": -240.0,
+        "desc": "Keel deck star",
+        "tags": [
+          "asterism",
+          "puppis"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ]
+    ]
+  },
+  {
+    "id": "pavo",
+    "label": "Pavo (The Peacock)",
+    "stars": [
+      {
+        "id": "peacock",
+        "name": "Peacock (\u03b1 Pav)",
+        "x": -220.0,
+        "y": -320.0,
+        "z": 40.0,
+        "desc": "Spectroscopic binary eye of the Peacock",
+        "tags": [
+          "asterism",
+          "pavo"
+        ]
+      },
+      {
+        "id": "beta_pav",
+        "name": "Beta Pavonis",
+        "x": -250.0,
+        "y": -300.0,
+        "z": 60.0,
+        "desc": "Neck star of the Peacock",
+        "tags": [
+          "asterism",
+          "pavo"
+        ]
+      },
+      {
+        "id": "delta_pav",
+        "name": "Delta Pavonis",
+        "x": -200.0,
+        "y": -340.0,
+        "z": 30.0,
+        "desc": "Solar twin star close to Earth",
+        "tags": [
+          "asterism",
+          "pavo"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ]
+    ]
+  },
+  {
+    "id": "auriga",
+    "label": "Auriga (The Charioteer)",
+    "stars": [
+      {
+        "id": "capella",
+        "name": "Capella (\u03b1 Aur)",
+        "x": -120.0,
+        "y": 260.0,
+        "z": -80.0,
+        "desc": "The Little Goat, brilliant quadruple star",
+        "tags": [
+          "asterism",
+          "auriga"
+        ]
+      },
+      {
+        "id": "menkalinan",
+        "name": "Menkalinan (\u03b2 Aur)",
+        "x": -90.0,
+        "y": 240.0,
+        "z": -90.0,
+        "desc": "Shoulder of the Charioteer",
+        "tags": [
+          "asterism",
+          "auriga"
+        ]
+      },
+      {
+        "id": "mahasim",
+        "name": "Theta Aurigae",
+        "x": -70.0,
+        "y": 210.0,
+        "z": -70.0,
+        "desc": "Ankle of the Charioteer",
+        "tags": [
+          "asterism",
+          "auriga"
+        ]
+      },
+      {
+        "id": "al_anj",
+        "name": "Iota Aurigae",
+        "x": -130.0,
+        "y": 220.0,
+        "z": -50.0,
+        "desc": "Horn star of Auriga",
+        "tags": [
+          "asterism",
+          "auriga"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        0
+      ]
+    ]
+  },
+  {
+    "id": "lupus",
+    "label": "Lupus (The Wolf)",
+    "stars": [
+      {
+        "id": "men",
+        "name": "Men (\u03b1 Lup)",
+        "x": 140.0,
+        "y": -240.0,
+        "z": 90.0,
+        "desc": "The Blue Giant Wolf star",
+        "tags": [
+          "asterism",
+          "lupus"
+        ]
+      },
+      {
+        "id": "kelewan",
+        "name": "Beta Lupis",
+        "x": 160.0,
+        "y": -220.0,
+        "z": 100.0,
+        "desc": "Northern paw of the Wolf",
+        "tags": [
+          "asterism",
+          "lupus"
+        ]
+      },
+      {
+        "id": "gamma_lup",
+        "name": "Gamma Lupis",
+        "x": 130.0,
+        "y": -260.0,
+        "z": 80.0,
+        "desc": "Body star of the Wolf",
+        "tags": [
+          "asterism",
+          "lupus"
+        ]
+      }
+    ],
+    "links": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ]
+    ]
+  }
+]

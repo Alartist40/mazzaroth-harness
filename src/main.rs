@@ -15,7 +15,7 @@ struct Cli {
     #[arg(short, long, default_value = "data/mazzaroth.db")]
     db: PathBuf,
 
-    #[arg(long, default_value = "bibles")]
+    #[arg(long, default_value = "galaxy/data/bibles")]
     bibles_dir: PathBuf,
 
     #[arg(long)]
@@ -41,10 +41,18 @@ async fn main() -> anyhow::Result<()> {
     info!(db_path = ?cli.db, "Opening Mazzaroth cognitive storage");
     let engine = MazzarothEngine::open(&cli.db)?;
 
+    let resolved_bibles_dir = if cli.bibles_dir.exists() {
+        cli.bibles_dir
+    } else if PathBuf::from("bibles").exists() {
+        PathBuf::from("bibles")
+    } else {
+        cli.bibles_dir
+    };
+
     // If database is new or --import-corpus is passed, import the large multilingual corpus
-    if (cli.import_corpus || engine.store.count_nodes()? <= 2) && cli.bibles_dir.exists() {
-        info!("Seeding Mazzaroth Celestial Galaxy with multilingual corpus from {:?}", cli.bibles_dir);
-        let count = CorpusImporter::import_bibles_directory(&engine, &cli.bibles_dir, 60, 10)?;
+    if (cli.import_corpus || engine.store.count_nodes()? <= 2) && resolved_bibles_dir.exists() {
+        info!("Seeding Mazzaroth Celestial Galaxy with multilingual corpus from {:?}", resolved_bibles_dir);
+        let count = CorpusImporter::import_bibles_directory(&engine, &resolved_bibles_dir, 60, 10)?;
         info!(imported_nodes = count, "Corpus seeded into Mazzaroth Galaxy");
     }
 
