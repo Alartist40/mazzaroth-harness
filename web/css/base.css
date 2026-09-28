@@ -587,3 +587,24 @@ button.action-btn:hover {
 .verse-text {
   flex: 1;
 }
+
+/* Drilldown Path & List Header */
+.drill-path {
+  font-size: 0.72rem;
+  color: var(--accent-cyan);
+  padding: 4px 8px;
+  background: rgba(87, 215, 255, 0.08);
+  border: 1px solid var(--hairline-bright);
+  border-radius: 2px;
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.drill-list-header {
+  font-size: 0.68rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}

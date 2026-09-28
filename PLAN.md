@@ -21,7 +21,7 @@ Execute **Stage S29 (UX STABILIZATION)**: (1) section-switch state isolation, (2
 
 ## 1. Stages
 
-- **S29 — UX STABILIZATION** [PENDING] — OWNS: `web/js/main.js`, `web/index.html`, `web/css/base.css`.
+- **S29 — UX STABILIZATION** [DONE] — OWNS: `web/js/main.js`, `web/index.html`, `web/css/base.css`.
   a) `switchSection` resets: closeHud, hide tooltip, clear `#selection-overlay-svg`, hide nav crumbs,
   `drilldownState = step 1`, clear search input. b) Sidebar: persistent path chips (`#drill-path`),
   per-step list header (`#drill-list-header`, e.g. "60 languages — pick one"), step-1 hint line,

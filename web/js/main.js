@@ -266,11 +266,33 @@ let scene, camera, renderer, controls;
         sections[currentSection].mount();
       }
 
-      document.querySelectorAll('.top-btn').forEach(btn => {
-        if (btn.id === 'tab-' + sectionId) {
-          btn.classList.add('active');
-        } else if (btn.id && btn.id.startsWith('tab-')) {
-          btn.classList.remove('active');
+      // Full cross-section UI isolation & state reset
+      closeHud();
+      const tooltip = document.getElementById("node-hover-tooltip");
+      if (tooltip) tooltip.style.display = "none";
+      const overlay = document.getElementById("selection-overlay-svg");
+      if (overlay) overlay.innerHTML = "";
+
+      const sep1 = document.getElementById("sep-1");
+      const navLang = document.getElementById("nav-lang");
+      const sep2 = document.getElementById("sep-2");
+      const navVersion = document.getElementById("nav-version");
+      if (sep1) sep1.style.display = "none";
+      if (navLang) navLang.style.display = "none";
+      if (sep2) sep2.style.display = "none";
+      if (navVersion) navVersion.style.display = "none";
+
+      drilldownState.step = 1;
+      drilldownState.filterQuery = "";
+      drilldownState.booksMeta = [];
+      const searchInput = document.getElementById("search-query");
+      if (searchInput) searchInput.value = "";
+
+      document.querySelectorAll(".top-btn").forEach(btn => {
+        if (btn.id === "tab-" + sectionId) {
+          btn.classList.add("active");
+        } else if (btn.id && btn.id.startsWith("tab-")) {
+          btn.classList.remove("active");
         }
       });
 
@@ -496,11 +518,15 @@ let scene, camera, renderer, controls;
       const list = document.getElementById("cluster-list");
       const badge = document.getElementById("drilldown-step-label");
       const backBtn = document.getElementById("drilldown-back-btn");
+      const drillPath = document.getElementById("drill-path");
+      const listHeader = document.getElementById("drill-list-header");
       if (!list || !badge) return;
 
       if (currentSection === "constellations") {
         badge.textContent = "CONSTELLATIONS & ASTERISMS";
         if (backBtn) backBtn.classList.add("is-hidden");
+        if (drillPath) drillPath.classList.add("is-hidden");
+        if (listHeader) listHeader.textContent = "32 Classical constellations & asterisms";
         return renderConstellationsList();
       }
 
@@ -510,12 +536,15 @@ let scene, camera, renderer, controls;
       if (drilldownState.step === 1) {
         badge.textContent = "STEP 1: SELECT LANGUAGE";
         if (backBtn) backBtn.classList.add("is-hidden");
+        if (drillPath) drillPath.classList.add("is-hidden");
 
         const langBodies = (galaxyData ? galaxyData.bodies : []).filter(b => b.id.includes(":lang:"));
         let filtered = langBodies;
         if (q) {
           filtered = langBodies.filter(b => b.label.toLowerCase().includes(q) || b.id.toLowerCase().includes(q));
         }
+
+        if (listHeader) listHeader.textContent = `${filtered.length} languages — pick one to explore`;
 
         filtered.forEach(b => {
           const item = document.createElement("div");
@@ -526,8 +555,12 @@ let scene, camera, renderer, controls;
           list.appendChild(item);
         });
       } else if (drilldownState.step === 2) {
-        badge.textContent = `STEP 2: ${drilldownState.lang.toUpperCase()} VERSIONS`;
+        badge.textContent = `STEP 2: TRANSLATION VERSION`;
         if (backBtn) backBtn.classList.remove("is-hidden");
+        if (drillPath) {
+          drillPath.textContent = `${drilldownState.langName || drilldownState.lang.toUpperCase()}`;
+          drillPath.classList.remove("is-hidden");
+        }
 
         let versions = [];
         try {
@@ -538,6 +571,8 @@ let scene, camera, renderer, controls;
         if (versions.length === 0) versions = ["kjv"];
         if (q) versions = versions.filter(v => v.toLowerCase().includes(q));
 
+        if (listHeader) listHeader.textContent = `${versions.length} versions in ${drilldownState.lang.toUpperCase()} — pick translation`;
+
         versions.forEach(v => {
           const item = document.createElement("div");
           item.className = "cluster-item";
@@ -546,8 +581,12 @@ let scene, camera, renderer, controls;
           list.appendChild(item);
         });
       } else if (drilldownState.step === 3) {
-        badge.textContent = `STEP 3: ${drilldownState.version.toUpperCase()} BOOKS`;
+        badge.textContent = `STEP 3: SELECT BOOK`;
         if (backBtn) backBtn.classList.remove("is-hidden");
+        if (drillPath) {
+          drillPath.textContent = `${drilldownState.lang.toUpperCase()} › ${drilldownState.version.toUpperCase()}`;
+          drillPath.classList.remove("is-hidden");
+        }
 
         if (!drilldownState.booksMeta || drilldownState.booksMeta.length === 0) {
           try {
@@ -562,6 +601,8 @@ let scene, camera, renderer, controls;
         let books = drilldownState.booksMeta;
         if (q) books = books.filter(b => b.name.toLowerCase().includes(q));
 
+        if (listHeader) listHeader.textContent = `${books.length} books in ${drilldownState.version.toUpperCase()} — pick scripture`;
+
         books.forEach(b => {
           const item = document.createElement("div");
           item.className = "cluster-item";
@@ -570,8 +611,14 @@ let scene, camera, renderer, controls;
           list.appendChild(item);
         });
       } else if (drilldownState.step === 4) {
-        badge.textContent = `STEP 4: ${drilldownState.book.toUpperCase()} CHAPTERS`;
+        badge.textContent = `STEP 4: CHAPTER`;
         if (backBtn) backBtn.classList.remove("is-hidden");
+        if (drillPath) {
+          drillPath.textContent = `${drilldownState.lang.toUpperCase()} › ${drilldownState.version.toUpperCase()} › ${drilldownState.book}`;
+          drillPath.classList.remove("is-hidden");
+        }
+
+        if (listHeader) listHeader.textContent = `${drilldownState.book} (${drilldownState.totalChapters} chapters) — open reading pane`;
 
         for (let i = 1; i <= drilldownState.totalChapters; i++) {
           if (q && !String(i).includes(q)) continue;
@@ -957,7 +1004,13 @@ let scene, camera, renderer, controls;
     }
 
     async function searchGalaxy() {
-      const query = document.getElementById('search-query').value.trim();
+      const list = document.getElementById("cluster-list");
+      if (list && list.firstElementChild) {
+        list.firstElementChild.click();
+        return;
+      }
+
+      const query = document.getElementById("search-query").value.trim();
       if (!query) return;
 
       const res = await fetch(`/api/memory/recall?q=${encodeURIComponent(query)}&limit=5`);
