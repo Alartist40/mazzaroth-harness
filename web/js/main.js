@@ -422,61 +422,261 @@ let scene, camera, renderer, controls;
       }
     }
 
+    const drilldownState = {
+      step: 1,
+      lang: "eng",
+      langName: "English",
+      version: "kjv",
+      book: "Genesis",
+      chapter: 1,
+      totalChapters: 50,
+      filterQuery: "",
+      booksMeta: []
+    };
+
     function populateClusterSidebar(data) {
-      const list = document.getElementById('cluster-list');
-      list.innerHTML = '';
+      renderDrilldown();
+    }
 
-      if (currentSection === 'constellations') {
-        const zodiacSigns = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpius', 'sagittarius', 'capricornus', 'aquarius', 'pisces'];
-        const zodiacBodies = [];
-        const asterismBodies = [];
+    function renderConstellationsList() {
+      const list = document.getElementById("cluster-list");
+      if (!list || !currentCelestialData) return;
+      list.innerHTML = "";
+      const q = (drilldownState.filterQuery || "").toLowerCase().trim();
 
-        data.bodies.forEach(b => {
-          const matchZodiac = zodiacSigns.some(z => b.id.toLowerCase().includes(z));
-          if (matchZodiac) {
-            zodiacBodies.push(b);
-          } else {
-            asterismBodies.push(b);
-          }
-        });
+      const zodiacSigns = ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpius", "sagittarius", "capricornus", "aquarius", "pisces"];
+      const zodiacBodies = [];
+      const asterismBodies = [];
 
-        const zTitle = document.createElement('div');
-        zTitle.className = 'cluster-category-title';
-        zTitle.textContent = `12 Zodiac Constellations (${zodiacBodies.length} Stars)`;
+      currentCelestialData.bodies.forEach(b => {
+        const matchZodiac = zodiacSigns.some(z => b.id.toLowerCase().includes(z));
+        if (matchZodiac) {
+          zodiacBodies.push(b);
+        } else {
+          asterismBodies.push(b);
+        }
+      });
+
+      const zFiltered = q ? zodiacBodies.filter(b => b.label.toLowerCase().includes(q)) : zodiacBodies;
+      const aFiltered = q ? asterismBodies.filter(b => b.label.toLowerCase().includes(q)) : asterismBodies;
+
+      if (zFiltered.length > 0) {
+        const zTitle = document.createElement("div");
+        zTitle.className = "cluster-category-title";
+        zTitle.textContent = `12 Zodiac Constellations (${zFiltered.length} Stars)`;
         list.appendChild(zTitle);
 
-        zodiacBodies.forEach(c => {
-          const item = document.createElement('div');
-          item.className = 'cluster-item';
+        zFiltered.forEach(c => {
+          const item = document.createElement("div");
+          item.className = "cluster-item";
           item.innerHTML = `<span>${cleanLabel(c.label)}</span><span class="cluster-action">LOCK</span>`;
-          item.onclick = () => onSelectStar(c);
-          list.appendChild(item);
-        });
-
-        const aTitle = document.createElement('div');
-        aTitle.className = 'cluster-category-title';
-        aTitle.style.marginTop = '10px';
-        aTitle.textContent = `Major Asterisms (${asterismBodies.length} Stars)`;
-        list.appendChild(aTitle);
-
-        asterismBodies.forEach(c => {
-          const item = document.createElement('div');
-          item.className = 'cluster-item';
-          item.innerHTML = `<span>${cleanLabel(c.label)}</span><span class="cluster-action">LOCK</span>`;
-          item.onclick = () => onSelectStar(c);
-          list.appendChild(item);
-        });
-      } else {
-        const clusters = data.bodies.filter(b => b.id.includes(':lang:'));
-
-        clusters.forEach(c => {
-          const item = document.createElement('div');
-          item.className = 'cluster-item';
-          item.innerHTML = `<span>${cleanLabel(c.label)}</span><span class="cluster-action">WARP</span>`;
           item.onclick = () => onSelectStar(c);
           list.appendChild(item);
         });
       }
+
+      if (aFiltered.length > 0) {
+        const aTitle = document.createElement("div");
+        aTitle.className = "cluster-category-title";
+        aTitle.style.marginTop = "10px";
+        aTitle.textContent = `Major Asterisms (${aFiltered.length} Stars)`;
+        list.appendChild(aTitle);
+
+        aFiltered.forEach(c => {
+          const item = document.createElement("div");
+          item.className = "cluster-item";
+          item.innerHTML = `<span>${cleanLabel(c.label)}</span><span class="cluster-action">LOCK</span>`;
+          item.onclick = () => onSelectStar(c);
+          list.appendChild(item);
+        });
+      }
+    }
+
+    async function renderDrilldown() {
+      const list = document.getElementById("cluster-list");
+      const badge = document.getElementById("drilldown-step-label");
+      const backBtn = document.getElementById("drilldown-back-btn");
+      if (!list || !badge) return;
+
+      if (currentSection === "constellations") {
+        badge.textContent = "CONSTELLATIONS & ASTERISMS";
+        if (backBtn) backBtn.classList.add("is-hidden");
+        return renderConstellationsList();
+      }
+
+      list.innerHTML = "";
+      const q = (drilldownState.filterQuery || "").toLowerCase().trim();
+
+      if (drilldownState.step === 1) {
+        badge.textContent = "STEP 1: SELECT LANGUAGE";
+        if (backBtn) backBtn.classList.add("is-hidden");
+
+        const langBodies = (currentCelestialData ? currentCelestialData.bodies : []).filter(b => b.id.includes(":lang:"));
+        let filtered = langBodies;
+        if (q) {
+          filtered = langBodies.filter(b => b.label.toLowerCase().includes(q) || b.id.toLowerCase().includes(q));
+        }
+
+        filtered.forEach(b => {
+          const item = document.createElement("div");
+          item.className = "cluster-item";
+          const langCode = b.id.split(":").pop();
+          item.innerHTML = `<span>${cleanLabel(b.label)}</span><span class="cluster-action">SELECT →</span>`;
+          item.onclick = () => selectLanguage(langCode, b);
+          list.appendChild(item);
+        });
+      } else if (drilldownState.step === 2) {
+        badge.textContent = `STEP 2: ${drilldownState.lang.toUpperCase()} VERSIONS`;
+        if (backBtn) backBtn.classList.remove("is-hidden");
+
+        let versions = [];
+        try {
+          const res = await fetch(`/api/scripture/versions?lang=${drilldownState.lang}`);
+          if (res.ok) versions = await res.json();
+        } catch (e) {}
+
+        if (versions.length === 0) versions = ["kjv"];
+        if (q) versions = versions.filter(v => v.toLowerCase().includes(q));
+
+        versions.forEach(v => {
+          const item = document.createElement("div");
+          item.className = "cluster-item";
+          item.innerHTML = `<span>${v.toUpperCase()}</span><span class="cluster-action">SELECT →</span>`;
+          item.onclick = () => selectVersion(v);
+          list.appendChild(item);
+        });
+      } else if (drilldownState.step === 3) {
+        badge.textContent = `STEP 3: ${drilldownState.version.toUpperCase()} BOOKS`;
+        if (backBtn) backBtn.classList.remove("is-hidden");
+
+        if (!drilldownState.booksMeta || drilldownState.booksMeta.length === 0) {
+          try {
+            const res = await fetch(`/api/scripture/meta?lang=${drilldownState.lang}&version=${drilldownState.version}`);
+            if (res.ok) {
+              const meta = await res.json();
+              drilldownState.booksMeta = meta.books || [];
+            }
+          } catch (e) {}
+        }
+
+        let books = drilldownState.booksMeta;
+        if (q) books = books.filter(b => b.name.toLowerCase().includes(q));
+
+        books.forEach(b => {
+          const item = document.createElement("div");
+          item.className = "cluster-item";
+          item.innerHTML = `<span>${b.name} (${b.chapters} ch)</span><span class="cluster-action">READ →</span>`;
+          item.onclick = () => selectBook(b.name, b.chapters);
+          list.appendChild(item);
+        });
+      } else if (drilldownState.step === 4) {
+        badge.textContent = `STEP 4: ${drilldownState.book.toUpperCase()} CHAPTERS`;
+        if (backBtn) backBtn.classList.remove("is-hidden");
+
+        for (let i = 1; i <= drilldownState.totalChapters; i++) {
+          if (q && !String(i).includes(q)) continue;
+          const item = document.createElement("div");
+          item.className = "cluster-item";
+          item.innerHTML = `<span>Chapter ${i}</span><span class="cluster-action">OPEN</span>`;
+          item.onclick = () => selectChapter(i);
+          list.appendChild(item);
+        }
+      }
+    }
+
+    function selectLanguage(langCode, body) {
+      drilldownState.lang = langCode;
+      drilldownState.langName = cleanLabel(body.label);
+      drilldownState.step = 2;
+      drilldownState.filterQuery = "";
+      document.getElementById("search-query").value = "";
+      onSelectStar(body);
+      renderDrilldown();
+    }
+
+    function selectVersion(version) {
+      drilldownState.version = version;
+      drilldownState.step = 3;
+      drilldownState.booksMeta = [];
+      drilldownState.filterQuery = "";
+      document.getElementById("search-query").value = "";
+
+      const vBody = currentCelestialData ? currentCelestialData.bodies.find(b => b.id.includes(`:${drilldownState.lang}:`) && b.id.toLowerCase().includes(version.toLowerCase())) : null;
+      if (vBody) onSelectStar(vBody);
+      renderDrilldown();
+    }
+
+    function selectBook(bookName, chaptersCount) {
+      drilldownState.book = bookName;
+      drilldownState.totalChapters = chaptersCount;
+      drilldownState.step = 4;
+      drilldownState.filterQuery = "";
+      document.getElementById("search-query").value = "";
+
+      const bBody = currentCelestialData ? currentCelestialData.bodies.find(b => b.id.toLowerCase().includes(bookName.toLowerCase())) : null;
+      if (bBody) onSelectStar(bBody);
+      renderDrilldown();
+    }
+
+    async function selectChapter(chapterNum) {
+      drilldownState.chapter = chapterNum;
+      await loadScriptureChapter(drilldownState.lang, drilldownState.version, drilldownState.book, chapterNum);
+    }
+
+    function stepBackDrilldown() {
+      if (drilldownState.step > 1) {
+        drilldownState.step -= 1;
+        drilldownState.filterQuery = "";
+        document.getElementById("search-query").value = "";
+        renderDrilldown();
+      }
+    }
+
+    async function loadScriptureChapter(lang, version, book, chapter) {
+      try {
+        const res = await fetch(`/api/scripture?lang=${lang}&version=${version}&book=${encodeURIComponent(book)}&chapter=${chapter}`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        drilldownState.totalChapters = data.total_chapters;
+        drilldownState.chapter = data.chapter;
+
+        document.getElementById("node-name").textContent = `${data.book.toUpperCase()} ${data.chapter}`;
+        document.getElementById("reading-title").textContent = `${data.book} ${data.chapter} (${data.version.toUpperCase()})`;
+
+        const contentDiv = document.getElementById("scripture-content");
+        contentDiv.innerHTML = "";
+
+        data.verses.forEach((v, idx) => {
+          const line = document.createElement("div");
+          line.className = "verse-line";
+          line.innerHTML = `<span class="verse-num">${idx + 1}</span><span class="verse-text">${v}</span>`;
+          contentDiv.appendChild(line);
+        });
+
+        document.getElementById("hud-metadata-view").classList.add("is-hidden");
+        document.getElementById("reading-pane").classList.remove("is-hidden");
+        document.getElementById("hud-panel").style.display = "flex";
+      } catch (e) {
+        console.error("Failed to load scripture chapter", e);
+      }
+    }
+
+    function prevChapter() {
+      if (drilldownState.chapter > 1) {
+        selectChapter(drilldownState.chapter - 1);
+      }
+    }
+
+    function nextChapter() {
+      if (drilldownState.chapter < drilldownState.totalChapters) {
+        selectChapter(drilldownState.chapter + 1);
+      }
+    }
+
+    function onSearchInput(val) {
+      drilldownState.filterQuery = val;
+      renderDrilldown();
     }
 
     // Smart Nearest-Node Locking on Click (Fixes UX issue, guarantees easy clicking)
@@ -886,3 +1086,18 @@ let scene, camera, renderer, controls;
     }
 
     window.onload = init;
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const hud = document.getElementById("hud-panel");
+        const reading = document.getElementById("reading-pane");
+        if (reading && !reading.classList.contains("is-hidden")) {
+          reading.classList.add("is-hidden");
+          document.getElementById("hud-metadata-view").classList.remove("is-hidden");
+        } else if (hud && hud.style.display !== "none") {
+          closeHud();
+        } else if (drilldownState.step > 1) {
+          stepBackDrilldown();
+        }
+      }
+    });

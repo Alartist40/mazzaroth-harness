@@ -46,16 +46,18 @@
       <span class="fps-badge">30 FPS</span>
     </div>
 
-    <input type="text" id="search-query" placeholder="Search memory stars..." onkeydown="if(event.key==='Enter') searchGalaxy()">
+    <input type="text" id="search-query" placeholder="Filter / Search memory stars..." oninput="onSearchInput(this.value)" onkeydown="if(event.key==='Enter') searchGalaxy()">
     <div class="btn-row">
       <button class="action-btn" onclick="searchGalaxy()">Lock Star</button>
       <button class="action-btn" onclick="toggleAutoRotate()">Orbit</button>
       <button class="action-btn" onclick="resetToGalacticView()">Center</button>
     </div>
 
-    <div class="cluster-header-label" id="cluster-header-text">
-      KNOWLEDGE CLUSTERS & SECTORS
+    <div class="drilldown-nav-header" id="drilldown-header">
+      <span class="drilldown-step-badge" id="drilldown-step-label">STEP 1: LANGUAGE</span>
+      <button class="drilldown-back-btn is-hidden" id="drilldown-back-btn" onclick="stepBackDrilldown()">Esc Back</button>
     </div>
+
     <div class="cluster-scroll" id="cluster-list"></div>
 
     <div class="ingest-box">
@@ -74,49 +76,65 @@
       <div class="pulse-dot"></div>
     </div>
 
-    <!-- Orbit System Visualizer + Metadata Readout -->
-    <div class="hud-visual-row">
-      <div class="orbit-box">
-        <svg viewBox="0 0 85 85" class="orbit-svg">
-          <circle cx="42" cy="42" r="7" fill="#ffcc00" filter="drop-shadow(0 0 6px #ffcc00)" />
-          <circle cx="42" cy="42" r="20" fill="none" stroke="#57d7ff" stroke-opacity="0.35" stroke-dasharray="2 3" />
-          <g class="animate-orbit">
-            <circle cx="62" cy="42" r="3" fill="#ff7f00" />
-          </g>
-          <circle cx="42" cy="42" r="32" fill="none" stroke="#57d7ff" stroke-opacity="0.35" stroke-dasharray="2 3" />
-          <g class="animate-orbit-reverse">
-            <circle cx="10" cy="42" r="3.5" fill="#ff007f" />
-            <circle cx="6" cy="39" r="1.5" fill="#ffffff" />
-          </g>
-        </svg>
+    <!-- Standard Stellar Metadata View -->
+    <div id="hud-metadata-view">
+      <div class="hud-visual-row">
+        <div class="orbit-box">
+          <svg viewBox="0 0 85 85" class="orbit-svg">
+            <circle cx="42" cy="42" r="7" fill="#ffcc00" filter="drop-shadow(0 0 6px #ffcc00)" />
+            <circle cx="42" cy="42" r="20" fill="none" stroke="#57d7ff" stroke-opacity="0.35" stroke-dasharray="2 3" />
+            <g class="animate-orbit">
+              <circle cx="62" cy="42" r="3" fill="#ff7f00" />
+            </g>
+            <circle cx="42" cy="42" r="32" fill="none" stroke="#57d7ff" stroke-opacity="0.35" stroke-dasharray="2 3" />
+            <g class="animate-orbit-reverse">
+              <circle cx="10" cy="42" r="3.5" fill="#ff007f" />
+              <circle cx="6" cy="39" r="1.5" fill="#ffffff" />
+            </g>
+          </svg>
+        </div>
+
+        <div class="metadata-col">
+          <div><span class="meta-label">ENTRY ID:</span> <span class="meta-val" id="node-id">0xF72D</span></div>
+          <div><span class="meta-label">CLASS:</span> <span class="meta-val" id="node-class">MEMORY RECORD</span></div>
+          <div><span class="meta-label">TIME:</span> <span class="meta-val" id="node-time">24:15:02 UTC</span></div>
+          <div><span class="meta-label">RADIUS:</span> <span class="meta-val" id="node-radius">341.6 AU</span></div>
+          <div><span class="meta-label">MASS:</span> <span class="meta-val" id="node-mass">0.95</span></div>
+        </div>
       </div>
 
-      <div class="metadata-col">
-        <div><span class="meta-label">ENTRY ID:</span> <span class="meta-val" id="node-id">0xF72D</span></div>
-        <div><span class="meta-label">CLASS:</span> <span class="meta-val" id="node-class">MEMORY RECORD</span></div>
-        <div><span class="meta-label">TIME:</span> <span class="meta-val" id="node-time">24:15:02 UTC</span></div>
-        <div><span class="meta-label">RADIUS:</span> <span class="meta-val" id="node-radius">341.6 AU</span></div>
-        <div><span class="meta-label">MASS:</span> <span class="meta-val" id="node-mass">0.95</span></div>
+      <div class="node-desc-box" id="node-desc">Memory record indexed in second brain matrix.</div>
+
+      <div class="tags-row" id="node-tags"></div>
+
+      <div class="waveform-box">
+        <div class="waveform-header">
+          <span>MEMORY DEPTH PATTERN</span>
+          <span class="waveform-freq-val" id="waveform-freq">432.8 Hz</span>
+        </div>
+        <canvas id="waveform-canvas" width="340" height="38" class="waveform-canvas"></canvas>
+      </div>
+
+      <div id="constellations-section">
+        <div class="section-subtitle">
+          CONNECTED EDGES & ASSOCIATIVE NODES
+        </div>
+        <div class="constellation-grid" id="constellation-grid"></div>
       </div>
     </div>
 
-    <div class="node-desc-box" id="node-desc">Memory record indexed in second brain matrix.</div>
-
-    <div class="tags-row" id="node-tags"></div>
-
-    <div class="waveform-box">
-      <div class="waveform-header">
-        <span>MEMORY DEPTH PATTERN</span>
-        <span class="waveform-freq-val" id="waveform-freq">432.8 Hz</span>
+    <!-- Scripture Reading Pane View -->
+    <div id="reading-pane" class="reading-pane is-hidden">
+      <div class="reading-header">
+        <div class="reading-title" id="reading-title">Genesis 1</div>
+        <div class="reading-nav-group">
+          <button class="reading-nav-btn" onclick="prevChapter()">← Prev</button>
+          <button class="reading-nav-btn" onclick="nextChapter()">Next →</button>
+        </div>
       </div>
-      <canvas id="waveform-canvas" width="340" height="38" class="waveform-canvas"></canvas>
-    </div>
-
-    <div id="constellations-section">
-      <div class="section-subtitle">
-        CONNECTED EDGES & ASSOCIATIVE NODES
+      <div class="reading-content" id="scripture-content">
+        <!-- Verses loaded dynamically -->
       </div>
-      <div class="constellation-grid" id="constellation-grid"></div>
     </div>
 
     <button class="action-btn btn-block" onclick="closeHud()">

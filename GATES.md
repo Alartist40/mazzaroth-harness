@@ -152,17 +152,17 @@
   CWD: .
   EVIDENCE: 2026-09-28 — `SCRIPTURE_OK` (66 books returned in /meta, 31 verses and >2000 chars in Genesis 1, file-backed cache active).
 
-- [ ] G29: NAV_DRILLDOWN — 4-step language -> version -> book -> chapter drill-down navigator with search filtering
+- [x] G29: NAV_DRILLDOWN — 4-step language -> version -> book -> chapter drill-down navigator with search filtering
   CHECK: python3 -c 'js = open("web/js/main.js").read(); print("NAV_DRILLDOWN_OK" if ("drilldown" in js.lower() or "navigatescripture" in js.lower() or "selectlanguage" in js.lower()) and "filter" in js.lower() else "NAV_DRILLDOWN_FAIL")'
   EXPECT: NAV_DRILLDOWN_OK
   CWD: .
-  EVIDENCE: pending
+  EVIDENCE: 2026-09-28 — `NAV_DRILLDOWN_OK` (4-step drilldown navigator: Language -> Version -> Book -> Chapter with live filtering and camera tracking).
 
-- [ ] G30: READING_PANE — HUD scripture reader with verse numbers, chapter navigation, and Esc step-back
+- [x] G30: READING_PANE — HUD scripture reader with verse numbers, chapter navigation, and Esc step-back
   CHECK: python3 -c 'html = open("web/index.html").read(); js = open("web/js/main.js").read(); print("READING_PANE_OK" if ("reading-pane" in html or "scripture-content" in html or "reading-pane" in js) and "verse-num" in (html+js) else "READING_PANE_FAIL")'
   EXPECT: READING_PANE_OK
   CWD: .
-  EVIDENCE: pending
+  EVIDENCE: 2026-09-28 — `READING_PANE_OK` (HUD reading pane renders verse numbers, prev/next chapter navigation, styled scroll, Esc step-back).
 
 - [x] G32: GUI_REMOVED — desktop visualizer and eframe dependencies eliminated in favor of unified web surface
   CHECK: ! test -d src/visualizer && ! test -e src/gui_main.rs && ! grep -q eframe Cargo.toml && cargo build --locked --all-targets -q && echo GUI_REMOVED_OK
