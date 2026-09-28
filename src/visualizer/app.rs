@@ -15,21 +15,6 @@ pub struct DustPoint {
     pub a: u8,
 }
 
-#[derive(Debug, Clone)]
-pub struct RibbonSegment {
-    pub x0: f32,
-    pub y0: f32,
-    pub z0: f32,
-    pub x1: f32,
-    pub y1: f32,
-    pub z1: f32,
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-    pub a: u8,
-    pub width: f32,
-}
-
 pub struct MazzarothVisualizerApp {
     pub engine: MazzarothEngine,
     pub camera: Camera3D,
@@ -40,7 +25,6 @@ pub struct MazzarothVisualizerApp {
     pub new_content: String,
     pub new_tier: MemoryTier,
     pub dust_particles: Vec<DustPoint>,
-    pub spiral_ribbons: Vec<RibbonSegment>,
     pub start_time: Instant,
     last_frame: Instant,
 }
@@ -52,41 +36,6 @@ fn dust_palette(r: f32) -> (f32, f32, f32) {
     } else {
         let t = ((r - 300.0) / 800.0).clamp(0.0, 1.0);
         (0.75 * (1.0 - t) + 0.22 * t, 0.52 * (1.0 - t) + 0.74 * t, 0.99 * (1.0 - t) + 0.97 * t)
-    }
-}
-
-fn ribbon_palette(t: f32) -> (u8, u8, u8) {
-    // Gradient: Core #fffbeb -> Gold #fbbf24 -> Tangerine #f97316 -> Magenta #e11d48 -> Purple #7c3aed -> Indigo #312e81
-    if t < 0.2 {
-        let f = t / 0.2;
-        let r = 255.0 * (1.0 - f) + 251.0 * f;
-        let g = 251.0 * (1.0 - f) + 191.0 * f;
-        let b = 235.0 * (1.0 - f) + 36.0 * f;
-        (r as u8, g as u8, b as u8)
-    } else if t < 0.4 {
-        let f = (t - 0.2) / 0.2;
-        let r = 251.0 * (1.0 - f) + 249.0 * f;
-        let g = 191.0 * (1.0 - f) + 115.0 * f;
-        let b = 36.0 * (1.0 - f) + 22.0 * f;
-        (r as u8, g as u8, b as u8)
-    } else if t < 0.65 {
-        let f = (t - 0.4) / 0.25;
-        let r = 249.0 * (1.0 - f) + 225.0 * f;
-        let g = 115.0 * (1.0 - f) + 29.0 * f;
-        let b = 22.0 * (1.0 - f) + 72.0 * f;
-        (r as u8, g as u8, b as u8)
-    } else if t < 0.85 {
-        let f = (t - 0.65) / 0.2;
-        let r = 225.0 * (1.0 - f) + 124.0 * f;
-        let g = 29.0 * (1.0 - f) + 58.0 * f;
-        let b = 72.0 * (1.0 - f) + 237.0 * f;
-        (r as u8, g as u8, b as u8)
-    } else {
-        let f = ((t - 0.85) / 0.15).clamp(0.0, 1.0);
-        let r = 124.0 * (1.0 - f) + 49.0 * f;
-        let g = 58.0 * (1.0 - f) + 46.0 * f;
-        let b = 237.0 * (1.0 - f) + 129.0 * f;
-        (r as u8, g as u8, b as u8)
     }
 }
 
@@ -133,43 +82,6 @@ impl MazzarothVisualizerApp {
             });
         }
 
-        // 2. Pre-generate spiral ribbons for continuous glowing galactic arms
-        let mut spiral_ribbons = Vec::with_capacity(400);
-        let steps = 90;
-        for arm in 0..4 {
-            let arm_angle = (arm as f32 / 4.0) * std::f32::consts::PI * 2.0;
-            for s in 0..steps {
-                let t0 = s as f32 / steps as f32;
-                let t1 = (s + 1) as f32 / steps as f32;
-                let r0 = 25.0 + t0 * 825.0;
-                let r1 = 25.0 + t1 * 825.0;
-
-                let spin0 = r0 * 0.003;
-                let spin1 = r1 * 0.003;
-                let ang0 = arm_angle + spin0;
-                let ang1 = arm_angle + spin1;
-
-                let x0 = ang0.cos() * r0;
-                let y0 = (r0 * 0.01).sin() * 20.0;
-                let z0 = ang0.sin() * r0;
-
-                let x1 = ang1.cos() * r1;
-                let y1 = (r1 * 0.01).sin() * 20.0;
-                let z1 = ang1.sin() * r1;
-
-                let (r, g, b) = ribbon_palette(t0);
-                let w = 2.0 + 4.0 * t0;
-
-                spiral_ribbons.push(RibbonSegment {
-                    x0, y0, z0,
-                    x1, y1, z1,
-                    r, g, b,
-                    a: 60,
-                    width: w,
-                });
-            }
-        }
-
         Self {
             engine,
             camera: Camera3D {
@@ -186,7 +98,6 @@ impl MazzarothVisualizerApp {
             new_content: String::new(),
             new_tier: MemoryTier::Episodic,
             dust_particles,
-            spiral_ribbons,
             start_time: Instant::now(),
             last_frame: Instant::now(),
         }
@@ -391,24 +302,7 @@ impl eframe::App for MazzarothVisualizerApp {
             // Deep space cosmic background
             painter.rect_filled(rect, 0.0, Color32::from_rgb(4, 1, 10));
 
-            // 1. Draw Multi-Layered Glowing Galactic Ribbons (Image 1)
-            for rib in &self.spiral_ribbons {
-                let (sx, sy, s_depth) = self.camera.project(rib.x0, rib.y0, rib.z0);
-                let (ex, ey, e_depth) = self.camera.project(rib.x1, rib.y1, rib.z1);
-
-                if s_depth > 10.0 || e_depth > 10.0 {
-                    let avg_depth = (s_depth + e_depth) * 0.5;
-                    let proj_scale = if avg_depth > 1.0 { (400.0 / avg_depth) * self.camera.zoom } else { self.camera.zoom };
-                    let stroke_w = (rib.width * proj_scale * 0.35).clamp(1.0, 6.0);
-
-                    painter.line_segment(
-                        [Pos2::new(sx, sy), Pos2::new(ex, ey)],
-                        Stroke::new(stroke_w, Color32::from_rgba_unmultiplied(rib.r, rib.g, rib.b, rib.a)),
-                    );
-                }
-            }
-
-            // 2. Draw 6k Procedural Dust Backdrop
+            // Draw 6k Procedural Dust Backdrop
             for d in &self.dust_particles {
                 let (dx, dy, d_depth) = self.camera.project(d.x, d.y, d.z);
                 let dust_pos = Pos2::new(dx, dy);

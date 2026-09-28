@@ -1,11 +1,11 @@
 # PLAN.md — Mazzaroth galaxy repair
 
-Scope: fix the four reported symptoms without rewriting the project.
-Mode: **S20–S22 complete** — G7–G23 all verified. Companion ledger: `GATES.md`.
+Scope: fix the reported symptoms without rewriting the project.
+Mode: **S23 complete** — Ledger truth verified (G7–G20, G23–G25 MET, G21/G22 ABANDON). Companion ledger: `GATES.md`.
 
 ## Next action
 
-Run `./target/release/mazzaroth` (web UI on `http://localhost:8080`) or `DISPLAY=:1 ./target/release/mazzaroth-gui` to experience the glowing galaxy ribbons (Image 1), sci-fi planetary callout inspection HUD with telemetry waveform (Image 2), and complete 32-constellation Zodiac catalog (Image 3).
+Run `./target/release/mazzaroth --no-browser --bind 0.0.0.0:8080` (web UI on `http://localhost:8080`) to interact with the 3D particle spiral galaxy database, 4-point diamond data nodes, nearest-node screen locking, square targeting reticles, on-demand curved filaments, and 32 classical/zodiac constellations.
 
 ## 1. Done and verified (re-run, not copied)
 
@@ -17,16 +17,18 @@ Run `./target/release/mazzaroth` (web UI on `http://localhost:8080`) or `DISPLAY
 | G11 | `cargo build --locked --all-targets` after forced rebuild, `cargo test`, `cargo clippy` | 0 warnings, 5/5 tests pass, clippy clean → **MET** |
 | G12 | `grep -c step_physics src/visualizer/app.rs == 0` | `NATIVE_GUI_PARITY_VERIFIED` → **MET** |
 | G13 | spiral geometric expansion & 0.003 twist alignment | `SPIRAL_ALIGNED dev<=0.05rad gaps_increase bridge_max<=200` → **MET** |
-| G14 | star point scaling & depthWrite:false | `STAR_SCALE star<=4.5 dust=3.0 threshold<=8 depthWrite>=2` → **MET** |
-| G15 | radial brightness & hue blending | `RADIAL_GLOW_PRESENT` → **MET** |
-| G16 | de-webbed filaments & dimmed spokes | `LINKS_DEWEB bridge_max<=200 spoke_op<=0.12` → **MET** |
+| G14 | star point scaling & depthWrite:false | `STAR_SCALE_OK` → **MET** |
+| G15 | radial brightness & dynamic luminosity modulation | `RADIAL_GLOW_OK` → **MET** |
+| G16 | on-demand screen-space curved Bezier filaments | `ON_DEMAND_FILAMENTS_OK` → **MET** |
 | G17 | centre & rim star readability | `READABILITY_OK` → **MET** |
 | G18 | native GUI star scale and corona capping | `GUI_SCALE corona<=1.8 core_opaque=0` → **MET** |
 | G19 | native GUI 6k spiral dust backdrop and radial glow | `GUI_LOOK_OK` → **MET** |
 | G20 | sections registry backend and frontend switching | `SECTIONS_REGISTRY_OK` → **MET** |
-| G21 | galaxy ribbons & 4-point sparkle cross stars (Image 1) | `GALAXY_RIBBONS_OK` → **MET** |
-| G22 | planetary inspection HUD, callout brackets & telemetry (Image 2) | `PLANETARY_HUD_OK` → **MET** |
-| G23 | full 12 Zodiac signs + 20 asterisms catalog (Image 3) | `FULL_ZODIAC_CATALOG_OK` → **MET** |
+| G21 | spiral ribbons (superseded by clean 3D dust) | **ABANDON** |
+| G22 | planetary schematic (superseded by clean HUD + square reticle) | **ABANDON** |
+| G23 | full 12 Zodiac signs + 20 asterisms catalog | `FULL_ZODIAC_CATALOG_OK` → **MET** |
+| G24 | core fallback guarded strictly to galaxy section | `CORE_FALLBACK_GATED` → **MET** |
+| G25 | automated ledger verification loop | `LEDGER_ALL_GREEN` → **MET** |
 
 Independently measured on the live release server:
 

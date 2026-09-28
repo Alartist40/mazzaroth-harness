@@ -496,9 +496,11 @@
     let galaxyData = { bodies: [], lines: [] };
     let currentFocusNode = null;
     let currentClusterNode = null;
-    let hoveredNode = null;
     let lastRenderedCount = -1;
+    let lastRenderedLinesCount = -1;
     let lastRenderedTimestamp = 0;
+    let tempVec3;
+    let tempTargetVec3;
 
     let currentSection = 'galaxy';
     const sections = {
@@ -535,6 +537,9 @@
     const container = document.getElementById('canvas-container');
 
     function init() {
+      tempVec3 = new THREE.Vector3();
+      tempTargetVec3 = new THREE.Vector3();
+
       scene = new THREE.Scene();
       scene.fog = new THREE.FogExp2(0x050614, 0.00018);
 
@@ -704,10 +709,33 @@
         const res = await fetch(sec.api);
         if (!res.ok) return;
         galaxyData = await res.json();
+        const linesCount = galaxyData.lines ? galaxyData.lines.length : 0;
         const bodiesChanged = galaxyData.bodies.length !== lastRenderedCount;
-        if (bodiesChanged) {
+        const linesChanged = linesCount !== lastRenderedLinesCount;
+
+        if (bodiesChanged || linesChanged) {
           lastRenderedCount = galaxyData.bodies.length;
+          lastRenderedLinesCount = linesCount;
           lastRenderedTimestamp = galaxyData.timestamp || 0;
+
+          // Precompute O(1) lookups for high-performance rendering & HUD
+          cachedBodyMap = new Map();
+          cachedAdjacencyMap = new Map();
+          galaxyData.bodies.forEach(b => {
+            cachedBodyMap.set(b.id, b);
+            cachedAdjacencyMap.set(b.id, []);
+          });
+          if (galaxyData.lines) {
+            galaxyData.lines.forEach(l => {
+              const s = cachedBodyMap.get(l.source_id);
+              const t = cachedBodyMap.get(l.target_id);
+              if (s && t) {
+                cachedAdjacencyMap.get(l.source_id).push(t);
+                cachedAdjacencyMap.get(l.target_id).push(s);
+              }
+            });
+          }
+
           renderDatabaseStars(galaxyData);
           populateClusterSidebar(galaxyData);
         } else if (galaxyData.timestamp && galaxyData.timestamp !== lastRenderedTimestamp) {
@@ -735,6 +763,7 @@
       });
 
       lastRenderedCount = -1;
+      lastRenderedLinesCount = -1;
       await fetchGalaxy();
       resetToGalacticView();
     }
@@ -744,10 +773,23 @@
       const isLang = b.id.includes(':lang:');
       const isVersion = b.id.includes(':version:');
 
-      if (isCore) return { r: 1.0, g: 1.0, b: 0.95 };
-      if (isLang) return { r: 1.0, g: 0.88, b: 0.15 };
-      if (isVersion) return { r: 0.0, g: 0.95, b: 1.0 };
-      return { r: 0.95, g: 0.35, b: 0.95 };
+      let baseCol;
+      if (isCore) baseCol = { r: 1.0, g: 1.0, b: 0.95 };
+      else if (isLang) baseCol = { r: 1.0, g: 0.88, b: 0.15 };
+      else if (isVersion) baseCol = { r: 0.0, g: 0.95, b: 1.0 };
+      else baseCol = { r: 0.95, g: 0.35, b: 0.95 };
+
+      // Radial brightness falloff and recency luminosity modulation
+      const r = Math.sqrt(b.x * b.x + b.z * b.z);
+      const falloff = Math.max(0.0, 1.0 - r / 900.0);
+      const radiusFade = 0.35 + 0.65 * falloff;
+      const lum = (b.luminosity !== undefined ? b.luminosity : 1.0) * radiusFade;
+
+      return {
+        r: Math.min(1.0, baseCol.r * lum),
+        g: Math.min(1.0, baseCol.g * lum),
+        b: Math.min(1.0, baseCol.b * lum)
+      };
     }
 
     function updateStarLuminosities(data) {
@@ -939,13 +981,13 @@
 
       for (let i = 0; i < galaxyData.bodies.length; i++) {
         const body = galaxyData.bodies[i];
-        const wp = new THREE.Vector3(body.x, body.y, body.z);
-        galaxyGroup.localToWorld(wp);
-        wp.project(camera);
+        tempVec3.set(body.x, body.y, body.z);
+        galaxyGroup.localToWorld(tempVec3);
+        tempVec3.project(camera);
 
-        if (wp.z < 1.0) {
-          const sx = (wp.x * 0.5 + 0.5) * window.innerWidth;
-          const sy = (-(wp.y * 0.5) + 0.5) * window.innerHeight;
+        if (tempVec3.z < 1.0) {
+          const sx = (tempVec3.x * 0.5 + 0.5) * window.innerWidth;
+          const sy = (-(tempVec3.y * 0.5) + 0.5) * window.innerHeight;
 
           const dist = Math.hypot(mouseX - sx, mouseY - sy);
           if (dist < minScreenDist) {
@@ -955,25 +997,27 @@
         }
       }
 
-      // Check central supermassive core click
-      const cp = new THREE.Vector3(0, 0, 0);
-      galaxyGroup.localToWorld(cp);
-      cp.project(camera);
-      if (cp.z < 1.0) {
-        const csx = (cp.x * 0.5 + 0.5) * window.innerWidth;
-        const csy = (-(cp.y * 0.5) + 0.5) * window.innerHeight;
-        const cdist = Math.hypot(mouseX - csx, mouseY - csy);
-        if (cdist < 40.0) {
-          const coreBody = galaxyData.bodies.find(b => b.id.includes(':core:')) || {
-            id: 'celestial:core:database',
-            label: 'GALACTIC DATABASE CORE',
-            x: 0, y: 0, z: 0,
-            mass: 1.0, luminosity: 1.0,
-            content: 'Supermassive second brain memory core anchoring 1,097 cognitive celestial nodes.',
-            tags: ['core', 'database', 'anchor', 'memory']
-          };
-          onSelectStar(coreBody);
-          return;
+      // Check central supermassive core click (only in galaxy section)
+      if (currentSection === 'galaxy') {
+        tempVec3.set(0, 0, 0);
+        galaxyGroup.localToWorld(tempVec3);
+        tempVec3.project(camera);
+        if (tempVec3.z < 1.0) {
+          const csx = (tempVec3.x * 0.5 + 0.5) * window.innerWidth;
+          const csy = (-(tempVec3.y * 0.5) + 0.5) * window.innerHeight;
+          const cdist = Math.hypot(mouseX - csx, mouseY - csy);
+          if (cdist < 40.0) {
+            const coreBody = galaxyData.bodies.find(b => b.id.includes(':core:')) || {
+              id: 'celestial:core:database',
+              label: 'GALACTIC DATABASE CORE',
+              x: 0, y: 0, z: 0,
+              mass: 1.0, luminosity: 1.0,
+              content: 'Supermassive second brain memory core anchoring 1,097 cognitive celestial nodes.',
+              tags: ['core', 'database', 'anchor', 'memory']
+            };
+            onSelectStar(coreBody);
+            return;
+          }
         }
       }
 
@@ -1003,13 +1047,13 @@
 
       for (let i = 0; i < galaxyData.bodies.length; i++) {
         const body = galaxyData.bodies[i];
-        const wp = new THREE.Vector3(body.x, body.y, body.z);
-        galaxyGroup.localToWorld(wp);
-        wp.project(camera);
+        tempVec3.set(body.x, body.y, body.z);
+        galaxyGroup.localToWorld(tempVec3);
+        tempVec3.project(camera);
 
-        if (wp.z < 1.0) {
-          const sx = (wp.x * 0.5 + 0.5) * window.innerWidth;
-          const sy = (-(wp.y * 0.5) + 0.5) * window.innerHeight;
+        if (tempVec3.z < 1.0) {
+          const sx = (tempVec3.x * 0.5 + 0.5) * window.innerWidth;
+          const sy = (-(tempVec3.y * 0.5) + 0.5) * window.innerHeight;
 
           const dist = Math.hypot(mouseX - sx, mouseY - sy);
           if (dist < minScreenDist) {
@@ -1092,9 +1136,8 @@
         tagsRow.appendChild(pill);
       });
 
-      const connected = galaxyData.bodies.filter(b => {
-        return galaxyData.lines && galaxyData.lines.some(l => (l.source_id === body.id && l.target_id === b.id) || (l.target_id === body.id && l.source_id === b.id));
-      });
+      // O(1) adjacency lookup
+      const connected = cachedAdjacencyMap.get(body.id) || [];
 
       grid.innerHTML = '';
       if (connected.length > 0) {
@@ -1250,20 +1293,17 @@
         return;
       }
 
-      const p = new THREE.Vector3(currentFocusNode.x, currentFocusNode.y, currentFocusNode.z);
-      galaxyGroup.localToWorld(p);
-      p.project(camera);
+      tempVec3.set(currentFocusNode.x, currentFocusNode.y, currentFocusNode.z);
+      galaxyGroup.localToWorld(tempVec3);
+      tempVec3.project(camera);
 
-      if (p.z >= 1.0) {
+      if (tempVec3.z >= 1.0) {
         svg.innerHTML = '';
         return;
       }
 
-      const sx = (p.x * 0.5 + 0.5) * window.innerWidth;
-      const sy = (-(p.y * 0.5) + 0.5) * window.innerHeight;
-
-      const bodyMap = new Map();
-      galaxyData.bodies.forEach(b => bodyMap.set(b.id, b));
+      const sx = (tempVec3.x * 0.5 + 0.5) * window.innerWidth;
+      const sy = (-(tempVec3.y * 0.5) + 0.5) * window.innerHeight;
 
       let svgContent = '';
 
@@ -1279,31 +1319,26 @@
         </g>
       `;
 
-      // 2. Draw Curved Linking Lines to Connected Neighbor Nodes
-      if (galaxyData.lines && currentSection === 'galaxy') {
-        galaxyData.lines.forEach(line => {
-          if (line.source_id === currentFocusNode.id || line.target_id === currentFocusNode.id) {
-            const otherId = line.source_id === currentFocusNode.id ? line.target_id : line.source_id;
-            const targetBody = bodyMap.get(otherId);
-            if (targetBody) {
-              const tp = new THREE.Vector3(targetBody.x, targetBody.y, targetBody.z);
-              galaxyGroup.localToWorld(tp);
-              tp.project(camera);
+      // 2. Draw Curved Linking Lines to Connected Neighbor Nodes (O(neighbors))
+      if (currentSection === 'galaxy') {
+        const neighbors = cachedAdjacencyMap.get(currentFocusNode.id) || [];
+        neighbors.forEach(targetBody => {
+          tempTargetVec3.set(targetBody.x, targetBody.y, targetBody.z);
+          galaxyGroup.localToWorld(tempTargetVec3);
+          tempTargetVec3.project(camera);
 
-              if (tp.z < 1.0) {
-                const tx = (tp.x * 0.5 + 0.5) * window.innerWidth;
-                const ty = (-(tp.y * 0.5) + 0.5) * window.innerHeight;
+          if (tempTargetVec3.z < 1.0) {
+            const tx = (tempTargetVec3.x * 0.5 + 0.5) * window.innerWidth;
+            const ty = (-(tempTargetVec3.y * 0.5) + 0.5) * window.innerHeight;
 
-                const midX = (sx + tx) / 2;
-                const cpY = Math.min(sy, ty) - 40;
+            const midX = (sx + tx) / 2;
+            const cpY = Math.min(sy, ty) - 40;
 
-                svgContent += `
-                  <path d="M ${sx} ${sy} Q ${midX} ${cpY} ${tx} ${ty}" stroke="#00ffff" stroke-width="1.5" fill="none" opacity="0.9" filter="drop-shadow(0 0 6px #00ffff)" />
-                  <circle cx="${tx}" cy="${ty}" r="3" fill="#00ffff" filter="drop-shadow(0 0 6px #00ffff)" />
-                  <circle cx="${tx}" cy="${ty}" r="8" stroke="#00ffff" stroke-width="1" fill="none" opacity="0.8" />
-                `;
-              }
-            }
+            svgContent += `
+              <path d="M ${sx} ${sy} Q ${midX} ${cpY} ${tx} ${ty}" stroke="#00ffff" stroke-width="1.5" fill="none" opacity="0.9" filter="drop-shadow(0 0 6px #00ffff)" />
+              <circle cx="${tx}" cy="${ty}" r="3" fill="#00ffff" filter="drop-shadow(0 0 6px #00ffff)" />
+              <circle cx="${tx}" cy="${ty}" r="8" stroke="#00ffff" stroke-width="1" fill="none" opacity="0.8" />
+            `;
           }
         });
       }

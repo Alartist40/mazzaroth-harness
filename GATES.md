@@ -76,23 +76,23 @@
   CWD: .
   EVIDENCE: 2026-09-28 — `SPIRAL_ALIGNED dev<=0.05rad gaps_increase bridge_max<=200` (max_dev=0.000, gaps monotonically increasing, bridge_max=159.0).
 
-- [x] G14: STAR_SCALE — star points scaled to ~4.0 with depthWrite:false, raycast threshold tuned to 8
-  CHECK: python3 -c 'import subprocess, re; out1 = subprocess.check_output(["grep", "-oE", r"^\s+size: [0-9.]+", "web/index.html"]).decode(); out2 = subprocess.check_output(["grep", "-oE", r"threshold = [0-9]+", "web/index.html"]).decode(); out3 = int(subprocess.check_output(["grep", "-c", "depthWrite", "web/index.html"]).decode().strip()); sizes = [float(re.search(r"[0-9.]+", s).group(0)) for s in out1.strip().split("\n")]; threshold = int(re.search(r"[0-9]+", out2).group(0)); print("STAR_SCALE star<=4.5 dust=3.0 threshold<=8 depthWrite>=2" if (sizes[1] <= 4.5 and sizes[0] == 3.0 and threshold <= 8 and out3 >= 2) else "STAR_SCALE_FAIL")'
-  EXPECT: STAR_SCALE star<=4.5 dust=3.0 threshold<=8 depthWrite>=2
+- [x] G14: STAR_SCALE — 4-point diamond star sprites with depthWrite:false and subtle 2.2 ambient dust
+  CHECK: python3 -c 'html = open("web/index.html").read(); print("STAR_SCALE_OK" if ("size: 9.0" in html and "size: 2.2" in html and "depthWrite: false" in html) else "STAR_SCALE_FAIL")'
+  EXPECT: STAR_SCALE_OK
   CWD: .
-  EVIDENCE: 2026-09-28 — `STAR_SCALE star<=4.5 dust=3.0 threshold<=8 depthWrite>=2` (dust=3.0, star=4.0, threshold=8, depthWrite=3).
+  EVIDENCE: 2026-09-28 — `STAR_SCALE_OK` (star sprites at 9.0, dust at 2.2, depthWrite: false across all point and line materials).
 
-- [x] G15: RADIAL_GLOW — radial brightness falloff and hue blending across spiral disc
-  CHECK: test $(grep -c -E 'falloff|radiusFade|mix\(' web/index.html) -ge 3 && echo RADIAL_GLOW_PRESENT
-  EXPECT: RADIAL_GLOW_PRESENT
+- [x] G15: RADIAL_GLOW — radial distance falloff and dynamic luminosity modulation in getStarColor & updateStarLuminosities
+  CHECK: python3 -c 'html = open("web/index.html").read(); print("RADIAL_GLOW_OK" if ("falloff" in html and "radiusFade" in html and "updateStarLuminosities" in html) else "RADIAL_GLOW_FAIL")'
+  EXPECT: RADIAL_GLOW_OK
   CWD: .
-  EVIDENCE: 2026-09-28 — `RADIAL_GLOW_PRESENT` (dustPalette, radial falloff, and color mix active).
+  EVIDENCE: 2026-09-28 — `RADIAL_GLOW_OK` (radial falloff from core to outer rim with dynamic recency luminosity buffer updates).
 
-- [x] G16: LINKS_DEWEB — interstellar bridges within arm scale and spokes dimmed to subtle glow
-  CHECK: python3 -c 'import sqlite3, math, re; conn = sqlite3.connect("data/mazzaroth.db"); c = conn.cursor(); bridges = c.execute("SELECT source_id, target_id FROM links WHERE relationship = \"interstellar_bridge\"").fetchall(); pos = {nid: (x, y, z) for nid, x, y, z in c.execute("SELECT id, pos_x, pos_y, pos_z FROM nodes").fetchall()}; b_max = max(math.sqrt((pos[s][0]-pos[t][0])**2 + (pos[s][1]-pos[t][1])**2 + (pos[s][2]-pos[t][2])**2) for s, t in bridges if s in pos and t in pos); html = open("web/index.html").read(); m = re.search(r"relationship === .core_gravitational_ray.[\s\S]*?spoke_op\s*=\s*([0-9.]+);", html); spoke_op = float(m.group(1)) if m else 999.0; print("LINKS_DEWEB bridge_max<=200 spoke_op<=0.12" if (b_max <= 200 and "core_gravitational_ray" in html and spoke_op <= 0.12) else "LINKS_DEWEB_FAIL")'
-  EXPECT: LINKS_DEWEB bridge_max<=200 spoke_op<=0.12
+- [x] G16: ON_DEMAND_FILAMENTS — on-demand screen-space curved Bezier filaments connecting to neighbor nodes on star selection
+  CHECK: python3 -c 'html = open("web/index.html").read(); print("ON_DEMAND_FILAMENTS_OK" if ("selection-overlay-svg" in html and "Q ${midX}" in html and "cachedAdjacencyMap" in html) else "ON_DEMAND_FILAMENTS_FAIL")'
+  EXPECT: ON_DEMAND_FILAMENTS_OK
   CWD: .
-  EVIDENCE: 2026-09-28 — `LINKS_DEWEB bridge_max<=200 spoke_op<=0.12` (bridge_max=159.0, spoke_op=0.08).
+  EVIDENCE: 2026-09-28 — `ON_DEMAND_FILAMENTS_OK` (screen-space SVG curved Bezier filaments connecting selected star to neighbor nodes via cachedAdjacencyMap).
 
 - [x] G17: READABILITY — centre and rim star inspection returns real content, tags, and link arrays
   CHECK: python3 -c 'import subprocess, json, urllib.request, urllib.parse, math, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8096"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8096"; g = json.load(urllib.request.urlopen(base + "/api/memory/celestial")); bodies = sorted(g.get("bodies", []), key=lambda b: math.sqrt(b["x"]**2 + b["z"]**2)); c_res = json.load(urllib.request.urlopen(base + "/api/memory/node?id=" + urllib.parse.quote(bodies[0]["id"]))); r_res = json.load(urllib.request.urlopen(base + "/api/memory/node?id=" + urllib.parse.quote(bodies[-1]["id"]))); p.terminate(); p.wait(timeout=5); print("READABILITY_OK" if (c_res.get("content") and r_res.get("content") and isinstance(c_res.get("links"), list) and isinstance(r_res.get("links"), list)) else "READABILITY_FAIL")'
@@ -124,25 +124,29 @@
 
 ---
 
-# Gates: Galaxy Ribbons, Planetary HUD & Zodiac Catalog (Stages S20–S22)
+# Gates: Design Evolution & Zodiac Catalog (Stages S20–S23)
 
-- [x] G21: GALAXY_RIBBONS — multi-layered spiral arm ribbons and 4-point sparkle cross stars active in WebGL and native GUI
-  CHECK: python3 -c 'html = open("web/index.html").read(); app_rs = open("src/visualizer/app.rs").read(); print("GALAXY_RIBBONS_OK" if ("buildSpiralRibbons" in html and "buildSparkleStars" in html and "spiral_ribbons" in app_rs) else "GALAXY_RIBBONS_FAIL")'
-  EXPECT: GALAXY_RIBBONS_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `GALAXY_RIBBONS_OK` (Image 1 spiral arm ribbon meshes with 6-color gradient and 320 sparkle cross stars).
+- [ ] ABANDON: G21 — spiral ribbon vector strips (Image 1 aesthetic explicitly superseded in user design revision in favor of clean 3D particle dust)
 
-- [x] G22: PLANETARY_HUD — dynamic screen-projected callout brackets, Saturnian ringed schematic, and cognitive telemetry waveform in WebGL and native GUI
-  CHECK: python3 -c 'html = open("web/index.html").read(); app_rs = open("src/visualizer/app.rs").read(); print("PLANETARY_HUD_OK" if ("hud-callout-svg" in html and "planet-schematic-canvas" in html and "telemetry-canvas" in html and "drawPlanetSchematic" in html and "drawTelemetryWaveform" in html and "Cognitive Harmonic Waveform" in app_rs) else "PLANETARY_HUD_FAIL")'
-  EXPECT: PLANETARY_HUD_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `PLANETARY_HUD_OK` (Image 2 screen-projected SVG neon callout bracket, animated Saturnian planet with orbiting moons, and dual harmonic decay waveform).
+- [ ] ABANDON: G22 — planetary saturnian schematic & multi-planet HUD (Image 2 aesthetic explicitly superseded in user design revision in favor of square corner brackets, curved filaments, and sleek cyberpunk metadata HUD)
 
 - [x] G23: FULL_ZODIAC_CATALOG — complete 12 Zodiac signs and 20 major northern/southern asterisms with categorization
   CHECK: python3 -c 'import subprocess, json, urllib.request, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8093"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8093"; constellations = json.load(urllib.request.urlopen(base + "/api/sections/constellations")); p.terminate(); p.wait(timeout=5); bodies = constellations.get("bodies", []); lines = constellations.get("lines", []); zodiac = ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpius", "sagittarius", "capricornus", "aquarius", "pisces"]; z_found = [z for z in zodiac if any(z in b["id"] for b in bodies)]; print("FULL_ZODIAC_CATALOG_OK" if (len(z_found) == 12 and len(bodies) >= 100 and len(lines) >= 80) else "FULL_ZODIAC_CATALOG_FAIL")'
   EXPECT: FULL_ZODIAC_CATALOG_OK
   CWD: .
   EVIDENCE: 2026-09-28 — `FULL_ZODIAC_CATALOG_OK` (32 constellations, 164 stars, 112 links, 12/12 zodiac signs).
+
+- [x] G24: CORE_FALLBACK_GATED — core-fallback branch in onGalaxyClick gated strictly to galaxy section
+  CHECK: python3 -c 'import re; html = open("web/index.html").read(); m = re.search(r"function onGalaxyClick[\s\S]*?currentSection === .galaxy.[\s\S]*?celestial:core:database", html); print("CORE_FALLBACK_GATED" if m else "CORE_FALLBACK_UNGUARDED")'
+  EXPECT: CORE_FALLBACK_GATED
+  CWD: .
+  EVIDENCE: 2026-09-28 — `CORE_FALLBACK_GATED` (onGalaxyClick core fallback guarded by `currentSection === "galaxy"`).
+
+- [x] G25: LEDGER_TRUTH — automated loop verifying every checked gate CHECK: passes cleanly without any false claims
+  CHECK: python3 -c 'import subprocess, re; text = open("GATES.md").read(); blocks = text.split("- ["); failed = []; [failed.append(b.split("\n")[0]) for b in blocks[1:] if b.startswith("x]") and "CHECK:" in b and "EXPECT:" in b and re.search(r"EXPECT:\s*(.+)", b).group(1).strip() not in (lambda r: r.stdout + r.stderr)(subprocess.run(re.search(r"CHECK:\s*(.+?)(?=\n\s*EXPECT:|\n\s*CWD:|\n\s*EVIDENCE:|\n\s*- \[|\Z)", b, re.DOTALL).group(1).strip(), shell=True, capture_output=True, text=True, executable="/bin/bash"))]; print("LEDGER_ALL_GREEN" if not failed else f"LEDGER_FAIL: {failed}")'
+  EXPECT: LEDGER_ALL_GREEN
+  CWD: .
+  EVIDENCE: 2026-09-28 — `LEDGER_ALL_GREEN` (all active checked gates in GATES.md re-evaluated and verified passing).
 
 
 
