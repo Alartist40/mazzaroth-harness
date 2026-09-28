@@ -140,11 +140,11 @@
   CWD: .
   EVIDENCE: 2026-09-28 — `SECTION_LAYOUT_OK` (Option A #[path] wiring, galaxy/data/bibles moved, constellation/data extracted, ServeDir static serving active).
 
-- [ ] G27: UI_CLEAN — emoji removed from chrome, scrollbars styled, inline styles eliminated, corner brackets preserved
-  CHECK: python3 -c 'html = open("web/index.html").read(); css = open("web/css/base.css").read(); js = open("web/js/main.js").read(); import re; emojis = re.findall(r"[\U00010000-\U0010ffff\u2600-\u27bf]", html); print("UI_CLEAN_OK" if len(emojis) == 0 and "scrollbar-width" in css and html.count("style=") <= 2 else f"FAIL emojis={len(emojis)} styles={html.count(\"style=\")}")'
+- [x] G27: UI_CLEAN — emoji removed from chrome, scrollbars styled, inline styles eliminated, corner brackets preserved
+  CHECK: python3 -c 'html = open("web/index.html").read(); css = open("web/css/base.css").read(); js = open("web/js/main.js").read(); import re; emojis = re.findall(r"[\U00010000-\U0010ffff\u2600-\u27bf]", html); print("UI_CLEAN_OK" if len(emojis) == 0 and "scrollbar-width" in css and html.count("style=") <= 2 else "FAIL")'
   EXPECT: UI_CLEAN_OK
   CWD: .
-  EVIDENCE: pending
+  EVIDENCE: 2026-09-28 — `UI_CLEAN_OK` (0 emojis in HTML/chrome, scrollbar-width rules active, 0 style= in index.html, cleanLabel dynamic stripping).
 
 - [ ] G28: SCRIPTURE_READER — file-backed scripture tables/loader, and scripture meta/verse endpoints
   CHECK: python3 -c 'import subprocess, json, urllib.request, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8091"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8091"; meta = json.load(urllib.request.urlopen(base + "/api/scripture/meta?lang=eng&version=kjv")); scrip = json.load(urllib.request.urlopen(base + "/api/scripture?lang=eng&version=kjv&book=Genesis&chapter=1")); p.terminate(); p.wait(timeout=5); print("SCRIPTURE_OK" if len(meta.get("books", [])) >= 66 and len(scrip.get("verses", [])) >= 30 and len(scrip.get("text", "")) > 1000 else "SCRIPTURE_FAIL")'

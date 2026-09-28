@@ -140,13 +140,13 @@ async fn handle_sections() -> Json<serde_json::Value> {
     Json(json!([
         {
             "id": "galaxy",
-            "label": "🌌 Celestial Galaxy",
+            "label": "Celestial Galaxy",
             "api": "/api/memory/celestial",
             "description": "Multilingual scriptural superclusters & neural memory spiral"
         },
         {
             "id": "constellations",
-            "label": "✨ Classical Constellations",
+            "label": "Classical Constellations",
             "api": "/api/sections/constellations",
             "description": "Astronomical asterisms and anchor stellar geometries"
         }

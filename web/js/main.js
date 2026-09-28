@@ -1,3 +1,7 @@
+function cleanLabel(str) {
+  if (!str) return "";
+  return String(str).replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{2700}-\u{27BF}\u{1F000}-\u{1FFFF}\u{2190}-\u{21FF}🌌✨✦🪐🔍♈🌟›]/gu, "").trim();
+}
 let scene, camera, renderer, controls;
     let galaxyGroup;
     let starPoints, spiralDustPoints, centralCoreMesh, centralCoronaMesh, constellationLinesMesh;
@@ -14,7 +18,7 @@ let scene, camera, renderer, controls;
     const sections = {
       galaxy: {
         id: 'galaxy',
-        label: '🌌 Celestial Galaxy',
+        label: 'Celestial Galaxy',
         api: '/api/memory/celestial',
         mount: () => {
           if (spiralDustPoints) spiralDustPoints.visible = true;
@@ -30,7 +34,7 @@ let scene, camera, renderer, controls;
       },
       constellations: {
         id: 'constellations',
-        label: '✨ Classical Constellations',
+        label: 'Classical Constellations',
         api: '/api/sections/constellations',
         mount: () => {
           if (spiralDustPoints) spiralDustPoints.visible = false;
@@ -438,13 +442,13 @@ let scene, camera, renderer, controls;
 
         const zTitle = document.createElement('div');
         zTitle.className = 'cluster-category-title';
-        zTitle.textContent = `♈ 12 Zodiac Constellations (${zodiacBodies.length} Stars)`;
+        zTitle.textContent = `12 Zodiac Constellations (${zodiacBodies.length} Stars)`;
         list.appendChild(zTitle);
 
         zodiacBodies.forEach(c => {
           const item = document.createElement('div');
           item.className = 'cluster-item';
-          item.innerHTML = `<span>♈ ${c.label}</span><span style="color:#00ffff; font-size:0.68rem;">LOCK →</span>`;
+          item.innerHTML = `<span>${cleanLabel(c.label)}</span><span class="cluster-action">LOCK</span>`;
           item.onclick = () => onSelectStar(c);
           list.appendChild(item);
         });
@@ -452,13 +456,13 @@ let scene, camera, renderer, controls;
         const aTitle = document.createElement('div');
         aTitle.className = 'cluster-category-title';
         aTitle.style.marginTop = '10px';
-        aTitle.textContent = `✨ Major Asterisms (${asterismBodies.length} Stars)`;
+        aTitle.textContent = `Major Asterisms (${asterismBodies.length} Stars)`;
         list.appendChild(aTitle);
 
         asterismBodies.forEach(c => {
           const item = document.createElement('div');
           item.className = 'cluster-item';
-          item.innerHTML = `<span>✨ ${c.label}</span><span style="color:#00ffff; font-size:0.68rem;">LOCK →</span>`;
+          item.innerHTML = `<span>${cleanLabel(c.label)}</span><span class="cluster-action">LOCK</span>`;
           item.onclick = () => onSelectStar(c);
           list.appendChild(item);
         });
@@ -468,7 +472,7 @@ let scene, camera, renderer, controls;
         clusters.forEach(c => {
           const item = document.createElement('div');
           item.className = 'cluster-item';
-          item.innerHTML = `<span>✦ ${c.label}</span><span style="color:#00ffff; font-size:0.68rem;">WARP →</span>`;
+          item.innerHTML = `<span>${cleanLabel(c.label)}</span><span class="cluster-action">WARP</span>`;
           item.onclick = () => onSelectStar(c);
           list.appendChild(item);
         });
@@ -576,7 +580,7 @@ let scene, camera, renderer, controls;
         hoveredNode = closestBody;
         tooltip.style.left = `${targetScreenPos.x}px`;
         tooltip.style.top = `${targetScreenPos.y}px`;
-        tooltip.textContent = `✦ ${closestBody.label}`;
+        tooltip.textContent = cleanLabel(closestBody.label);
         tooltip.style.display = 'block';
         container.style.cursor = 'pointer';
       } else {
@@ -596,13 +600,13 @@ let scene, camera, renderer, controls;
         currentClusterNode = body;
         document.getElementById('sep-1').style.display = 'inline';
         document.getElementById('nav-lang').style.display = 'inline';
-        document.getElementById('nav-lang').textContent = `🪐 ${body.label}`;
+        document.getElementById('nav-lang').textContent = cleanLabel(body.label);
         document.getElementById('sep-2').style.display = 'none';
         document.getElementById('nav-version').style.display = 'none';
       } else {
         document.getElementById('sep-2').style.display = 'inline';
         document.getElementById('nav-version').style.display = 'inline';
-        document.getElementById('nav-version').textContent = `✦ ${body.label}`;
+        document.getElementById('nav-version').textContent = cleanLabel(body.label);
       }
 
       const worldPos = new THREE.Vector3(body.x, body.y, body.z);
@@ -624,7 +628,7 @@ let scene, camera, renderer, controls;
       const tagsRow = document.getElementById('node-tags');
       const grid = document.getElementById('constellation-grid');
 
-      uiName.textContent = body.label.toUpperCase();
+      uiName.textContent = cleanLabel(body.label).toUpperCase();
       uiId.textContent = computeHexHash(body.id);
       uiClass.textContent = body.tier ? body.tier.toUpperCase() : 'MEMORY RECORD';
       uiTime.textContent = computeFormattedUtcTime();
@@ -653,7 +657,7 @@ let scene, camera, renderer, controls;
         connected.slice(0, 6).forEach(m => {
           const card = document.createElement('div');
           card.className = 'constellation-card';
-          card.innerHTML = `<div class="constellation-title">✦ ${m.label}</div><div class="constellation-sub">${m.id.split(':')[1] || 'node'}</div>`;
+          card.innerHTML = `<div class="constellation-title">${cleanLabel(m.label)}</div><div class="constellation-sub">${m.id.split(':')[1] || 'node'}</div>`;
           card.onclick = () => onSelectStar(m);
           grid.appendChild(card);
         });

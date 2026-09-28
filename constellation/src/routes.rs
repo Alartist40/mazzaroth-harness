@@ -35,7 +35,7 @@ pub async fn handle_constellations_section() -> Json<serde_json::Value> {
             let cluster_orbit_radius = (cx * cx + cz * cz).sqrt();
             bodies.push(json!({
                 "id": cluster_id,
-                "label": format!("🪐 {}", c.label),
+                "label": c.label.to_string(),
                 "tier": "celestial",
                 "x": cx, "y": cy, "z": cz,
                 "radius": 14.0,
