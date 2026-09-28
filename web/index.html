@@ -44,7 +44,7 @@
       z-index: 10;
       font-size: 0.72rem;
       letter-spacing: 0.2em;
-      opacity: 0.8;
+      opacity: 0.85;
       color: #00ffff;
       pointer-events: none;
       line-height: 1.5;
@@ -56,10 +56,27 @@
       z-index: 10;
       font-size: 0.72rem;
       letter-spacing: 0.2em;
-      opacity: 0.8;
+      opacity: 0.85;
       color: #00ffff;
       pointer-events: none;
       line-height: 1.5;
+    }
+
+    /* Hover Node Tooltip */
+    #node-hover-tooltip {
+      position: absolute;
+      z-index: 25;
+      pointer-events: none;
+      display: none;
+      background: rgba(4, 11, 28, 0.9);
+      border: 1px solid #00ffff;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      color: #00ffff;
+      transform: translate(-50%, -130%);
+      white-space: nowrap;
+      border-radius: 2px;
     }
 
     /* Top Navigation Bar */
@@ -210,7 +227,7 @@
       padding-left: 10px;
     }
 
-    /* Right Interactive HUD Panel (Exact Reference Architecture) */
+    /* Right Interactive HUD Panel */
     .hud-panel {
       position: absolute;
       top: 50%;
@@ -276,7 +293,6 @@
       100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 255, 0); }
     }
 
-    /* Visualization Box (Orbit SVG + Metadata) */
     .hud-visual-row {
       display: flex;
       gap: 12px;
@@ -308,7 +324,6 @@
     .meta-label { color: #0284c7; }
     .meta-val { color: #00ffff; font-weight: 700; }
 
-    /* Waveform Box */
     .waveform-box {
       border: 1px solid rgba(0, 255, 255, 0.3);
       background: rgba(0, 255, 255, 0.04);
@@ -362,6 +377,7 @@
 <body>
   <div id="canvas-container"></div>
   <svg id="selection-overlay-svg"></svg>
+  <div id="node-hover-tooltip">NODE</div>
 
   <!-- Ambient UI Accents -->
   <div class="ambient-hud-top-left">
@@ -413,7 +429,7 @@
     </div>
   </div>
 
-  <!-- Right Interactive HUD Panel (Exact Match to Reference) -->
+  <!-- Right Interactive HUD Panel -->
   <div class="hud-panel" id="hud-panel">
     <div class="scanline"></div>
 
@@ -476,20 +492,13 @@
   <script>
     let scene, camera, renderer, controls;
     let galaxyGroup;
-    let starPoints, spiralDustPoints, sparklePoints, decorativePillsMesh, constellationLinesMesh;
+    let starPoints, spiralDustPoints, centralCoreMesh, centralCoronaMesh, constellationLinesMesh;
     let galaxyData = { bodies: [], lines: [] };
     let currentFocusNode = null;
     let currentClusterNode = null;
+    let hoveredNode = null;
     let lastRenderedCount = -1;
     let lastRenderedTimestamp = 0;
-
-    // Palette: Deep Navy -> Purple -> Magenta -> Bright Orange -> Yellow Core
-    const colors = {
-      bg: 0x050614,
-      glowCyan: 0x00ffff,
-      stars: 0xffffff,
-      arms: ['#2e0c59', '#7b1fa2', '#d81b60', '#fb8c00', '#ffcc00']
-    };
 
     let currentSection = 'galaxy';
     const sections = {
@@ -499,14 +508,14 @@
         api: '/api/memory/celestial',
         mount: () => {
           if (spiralDustPoints) spiralDustPoints.visible = true;
-          if (sparklePoints) sparklePoints.visible = true;
-          if (decorativePillsMesh) decorativePillsMesh.visible = true;
+          if (centralCoreMesh) centralCoreMesh.visible = true;
+          if (centralCoronaMesh) centralCoronaMesh.visible = true;
           document.getElementById('cluster-header-text').textContent = 'KNOWLEDGE CLUSTERS & SECTORS';
         },
         unmount: () => {
           if (spiralDustPoints) spiralDustPoints.visible = false;
-          if (sparklePoints) sparklePoints.visible = false;
-          if (decorativePillsMesh) decorativePillsMesh.visible = false;
+          if (centralCoreMesh) centralCoreMesh.visible = false;
+          if (centralCoronaMesh) centralCoronaMesh.visible = false;
         }
       },
       constellations: {
@@ -515,8 +524,8 @@
         api: '/api/sections/constellations',
         mount: () => {
           if (spiralDustPoints) spiralDustPoints.visible = false;
-          if (sparklePoints) sparklePoints.visible = false;
-          if (decorativePillsMesh) decorativePillsMesh.visible = false;
+          if (centralCoreMesh) centralCoreMesh.visible = false;
+          if (centralCoronaMesh) centralCoronaMesh.visible = false;
           document.getElementById('cluster-header-text').textContent = 'CONSTELLATION CATALOG (32)';
         },
         unmount: () => {}
@@ -527,16 +536,16 @@
 
     function init() {
       scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x050614, 0.0002);
+      scene.fog = new THREE.FogExp2(0x050614, 0.00018);
 
       camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 1, 25000);
-      camera.position.set(0, 520, 1100);
+      camera.position.set(0, 500, 1100);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.35;
+      renderer.toneMappingExposure = 1.4;
       container.appendChild(renderer.domElement);
 
       controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -549,7 +558,7 @@
 
       // Deep space ambient and core light
       scene.add(new THREE.AmbientLight(0x1e1b4b, 2.2));
-      const coreLight = new THREE.PointLight(0xffcc00, 5.0, 4000);
+      const coreLight = new THREE.PointLight(0xffcc00, 6.0, 5000);
       coreLight.position.set(0, 0, 0);
       scene.add(coreLight);
 
@@ -557,35 +566,17 @@
       galaxyGroup = new THREE.Group();
       scene.add(galaxyGroup);
 
-      // 1. Swirling 3D Logarithmic Rounded Spiral Arms of 32,000 Cosmic Particles
+      // 1. Massive Luminous Galactic Gravitational Center Core (Prominent Anchor)
+      buildSupermassiveCore();
+
+      // 2. Swirling 3D Rounded Spiral Arms connecting tightly into the Center Core
       build3DRoundedSpiralGalaxy();
 
-      // 2. 3D Floating Decorative Glowing Vector Pills (Capsules)
-      build3DDecorativePills();
+      // Mouse Move & Smart Hover Detection
+      window.addEventListener('mousemove', onMouseMove);
 
-      // 3. Discrete 4-Point Sparkle Cross Stars
-      buildSparkleStars();
-
-      // Click / Raycast Selection
-      const raycaster = new THREE.Raycaster();
-      raycaster.params.Points.threshold = 9;
-      const mouse = new THREE.Vector2();
-
-      window.addEventListener('click', (e) => {
-        if (e.target.closest('.sidebar-panel') || e.target.closest('.hud-panel') || e.target.closest('.top-bar')) return;
-        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-
-        raycaster.setFromCamera(mouse, camera);
-        if (starPoints) {
-          const intersects = raycaster.intersectObject(starPoints);
-          if (intersects.length > 0) {
-            const idx = intersects[0].index;
-            const body = galaxyData.bodies[idx];
-            if (body) onSelectStar(body);
-          }
-        }
-      });
+      // Smart Nearest-Node Click Lock
+      window.addEventListener('click', onGalaxyClick);
 
       fetchGalaxy();
       setInterval(fetchGalaxy, 10000);
@@ -594,15 +585,55 @@
       animate(0);
     }
 
-    // 3D Logarithmic Rounded Spiral Galaxy (Matching galaxy_database_interactive.html math in 3D)
+    // Prominent Supermassive Gravitational Core (Anchoring all spiral arms)
+    function buildSupermassiveCore() {
+      // 1. Solid radiant white/gold central sphere
+      const sphereGeo = new THREE.SphereGeometry(14, 32, 32);
+      const sphereMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+      });
+      centralCoreMesh = new THREE.Mesh(sphereGeo, sphereMat);
+      galaxyGroup.add(centralCoreMesh);
+
+      // 2. Massive glowing sunburst corona billboard
+      const coronaCanvas = document.createElement('canvas');
+      coronaCanvas.width = 256;
+      coronaCanvas.height = 256;
+      const ctx = coronaCanvas.getContext('2d');
+
+      const grad = ctx.createRadialGradient(128, 128, 8, 128, 128, 124);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      grad.addColorStop(0.2, 'rgba(255, 204, 0, 0.95)');
+      grad.addColorStop(0.5, 'rgba(251, 140, 0, 0.7)');
+      grad.addColorStop(0.8, 'rgba(216, 27, 96, 0.3)');
+      grad.addColorStop(1, 'rgba(46, 12, 89, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 256, 256);
+
+      const coronaTex = new THREE.CanvasTexture(coronaCanvas);
+      const coronaGeo = new THREE.PlaneGeometry(120, 120);
+      const coronaMat = new THREE.MeshBasicMaterial({
+        map: coronaTex,
+        transparent: true,
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+      centralCoronaMesh = new THREE.Mesh(coronaGeo, coronaMat);
+      galaxyGroup.add(centralCoronaMesh);
+    }
+
+    // 3D Rounded Spiral Galaxy (Seamlessly flowing into the center core at r=0)
     function build3DRoundedSpiralGalaxy() {
-      const count = 32000;
+      const count = 36000;
       const geo = new THREE.BufferGeometry();
       const pos = new Float32Array(count * 3);
       const col = new Float32Array(count * 3);
 
       const numArms = 4;
-      const cCore = new THREE.Color('#ffcc00');
+      const cCore = new THREE.Color('#ffffff');
+      const cYellow = new THREE.Color('#ffcc00');
       const cOrange = new THREE.Color('#fb8c00');
       const cMagenta = new THREE.Color('#d81b60');
       const cPurple = new THREE.Color('#7b1fa2');
@@ -613,13 +644,14 @@
         const arm = i % numArms;
         const armOffset = (arm / numArms) * Math.PI * 2;
 
-        // Spiral parameters: r = a + b * t
-        const t = Math.pow(Math.random(), 1.35) * 16.0;
-        const r = 20.0 + t * 58.0;
-        const angle = t * 0.85 + armOffset;
+        // Start t right at 0 so spiral connects seamlessly to the centre core!
+        const t = Math.pow(Math.random(), 1.25) * 16.0;
+        const r = t * 62.0; // r starts right at 0
+        const angle = t * 0.82 + armOffset;
 
-        const spread = (15.0 + t * 4.5) * (Math.random() < 0.5 ? 1 : -1) * Math.pow(Math.random(), 2);
-        const ySpread = (Math.random() - 0.5) * (14.0 + t * 2.2);
+        // Natural organic dispersion along spiral
+        const spread = (6.0 + t * 4.0) * (Math.random() < 0.5 ? 1 : -1) * Math.pow(Math.random(), 1.8);
+        const ySpread = (Math.random() - 0.5) * (8.0 + t * 2.2);
 
         const x = Math.cos(angle) * r + spread;
         const y = ySpread + Math.sin(r * 0.01) * 14.0;
@@ -629,17 +661,19 @@
         pos[i3 + 1] = y;
         pos[i3 + 2] = z;
 
-        // Color mapping from center (Yellow) -> Orange -> Magenta -> Purple -> Deep Purple
+        // Color mapping: Core (White/Yellow) -> Orange -> Magenta -> Purple -> Deep Purple
         let c;
         const normT = t / 16.0;
-        if (normT < 0.2) {
-          c = cCore.clone().lerp(cOrange, normT / 0.2);
-        } else if (normT < 0.45) {
-          c = cOrange.clone().lerp(cMagenta, (normT - 0.2) / 0.25);
-        } else if (normT < 0.75) {
-          c = cMagenta.clone().lerp(cPurple, (normT - 0.45) / 0.3);
+        if (normT < 0.1) {
+          c = cCore.clone().lerp(cYellow, normT / 0.1);
+        } else if (normT < 0.28) {
+          c = cYellow.clone().lerp(cOrange, (normT - 0.1) / 0.18);
+        } else if (normT < 0.55) {
+          c = cOrange.clone().lerp(cMagenta, (normT - 0.28) / 0.27);
+        } else if (normT < 0.82) {
+          c = cMagenta.clone().lerp(cPurple, (normT - 0.55) / 0.27);
         } else {
-          c = cPurple.clone().lerp(cDeepPurple, (normT - 0.75) / 0.25);
+          c = cPurple.clone().lerp(cDeepPurple, (normT - 0.82) / 0.18);
         }
 
         col[i3] = c.r;
@@ -650,135 +684,18 @@
       geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
       geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
+      // Ambient dust is subtle and fine (size: 2.2) so data nodes pop out clearly
       const mat = new THREE.PointsMaterial({
-        size: 3.2,
+        size: 2.2,
         vertexColors: true,
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.65,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
 
       spiralDustPoints = new THREE.Points(geo, mat);
       galaxyGroup.add(spiralDustPoints);
-    }
-
-    // 3D Floating Decorative Glowing Vector Pills along the spiral paths
-    function build3DDecorativePills() {
-      const linePositions = [];
-      const lineColors = [];
-
-      const pillColors = [
-        new THREE.Color('#ffcc00'),
-        new THREE.Color('#fb8c00'),
-        new THREE.Color('#d81b60'),
-        new THREE.Color('#7b1fa2')
-      ];
-
-      for (let i = 0; i < 48; i++) {
-        const t = 1.0 + Math.random() * 14.0;
-        const arm = Math.floor(Math.random() * 4);
-        const armOffset = (arm / 4) * Math.PI * 2;
-
-        const r = 25.0 + t * 58.0;
-        const angle = t * 0.85 + armOffset;
-
-        const cx = Math.cos(angle) * r;
-        const cy = (Math.random() - 0.5) * 20.0 + Math.sin(r * 0.01) * 14.0;
-        const cz = Math.sin(angle) * r;
-
-        const len = 25.0 + Math.random() * 35.0;
-        const tangentX = -Math.sin(angle) * (len * 0.5);
-        const tangentZ = Math.cos(angle) * (len * 0.5);
-
-        const col = pillColors[Math.floor(Math.random() * pillColors.length)];
-
-        linePositions.push(cx - tangentX, cy, cz - tangentZ);
-        linePositions.push(cx + tangentX, cy, cz + tangentZ);
-
-        lineColors.push(col.r, col.g, col.b);
-        lineColors.push(col.r, col.g, col.b);
-      }
-
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-      geo.setAttribute('color', new THREE.Float32BufferAttribute(lineColors, 3));
-
-      const mat = new THREE.LineBasicMaterial({
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.85,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        linewidth: 3
-      });
-
-      decorativePillsMesh = new THREE.LineSegments(geo, mat);
-      galaxyGroup.add(decorativePillsMesh);
-    }
-
-    // 4-Point Sparkle Cross Stars
-    function buildSparkleStars() {
-      const count = 350;
-      const geo = new THREE.BufferGeometry();
-      const pos = new Float32Array(count * 3);
-      const col = new Float32Array(count * 3);
-
-      const sparkleCanvas = document.createElement('canvas');
-      sparkleCanvas.width = 64;
-      sparkleCanvas.height = 64;
-      const ctx = sparkleCanvas.getContext('2d');
-
-      const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 28);
-      grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      grad.addColorStop(0.3, 'rgba(255, 204, 0, 0.9)');
-      grad.addColorStop(0.7, 'rgba(0, 255, 255, 0.3)');
-      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 64, 64);
-
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-      ctx.beginPath();
-      ctx.moveTo(0, 32); ctx.lineTo(32, 30); ctx.lineTo(64, 32); ctx.lineTo(32, 34); ctx.closePath();
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.moveTo(32, 0); ctx.lineTo(30, 32); ctx.lineTo(32, 64); ctx.lineTo(34, 32); ctx.closePath();
-      ctx.fill();
-
-      const sparkleTex = new THREE.CanvasTexture(sparkleCanvas);
-
-      for (let i = 0; i < count; i++) {
-        const i3 = i * 3;
-        const r = Math.pow(Math.random(), 1.2) * 600 + 15;
-        const ang = Math.random() * Math.PI * 2;
-        const y = (Math.random() - 0.5) * 35.0 + Math.sin(r * 0.01) * 14.0;
-
-        pos[i3] = Math.cos(ang) * r;
-        pos[i3 + 1] = y;
-        pos[i3 + 2] = Math.sin(ang) * r;
-
-        const isGold = Math.random() < 0.65;
-        col[i3] = isGold ? 1.0 : 0.85;
-        col[i3 + 1] = isGold ? 0.95 : 0.95;
-        col[i3 + 2] = isGold ? 0.5 : 1.0;
-      }
-
-      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-
-      const mat = new THREE.PointsMaterial({
-        size: 14.0,
-        map: sparkleTex,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.95,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      });
-
-      sparklePoints = new THREE.Points(geo, mat);
-      galaxyGroup.add(sparklePoints);
     }
 
     async function fetchGalaxy() {
@@ -823,27 +740,14 @@
     }
 
     function getStarColor(b) {
-      const r = Math.sqrt(b.x * b.x + b.z * b.z);
-      const falloff = Math.max(0.0, 1.0 - (r / 900.0));
-      const radiusFade = 0.45 + 0.55 * falloff;
-      const lum = (b.luminosity || 0.9) * radiusFade;
+      const isCore = b.id.includes(':core:');
+      const isLang = b.id.includes(':lang:');
+      const isVersion = b.id.includes(':version:');
 
-      let c = { r: 1.0, g: 0.95, b: 0.6 };
-      if (b.id.includes(':core:')) {
-        c = { r: 1.0, g: 1.0, b: 0.85 };
-      } else if (b.id.includes(':lang:')) {
-        c = { r: 1.0, g: 0.85, b: 0.2 };
-      } else if (b.id.includes(':version:')) {
-        c = { r: 0.0, g: 0.95, b: 1.0 };
-      } else {
-        c = { r: 0.85, g: 0.45, b: 1.0 };
-      }
-
-      return {
-        r: c.r * lum,
-        g: c.g * lum,
-        b: c.b * lum,
-      };
+      if (isCore) return { r: 1.0, g: 1.0, b: 0.95 };
+      if (isLang) return { r: 1.0, g: 0.88, b: 0.15 };
+      if (isVersion) return { r: 0.0, g: 0.95, b: 1.0 };
+      return { r: 0.95, g: 0.35, b: 0.95 };
     }
 
     function updateStarLuminosities(data) {
@@ -858,6 +762,7 @@
       colAttr.needsUpdate = true;
     }
 
+    // Renders Database Memory Stars as Crisp, Unmistakable 4-Point Luminous Diamond Stars
     function renderDatabaseStars(data) {
       document.getElementById('db-node-count-hud').textContent = `DATABASE: ${data.bodies.length} NODES`;
 
@@ -887,11 +792,38 @@
       geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
       geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
+      // Create crisp 4-point diamond starburst texture
+      const starCanvas = document.createElement('canvas');
+      starCanvas.width = 64;
+      starCanvas.height = 64;
+      const ctx = starCanvas.getContext('2d');
+
+      const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 30);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      grad.addColorStop(0.2, 'rgba(255, 238, 88, 0.95)');
+      grad.addColorStop(0.5, 'rgba(0, 255, 255, 0.4)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 64, 64);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+      ctx.beginPath();
+      ctx.moveTo(0, 32); ctx.lineTo(32, 30); ctx.lineTo(64, 32); ctx.lineTo(32, 34); ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(32, 0); ctx.lineTo(30, 32); ctx.lineTo(32, 64); ctx.lineTo(34, 32); ctx.closePath();
+      ctx.fill();
+
+      const starTex = new THREE.CanvasTexture(starCanvas);
+
+      // Stars are prominent (size: 9.0) so data nodes are unmistakable!
       const mat = new THREE.PointsMaterial({
-        size: 5.0,
+        size: 9.0,
+        map: starTex,
         vertexColors: true,
         transparent: true,
-        opacity: 0.9,
+        opacity: 0.98,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
@@ -993,10 +925,120 @@
       }
     }
 
+    // Smart Nearest-Node Locking on Click (Fixes UX issue, guarantees easy clicking)
+    function onGalaxyClick(e) {
+      if (e.target.closest('.sidebar-panel') || e.target.closest('.hud-panel') || e.target.closest('.top-bar')) return;
+
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+
+      if (!galaxyData.bodies || galaxyData.bodies.length === 0) return;
+
+      let closestBody = null;
+      let minScreenDist = Infinity;
+
+      for (let i = 0; i < galaxyData.bodies.length; i++) {
+        const body = galaxyData.bodies[i];
+        const wp = new THREE.Vector3(body.x, body.y, body.z);
+        galaxyGroup.localToWorld(wp);
+        wp.project(camera);
+
+        if (wp.z < 1.0) {
+          const sx = (wp.x * 0.5 + 0.5) * window.innerWidth;
+          const sy = (-(wp.y * 0.5) + 0.5) * window.innerHeight;
+
+          const dist = Math.hypot(mouseX - sx, mouseY - sy);
+          if (dist < minScreenDist) {
+            minScreenDist = dist;
+            closestBody = body;
+          }
+        }
+      }
+
+      // Check central supermassive core click
+      const cp = new THREE.Vector3(0, 0, 0);
+      galaxyGroup.localToWorld(cp);
+      cp.project(camera);
+      if (cp.z < 1.0) {
+        const csx = (cp.x * 0.5 + 0.5) * window.innerWidth;
+        const csy = (-(cp.y * 0.5) + 0.5) * window.innerHeight;
+        const cdist = Math.hypot(mouseX - csx, mouseY - csy);
+        if (cdist < 40.0) {
+          const coreBody = galaxyData.bodies.find(b => b.id.includes(':core:')) || {
+            id: 'celestial:core:database',
+            label: 'GALACTIC DATABASE CORE',
+            x: 0, y: 0, z: 0,
+            mass: 1.0, luminosity: 1.0,
+            content: 'Supermassive second brain memory core anchoring 1,097 cognitive celestial nodes.',
+            tags: ['core', 'database', 'anchor', 'memory']
+          };
+          onSelectStar(coreBody);
+          return;
+        }
+      }
+
+      // Generous 65px hitbox radius: effortlessly locks onto the nearest star node!
+      if (closestBody && minScreenDist < 65.0) {
+        onSelectStar(closestBody);
+      }
+    }
+
+    // Smart Hover Tooltip & Cursor Indicator
+    function onMouseMove(e) {
+      if (e.target.closest('.sidebar-panel') || e.target.closest('.hud-panel') || e.target.closest('.top-bar')) {
+        document.getElementById('node-hover-tooltip').style.display = 'none';
+        container.style.cursor = 'default';
+        return;
+      }
+
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+      const tooltip = document.getElementById('node-hover-tooltip');
+
+      if (!galaxyData.bodies || galaxyData.bodies.length === 0) return;
+
+      let closestBody = null;
+      let minScreenDist = Infinity;
+      let targetScreenPos = { x: 0, y: 0 };
+
+      for (let i = 0; i < galaxyData.bodies.length; i++) {
+        const body = galaxyData.bodies[i];
+        const wp = new THREE.Vector3(body.x, body.y, body.z);
+        galaxyGroup.localToWorld(wp);
+        wp.project(camera);
+
+        if (wp.z < 1.0) {
+          const sx = (wp.x * 0.5 + 0.5) * window.innerWidth;
+          const sy = (-(wp.y * 0.5) + 0.5) * window.innerHeight;
+
+          const dist = Math.hypot(mouseX - sx, mouseY - sy);
+          if (dist < minScreenDist) {
+            minScreenDist = dist;
+            closestBody = body;
+            targetScreenPos = { x: sx, y: sy };
+          }
+        }
+      }
+
+      if (closestBody && minScreenDist < 35.0) {
+        hoveredNode = closestBody;
+        tooltip.style.left = `${targetScreenPos.x}px`;
+        tooltip.style.top = `${targetScreenPos.y}px`;
+        tooltip.textContent = `✦ ${closestBody.label}`;
+        tooltip.style.display = 'block';
+        container.style.cursor = 'pointer';
+      } else {
+        hoveredNode = null;
+        tooltip.style.display = 'none';
+        container.style.cursor = 'crosshair';
+      }
+    }
+
     // Warp & Inspect Selected Memory Star
     async function onSelectStar(body) {
       currentFocusNode = body;
       const isCluster = body.id.includes(':lang:');
+      const isCore = body.id.includes(':core:');
 
       if (isCluster) {
         currentClusterNode = body;
@@ -1013,7 +1055,7 @@
 
       const worldPos = new THREE.Vector3(body.x, body.y, body.z);
       galaxyGroup.localToWorld(worldPos);
-      flyCameraTo(worldPos.x, worldPos.y, worldPos.z, isCluster ? 150 : 90);
+      flyCameraTo(worldPos.x, worldPos.y, worldPos.z, isCore ? 280 : (isCluster ? 150 : 90));
 
       openHud(body);
     }
@@ -1225,8 +1267,8 @@
 
       let svgContent = '';
 
-      // 1. Draw Square Corner Brackets around Selected Star (From reference design)
-      const pad = 14;
+      // 1. Draw Square Corner Brackets around Selected Star
+      const pad = 15;
       const l = 6;
       svgContent += `
         <g stroke="#00ffff" stroke-width="1.5" fill="none" filter="drop-shadow(0 0 8px #00ffff)">
@@ -1277,8 +1319,11 @@
         galaxyGroup.rotation.y += 0.0004;
       }
 
-      if (sparklePoints && sparklePoints.material) {
-        sparklePoints.material.size = 14.0 + Math.sin(time * 0.004) * 2.5;
+      // Pulse supermassive center corona & face camera
+      if (centralCoronaMesh) {
+        centralCoronaMesh.lookAt(camera.position);
+        const scale = 1.0 + Math.sin(time * 0.003) * 0.06;
+        centralCoronaMesh.scale.set(scale, scale, 1.0);
       }
 
       controls.update();
