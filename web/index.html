@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🌌 Mazzaroth — Second Brain Cognitive Galaxy</title>
+  <title>🌌 GALAXY DATABASE MAP — VER. 2.1</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
@@ -12,7 +12,7 @@
     body {
       background: #04010a;
       color: #f8fafc;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "SF Pro Display", sans-serif;
       overflow: hidden;
       height: 100vh;
       width: 100vw;
@@ -20,7 +20,7 @@
     }
     #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
 
-    /* HUD Projected SVG Overlay */
+    /* Screen-space SVG for Dynamic Neon Callout Brackets & Target Reticle */
     #hud-callout-svg {
       position: absolute;
       top: 0;
@@ -42,68 +42,93 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      background: rgba(14, 6, 32, 0.85);
+      background: rgba(10, 4, 24, 0.88);
       backdrop-filter: blur(25px);
-      border: 1px solid rgba(168, 85, 247, 0.3);
+      border: 1px solid rgba(56, 189, 248, 0.35);
       border-radius: 40px;
       padding: 8px 24px;
-      box-shadow: 0 10px 35px rgba(0,0,0,0.7), 0 0 25px rgba(168, 85, 247, 0.15);
+      box-shadow: 0 10px 35px rgba(0,0,0,0.8), 0 0 25px rgba(56, 189, 248, 0.2);
+    }
+    .top-brand {
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #38bdf8;
+      margin-right: 6px;
+      text-transform: uppercase;
     }
     .top-btn {
       background: none;
       border: none;
       color: #cbd5e1;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
       transition: all 0.2s;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 20px;
     }
-    .top-btn:hover { color: #fde047; background: rgba(168, 85, 247, 0.15); }
-    .top-btn.active { color: #38bdf8; background: rgba(56, 189, 248, 0.15); font-weight: 700; }
-    .top-sep { color: #64748b; font-size: 0.8rem; }
+    .top-btn:hover { color: #fde047; background: rgba(168, 85, 247, 0.2); }
+    .top-btn.active { color: #38bdf8; background: rgba(56, 189, 248, 0.2); font-weight: 700; box-shadow: 0 0 12px rgba(56, 189, 248, 0.3); }
+    .top-sep { color: #475569; font-size: 0.8rem; }
 
-    /* Left Sidebar */
+    /* Left Sidebar — Sector Scanning & Network Map */
     .hud-overlay {
       position: absolute;
       top: 24px;
       left: 24px;
       z-index: 10;
       width: 380px;
-      background: rgba(14, 6, 32, 0.82);
-      backdrop-filter: blur(30px);
-      border: 1px solid rgba(168, 85, 247, 0.25);
+      background: rgba(10, 4, 24, 0.85);
+      backdrop-filter: blur(32px);
+      border: 1px solid rgba(56, 189, 248, 0.3);
       border-radius: 24px;
       padding: 24px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(147, 51, 234, 0.15);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(56, 189, 248, 0.12);
       max-height: calc(100vh - 48px);
       display: flex;
       flex-direction: column;
     }
     h1 {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       font-weight: 900;
-      background: linear-gradient(135deg, #fde047, #c084fc, #38bdf8);
+      background: linear-gradient(135deg, #fde047, #f472b6, #38bdf8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 4px;
-      letter-spacing: 0.5px;
+      gap: 8px;
+      margin-bottom: 2px;
+      letter-spacing: 0.8px;
     }
-    .subtitle { font-size: 0.75rem; color: #c084fc; margin-bottom: 14px; font-weight: 500; }
-    .stats-bar { font-size: 0.75rem; color: #cbd5e1; margin-bottom: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .subtitle { font-size: 0.72rem; color: #38bdf8; margin-bottom: 12px; font-weight: 600; letter-spacing: 0.5px; }
+
+    /* Sector Scanning & Diagnostics Accent */
+    .scan-status-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-size: 0.72rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .scan-line { display: flex; justify-content: space-between; color: #94a3b8; }
+    .scan-val { color: #38bdf8; font-family: monospace; font-weight: 700; }
+    .scan-val.live { color: #4ade80; }
+
+    .stats-bar { font-size: 0.75rem; color: #cbd5e1; margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
     .stat-pill { background: rgba(30, 14, 58, 0.9); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.25); }
 
     input, textarea, select {
       width: 100%;
-      background: rgba(23, 10, 48, 0.9);
-      border: 1px solid rgba(168, 85, 247, 0.25);
+      background: rgba(18, 8, 38, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.25);
       border-radius: 12px;
       color: #fff;
       padding: 10px 14px;
@@ -112,41 +137,41 @@
       margin-bottom: 10px;
       transition: all 0.25s;
     }
-    input:focus, textarea:focus { border-color: #c084fc; box-shadow: 0 0 15px rgba(192, 132, 252, 0.3); }
+    input:focus, textarea:focus { border-color: #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.35); }
 
     .btn-row { display: flex; gap: 8px; margin-bottom: 12px; }
     button.action-btn {
       flex: 1;
-      background: linear-gradient(135deg, #9333ea, #6366f1, #38bdf8);
+      background: linear-gradient(135deg, #0284c7, #6366f1, #9333ea);
       border: none;
       border-radius: 10px;
       color: #fff;
       padding: 9px 12px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.2s;
-      box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
     }
-    button.action-btn:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(147, 51, 234, 0.5); }
-    button.action-btn.secondary { background: rgba(30, 14, 58, 0.85); border: 1px solid rgba(168, 85, 247, 0.3); box-shadow: none; }
+    button.action-btn:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(2, 132, 199, 0.5); }
+    button.action-btn.secondary { background: rgba(24, 10, 48, 0.85); border: 1px solid rgba(56, 189, 248, 0.3); box-shadow: none; }
 
     /* Topic / Language Clusters */
     .cluster-scroll {
       flex: 1;
       overflow-y: auto;
       margin-top: 6px;
-      border-top: 1px solid rgba(168, 85, 247, 0.2);
+      border-top: 1px solid rgba(56, 189, 248, 0.2);
       padding-top: 10px;
     }
     .cluster-category-title {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 800;
       color: #fde047;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin: 8px 0 4px 0;
-      padding: 2px 6px;
+      padding: 3px 6px;
       background: rgba(250, 204, 21, 0.1);
       border-radius: 4px;
     }
@@ -163,61 +188,73 @@
       margin-bottom: 3px;
     }
     .cluster-item:hover {
-      background: rgba(147, 51, 234, 0.25);
-      color: #fde047;
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
       transform: translateX(4px);
     }
 
-    /* Right Memory Note & Knowledge Inspector HUD (Image 2 Style) */
+    /* Right Futuristic Cyan Line-Art HUD Overlay (Design Blueprint Specification) */
     .note-inspector {
       position: absolute;
       top: 24px;
       right: 24px;
       z-index: 10;
-      width: 470px;
+      width: 490px;
       max-height: calc(100vh - 48px);
-      background: rgba(14, 6, 32, 0.90);
-      backdrop-filter: blur(32px);
-      border: 1px solid rgba(250, 204, 21, 0.45);
+      background: rgba(8, 3, 20, 0.92);
+      backdrop-filter: blur(35px);
+      border: 1px solid rgba(56, 189, 248, 0.5);
       border-radius: 24px;
       padding: 24px;
-      box-shadow: 0 25px 65px rgba(0, 0, 0, 0.85), 0 0 45px rgba(250, 204, 21, 0.18);
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), 0 0 40px rgba(56, 189, 248, 0.25);
       display: none;
       overflow-y: auto;
       animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(35px); } to { opacity: 1; transform: translateX(0); } }
 
-    .note-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .note-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
     .badge {
       display: inline-block;
       padding: 4px 12px;
       border-radius: 20px;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
     }
     .badge-core { background: linear-gradient(135deg, #facc15, #ea580c); color: #000; box-shadow: 0 0 15px rgba(250, 204, 21, 0.5); }
-    .badge-lang { background: linear-gradient(135deg, #38bdf8, #6366f1); color: #000; }
+    .badge-lang { background: linear-gradient(135deg, #38bdf8, #0284c7); color: #000; }
     .badge-version { background: linear-gradient(135deg, #c084fc, #9333ea); color: #fff; }
     .badge-book { background: linear-gradient(135deg, #fb923c, #f43f5e); color: #fff; }
 
-    .note-title { font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 4px; line-height: 1.3; }
-    .note-meta { font-size: 0.76rem; color: #94a3b8; margin-bottom: 12px; display: flex; gap: 12px; }
+    .system-title {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 2px;
+      line-height: 1.3;
+      letter-spacing: 0.5px;
+    }
+    .system-subtitle {
+      font-size: 0.72rem;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
 
-    /* Planetary HUD Schematic & Telemetry Waveform Box (Image 2) */
-    .hud-schematic-box {
-      background: radial-gradient(circle at 50% 50%, rgba(30, 14, 58, 0.85), rgba(10, 3, 24, 0.95));
-      border: 1px solid rgba(168, 85, 247, 0.35);
+    /* Component 1: Planetary System Diagram Box */
+    .hud-box {
+      background: radial-gradient(circle at 50% 50%, rgba(18, 8, 38, 0.9), rgba(6, 2, 16, 0.95));
+      border: 1px solid rgba(56, 189, 248, 0.35);
       border-radius: 16px;
       padding: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       position: relative;
-      overflow: hidden;
-      box-shadow: inset 0 0 25px rgba(147, 51, 234, 0.2);
     }
-    .hud-schematic-header {
+    .hud-box-header {
       font-size: 0.68rem;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -232,60 +269,68 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      margin: 4px 0 8px 0;
+      margin: 4px 0 6px 0;
     }
-    #planet-schematic-canvas {
-      width: 220px;
-      height: 125px;
-      border-radius: 8px;
-    }
-    #telemetry-canvas {
+    #planet-system-diagram {
       width: 100%;
-      height: 58px;
+      height: 130px;
       border-radius: 8px;
-      background: rgba(8, 2, 18, 0.75);
-      border: 1px solid rgba(56, 189, 248, 0.2);
+      background: rgba(4, 1, 12, 0.6);
+      cursor: crosshair;
     }
-    .hud-grid-specs {
+
+    /* Component 2: Technical Readout Grid */
+    .tech-readout-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 6px;
+      gap: 6px 12px;
       font-size: 0.72rem;
-      color: #94a3b8;
-      margin-top: 8px;
-      padding-top: 6px;
-      border-top: 1px dashed rgba(168, 85, 247, 0.2);
+      background: rgba(12, 6, 26, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
     }
-    .spec-item { display: flex; justify-content: space-between; }
-    .spec-val { color: #facc15; font-family: monospace; font-weight: 700; }
+    .tech-item { display: flex; flex-direction: column; }
+    .tech-label { font-size: 0.62rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .tech-val { color: #38bdf8; font-family: monospace; font-weight: 700; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Component 3: Memory Depth Pattern (Waveform Graph) */
+    #memory-depth-canvas {
+      width: 100%;
+      height: 65px;
+      border-radius: 8px;
+      background: rgba(6, 2, 14, 0.8);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
 
     .note-content {
-      background: rgba(23, 10, 48, 0.95);
-      border: 1px solid rgba(168, 85, 247, 0.25);
-      border-radius: 14px;
-      padding: 14px;
-      font-size: 0.88rem;
+      background: rgba(18, 8, 38, 0.95);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.84rem;
       line-height: 1.6;
       color: #f1f5f9;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       white-space: pre-wrap;
-      max-height: 240px;
+      max-height: 180px;
       overflow-y: auto;
     }
 
-    .tags-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-    .tag-pill { background: rgba(147, 51, 234, 0.2); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; }
+    .tags-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .tag-pill { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-family: monospace; }
 
     .constellation-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 8px;
+      gap: 6px;
+      margin-top: 6px;
     }
     .constellation-card {
-      background: rgba(30, 14, 58, 0.85);
-      border: 1px solid rgba(168, 85, 247, 0.25);
-      border-radius: 10px;
+      background: rgba(24, 10, 48, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 8px;
       padding: 8px 10px;
       cursor: pointer;
       transition: all 0.2s;
@@ -295,101 +340,110 @@
       background: rgba(56, 189, 248, 0.2);
       transform: translateY(-2px);
     }
-    .constellation-title { font-size: 0.8rem; font-weight: 700; color: #f8fafc; margin-bottom: 2px; }
-    .constellation-sub { font-size: 0.68rem; color: #94a3b8; }
+    .constellation-title { font-size: 0.78rem; font-weight: 700; color: #f8fafc; margin-bottom: 2px; }
+    .constellation-sub { font-size: 0.65rem; color: #94a3b8; }
   </style>
 </head>
 <body>
   <div id="canvas-container"></div>
 
-  <!-- Screen-space SVG for Dynamic Neon Callout Brackets (Image 2) -->
+  <!-- Screen-space SVG for Dynamic Neon Callout Brackets (Blueprint Design) -->
   <svg id="hud-callout-svg">
-    <path id="callout-line" d="" stroke="#facc15" stroke-width="1.5" fill="none" stroke-dasharray="5,3" filter="drop-shadow(0 0 6px #facc15)" />
-    <circle id="callout-reticle" cx="-100" cy="-100" r="10" stroke="#38bdf8" stroke-width="1.5" fill="none" opacity="0.8" />
-    <circle id="callout-dot" cx="-100" cy="-100" r="3.5" fill="#facc15" />
+    <path id="callout-line" d="" stroke="#38bdf8" stroke-width="1.5" fill="none" stroke-dasharray="5,3" filter="drop-shadow(0 0 6px #38bdf8)" />
+    <circle id="callout-reticle" cx="-100" cy="-100" r="12" stroke="#38bdf8" stroke-width="1.5" fill="none" opacity="0.8" />
+    <circle id="callout-reticle-inner" cx="-100" cy="-100" r="6" stroke="#fde047" stroke-width="1.0" fill="none" />
+    <circle id="callout-dot" cx="-100" cy="-100" r="3.5" fill="#38bdf8" />
   </svg>
 
   <!-- Top Breadcrumbs & Section Switcher -->
   <div class="top-bar">
-    <button class="top-btn active" id="tab-galaxy" onclick="switchSection('galaxy')">🌌 Galaxy</button>
+    <span class="top-brand">🌌 GALAXY DATABASE MAP — VER. 2.1</span>
+    <button class="top-btn active" id="tab-galaxy" onclick="switchSection('galaxy')">🌌 Galaxy Map</button>
     <button class="top-btn" id="tab-constellations" onclick="switchSection('constellations')">✨ Constellations</button>
     <span class="top-sep">|</span>
-    <button class="top-btn" onclick="resetToGalacticView()">🌌 Reset View</button>
+    <button class="top-btn" onclick="resetToGalacticView()">🌌 Reset Map</button>
     <span class="top-sep" id="sep-1" style="display:none;">›</span>
     <button class="top-btn" id="nav-lang" style="display:none;" onclick="zoomToCurrentCluster()">🪐 Cluster</button>
     <span class="top-sep" id="sep-2" style="display:none;">›</span>
-    <button class="top-btn" id="nav-version" style="display:none;">✦ Star Note</button>
+    <button class="top-btn" id="nav-version" style="display:none;">✦ Memory Node</button>
   </div>
 
-  <!-- Left Sidebar Controls -->
+  <!-- Left Sidebar — Sector Scanning & Network Map -->
   <div class="hud-overlay">
-    <h1>🌌 MAZZAROTH</h1>
-    <div class="subtitle">AI Second Brain & Celestial Memory Matrix</div>
+    <h1>🌌 GALAXY DATABASE</h1>
+    <div class="subtitle">VER. 2.1 — SECOND BRAIN COGNITIVE MATRIX</div>
 
-    <div class="stats-bar">
-      <span class="stat-pill" id="stat-stars">✨ 0 Stars</span>
-      <span class="stat-pill" id="stat-langs">🪐 60 Clusters</span>
-      <span class="stat-pill" id="stat-links">🔗 0 Constellations</span>
+    <div class="scan-status-box">
+      <div class="scan-line"><span>SECTOR SCANNING:</span><span class="scan-val live">● ACTIVE</span></div>
+      <div class="scan-line"><span>NETWORK MAP:</span><span class="scan-val live">ONLINE</span></div>
+      <div class="scan-line"><span>DATABASE NODES:</span><span class="scan-val" id="stat-total-nodes">1,097 ENTRIES</span></div>
+      <div class="scan-line"><span>COGNITIVE ACCELERATION:</span><span class="scan-val">LOW-CPU (30 FPS)</span></div>
     </div>
 
     <input type="text" id="search-query" placeholder="🔍 Search memory stars, concepts, scriptures..." onkeydown="if(event.key==='Enter') searchGalaxy()">
     <div class="btn-row">
-      <button class="action-btn" onclick="searchGalaxy()">🔍 Warp to Star</button>
+      <button class="action-btn" onclick="searchGalaxy()">🔍 Lock on Node</button>
       <button class="action-btn secondary" onclick="toggleAutoRotate()">⟳ Orbit</button>
-      <button class="action-btn secondary" onclick="resetToGalacticView()">🌌 Reset</button>
+      <button class="action-btn secondary" onclick="resetToGalacticView()">🌌 Center</button>
     </div>
 
-    <div style="font-size: 0.72rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 0.5px; margin-top: 4px;" id="cluster-header-text">
-      🪐 Knowledge Clusters & Focus Areas
+    <div style="font-size: 0.7rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 0.8px; margin-top: 4px;" id="cluster-header-text">
+      🪐 Knowledge Clusters & Focus Sectors
     </div>
     <div class="cluster-scroll" id="cluster-list"></div>
 
-    <div style="margin-top: 10px; border-top: 1px solid rgba(168, 85, 247, 0.2); padding-top: 10px;">
-      <input type="text" id="new-concept-label" placeholder="Ignite new thought / memory star...">
-      <button class="action-btn" style="width:100%;" onclick="formNewMemory()">✨ Ignite Memory Star</button>
+    <div style="margin-top: 10px; border-top: 1px solid rgba(56, 189, 248, 0.2); padding-top: 10px;">
+      <input type="text" id="new-concept-label" placeholder="Ignite new thought / memory node...">
+      <button class="action-btn" style="width:100%;" onclick="formNewMemory()">✨ Ingest Memory Node</button>
     </div>
   </div>
 
-  <!-- Right Memory Note & Knowledge Inspector HUD (Image 2) -->
+  <!-- Right Futuristic Cyan Line-Art HUD Overlay (Design Blueprint Specification) -->
   <div class="note-inspector" id="note-inspector">
     <div class="note-header">
-      <span class="badge badge-lang" id="inspector-badge">SEMANTIC STAR</span>
-      <button onclick="closeInspector()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">✕</button>
+      <span class="badge badge-lang" id="inspector-badge">CLASSIFICATION: MEMORY RECORD</span>
+      <button onclick="closeInspector()" style="background:none; border:none; color:#38bdf8; font-size:1.3rem; cursor:pointer;">✕</button>
     </div>
-    <div class="note-title" id="inspector-title">Concept Title</div>
-    <div class="note-meta" id="inspector-meta">
-      <span id="meta-luminosity">🔥 Recency: 1.00</span>
-      <span id="meta-retention">Mass: 0.95</span>
-    </div>
+    <div class="system-title" id="inspector-title">STELLAR SYSTEM: ALPHA-NODE</div>
+    <div class="system-subtitle" id="inspector-subtitle">COGNITIVE SECOND BRAIN MATRIX</div>
 
-    <!-- Planetary Schematic HUD with Saturnian Rings & Orbiting Moons -->
-    <div class="hud-schematic-box">
-      <div class="hud-schematic-header">
-        <span>🪐 CELESTIAL NODE TELEMETRY</span>
-        <span style="color: #4ade80;">● ACTIVE RESONANCE</span>
+    <!-- Component 1: Planetary System Diagram -->
+    <div class="hud-box">
+      <div class="hud-box-header">
+        <span>🪐 STELLAR SYSTEM ORBITAL HIERARCHY</span>
+        <span style="color: #4ade80;">● HIERARCHY ACTIVE</span>
       </div>
       <div class="hud-canvas-wrap">
-        <canvas id="planet-schematic-canvas" width="220" height="125"></canvas>
+        <canvas id="planet-system-diagram" width="440" height="130"></canvas>
       </div>
+    </div>
 
-      <!-- Live Cognitive Resonance Harmonic Waveform -->
-      <canvas id="telemetry-canvas" width="400" height="58"></canvas>
-
-      <div class="hud-grid-specs">
-        <div class="spec-item"><span>ORBIT RADIUS:</span><span class="spec-val" id="spec-radius">320.4 AU</span></div>
-        <div class="spec-item"><span>GRAVITATIONAL FLUX:</span><span class="spec-val" id="spec-flux">98.2%</span></div>
-        <div class="spec-item"><span>CELESTIAL TIER:</span><span class="spec-val" id="spec-tier">SEMANTIC</span></div>
-        <div class="spec-item"><span>COGNITIVE PHASE:</span><span class="spec-val" id="spec-phase">0.84 rad</span></div>
-      </div>
+    <!-- Component 2: Technical Readout Grid -->
+    <div class="tech-readout-grid">
+      <div class="tech-item"><span class="tech-label">ENTRY ID:</span><span class="tech-val" id="tech-entry-id">0xF72D</span></div>
+      <div class="tech-item"><span class="tech-label">CLASSIFICATION:</span><span class="tech-val" id="tech-classification">MEMORY RECORD</span></div>
+      <div class="tech-item"><span class="tech-label">TIMESTAMP:</span><span class="tech-val" id="tech-timestamp">24:15:02 UTC</span></div>
+      <div class="tech-item"><span class="tech-label">COGNITIVE TIER:</span><span class="tech-val" id="tech-tier">SEMANTIC</span></div>
+      <div class="tech-item"><span class="tech-label">ORBIT RADIUS:</span><span class="tech-val" id="tech-radius">341.6 AU</span></div>
+      <div class="tech-item"><span class="tech-label">GRAVITATIONAL FLUX:</span><span class="tech-val" id="tech-flux">98.4%</span></div>
     </div>
 
     <div class="tags-row" id="inspector-tags"></div>
 
-    <div class="note-content" id="inspector-content">Note content loads here...</div>
+    <div class="note-content" id="inspector-content">Description text loads here...</div>
+
+    <!-- Component 3: Memory Depth Pattern (Complex Sine/Cosine Waveform Graph) -->
+    <div class="hud-box">
+      <div class="hud-box-header">
+        <span>📊 MEMORY DEPTH PATTERN</span>
+        <span style="color: #38bdf8;" id="waveform-status">HARMONIC RESONANCE</span>
+      </div>
+      <canvas id="memory-depth-canvas" width="440" height="65"></canvas>
+    </div>
 
     <div id="constellations-section">
-      <div style="font-size: 0.75rem; text-transform: uppercase; color: #cbd5e1; font-weight: 800; margin-bottom: 6px;">
-        🔗 Orbiting Moons & Connected Constellations
+      <div style="font-size: 0.72rem; text-transform: uppercase; color: #cbd5e1; font-weight: 800; margin-bottom: 6px; letter-spacing: 0.5px;">
+        🔗 Connected Nodes & Associative Links
       </div>
       <div class="constellation-grid" id="constellation-grid"></div>
     </div>
@@ -398,12 +452,12 @@
   <script>
     let scene, camera, renderer, controls;
     let galaxyGroup;
-    let starPoints, spiralDustPoints, spiralRibbonMesh, sparklePoints, constellationLines;
+    let starPoints, spiralDustPoints, spiralRibbonMesh, sparklePoints;
+    let dynamicActiveEdges = null; // Dynamically created ONLY on selection
     let galaxyData = { bodies: [], lines: [] };
     let currentFocusNode = null;
     let currentClusterNode = null;
     let lastRenderedCount = -1;
-    let lastRenderedLines = -1;
     let lastRenderedTimestamp = 0;
 
     let currentSection = 'galaxy';
@@ -417,7 +471,7 @@
           if (spiralDustPoints) spiralDustPoints.visible = true;
           if (spiralRibbonMesh) spiralRibbonMesh.visible = true;
           if (sparklePoints) sparklePoints.visible = true;
-          document.getElementById('cluster-header-text').textContent = '🪐 Knowledge Clusters & Focus Areas';
+          document.getElementById('cluster-header-text').textContent = '🪐 Knowledge Clusters & Focus Sectors';
         },
         unmount: () => {
           if (spiralDustPoints) spiralDustPoints.visible = false;
@@ -444,10 +498,10 @@
 
     function init() {
       scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x04010a, 0.00025);
+      scene.fog = new THREE.FogExp2(0x04010a, 0.00022);
 
       camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 25000);
-      camera.position.set(0, 500, 1100);
+      camera.position.set(0, 520, 1150);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -465,8 +519,8 @@
       controls.autoRotateSpeed = 0.25;
 
       // Lights
-      scene.add(new THREE.AmbientLight(0x2e1065, 2.2));
-      const coreLight = new THREE.PointLight(0xfef08a, 5.0, 4000);
+      scene.add(new THREE.AmbientLight(0x2e1065, 2.4));
+      const coreLight = new THREE.PointLight(0xfef08a, 5.5, 4500);
       coreLight.position.set(0, 0, 0);
       scene.add(coreLight);
 
@@ -474,18 +528,18 @@
       galaxyGroup = new THREE.Group();
       scene.add(galaxyGroup);
 
-      // 1. Image 1 Glowing Multi-Layered Spiral Ribbons
+      // 1. Image Vibrant Multi-Layered Spiral Ribbons (Matching uploaded blueprint image)
       buildSpiralRibbons();
 
       // 2. Swirling 30,000 Particle Cosmic Spiral Dust
       createCosmicSpiralDust();
 
-      // 3. 4-Point Sparkle Cross Stars
+      // 3. Discrete 4-Point Sparkle Cross Stars
       buildSparkleStars();
 
-      // Click / Raycast
+      // Click / Raycast Selection
       const raycaster = new THREE.Raycaster();
-      raycaster.params.Points.threshold = 8;
+      raycaster.params.Points.threshold = 9;
       const mouse = new THREE.Vector2();
 
       window.addEventListener('click', (e) => {
@@ -504,7 +558,7 @@
         }
       });
 
-      // Fetch Live Memory Data once on init, then poll softly without tearing down meshes
+      // Fetch Live Memory Data once on init, then poll softly
       fetchGalaxy();
       setInterval(fetchGalaxy, 10000);
 
@@ -512,28 +566,28 @@
       animate(0);
     }
 
-    // Image 1: Glowing Multi-Layer Spiral Arm Ribbons
+    // Image-matched Flat-Vector Style Glowing Spiral Arm Ribbons (Blueprint Palette)
     function buildSpiralRibbons() {
       const numArms = 4;
-      const steps = 110;
+      const steps = 120;
       const ribbonPositions = [];
       const ribbonColors = [];
 
-      // Color Palette gradient matching Image 1:
-      // Core #fffbeb -> Gold #fbbf24 -> Tangerine #f97316 -> Magenta #e11d48 -> Purple #7c3aed -> Indigo #312e81
+      // Vibrant Vector Palette matching user's uploaded image:
+      // Galactic Core (#ffffff / #fef08a) -> Warm Golden Yellow (#facc15) -> Tangerine Orange (#fb923c) -> Magenta / Coral (#e11d48) -> Vibrant Purple (#a855f7) -> Deep Violet / Indigo (#312e81)
       const cCore = new THREE.Color('#fffbeb');
-      const cGold = new THREE.Color('#fbbf24');
-      const cTangerine = new THREE.Color('#f97316');
+      const cGold = new THREE.Color('#facc15');
+      const cOrange = new THREE.Color('#f97316');
       const cMagenta = new THREE.Color('#e11d48');
-      const cPurple = new THREE.Color('#7c3aed');
+      const cPurple = new THREE.Color('#a855f7');
       const cIndigo = new THREE.Color('#312e81');
 
       function getRibbonColor(t) {
-        if (t < 0.2) return cCore.clone().lerp(cGold, t / 0.2);
-        if (t < 0.4) return cGold.clone().lerp(cTangerine, (t - 0.2) / 0.2);
-        if (t < 0.65) return cTangerine.clone().lerp(cMagenta, (t - 0.4) / 0.25);
-        if (t < 0.85) return cMagenta.clone().lerp(cPurple, (t - 0.65) / 0.2);
-        return cPurple.clone().lerp(cIndigo, (t - 0.85) / 0.15);
+        if (t < 0.15) return cCore.clone().lerp(cGold, t / 0.15);
+        if (t < 0.35) return cGold.clone().lerp(cOrange, (t - 0.15) / 0.2);
+        if (t < 0.60) return cOrange.clone().lerp(cMagenta, (t - 0.35) / 0.25);
+        if (t < 0.82) return cMagenta.clone().lerp(cPurple, (t - 0.60) / 0.22);
+        return cPurple.clone().lerp(cIndigo, (t - 0.82) / 0.18);
       }
 
       for (let arm = 0; arm < numArms; arm++) {
@@ -541,19 +595,19 @@
         for (let s = 0; s < steps; s++) {
           const t0 = s / steps;
           const t1 = (s + 1) / steps;
-          const r0 = 25.0 + t0 * 825.0;
-          const r1 = 25.0 + t1 * 825.0;
+          const r0 = 20.0 + t0 * 840.0;
+          const r1 = 20.0 + t1 * 840.0;
 
           const spin0 = r0 * 0.003;
           const spin1 = r1 * 0.003;
           const ang0 = armAngle + spin0;
           const ang1 = armAngle + spin1;
 
-          const y0 = Math.sin(r0 * 0.01) * 20.0;
-          const y1 = Math.sin(r1 * 0.01) * 20.0;
+          const y0 = Math.sin(r0 * 0.01) * 18.0;
+          const y1 = Math.sin(r1 * 0.01) * 18.0;
 
-          const w0 = 12.0 + 40.0 * t0;
-          const w1 = 12.0 + 40.0 * t1;
+          const w0 = 14.0 + 42.0 * t0;
+          const w1 = 14.0 + 42.0 * t1;
 
           // Perpendicular offset in XZ plane
           const perpX0 = -Math.sin(ang0) * (w0 * 0.5);
@@ -566,7 +620,6 @@
           const cx1 = Math.cos(ang1) * r1;
           const cz1 = Math.sin(ang1) * r1;
 
-          // Quad vertices: v0 (inner 0), v1 (outer 0), v2 (inner 1), v3 (outer 1)
           const p0 = [cx0 - perpX0, y0, cz0 - perpZ0];
           const p1 = [cx0 + perpX0, y0, cz0 + perpZ0];
           const p2 = [cx1 - perpX1, y1, cz1 - perpZ1];
@@ -575,11 +628,9 @@
           const col0 = getRibbonColor(t0);
           const col1 = getRibbonColor(t1);
 
-          // Triangle 1: p0, p1, p2
           ribbonPositions.push(...p0, ...p1, ...p2);
           ribbonColors.push(col0.r, col0.g, col0.b, col0.r, col0.g, col0.b, col1.r, col1.g, col1.b);
 
-          // Triangle 2: p1, p3, p2
           ribbonPositions.push(...p1, ...p3, ...p2);
           ribbonColors.push(col0.r, col0.g, col0.b, col1.r, col1.g, col1.b, col1.r, col1.g, col1.b);
         }
@@ -592,7 +643,7 @@
       const mat = new THREE.MeshBasicMaterial({
         vertexColors: true,
         transparent: true,
-        opacity: 0.35,
+        opacity: 0.38,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
         side: THREE.DoubleSide
@@ -610,9 +661,9 @@
       const col = new Float32Array(count * 3);
 
       const numArms = 4;
-      const coreColor = new THREE.Color(0xfef08a); // Gold center
-      const midColor = new THREE.Color(0xc084fc);  // Purple mid
-      const rimColor = new THREE.Color(0x38bdf8);  // Cyan rim
+      const coreColor = new THREE.Color(0xfef08a);
+      const midColor = new THREE.Color(0xc084fc);
+      const rimColor = new THREE.Color(0x38bdf8);
 
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
@@ -626,7 +677,7 @@
         const rz = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.28) * r;
 
         pos[i3] = Math.cos(armAngle + spin) * r + rx;
-        pos[i3 + 1] = ry + Math.sin(r * 0.01) * 20;
+        pos[i3 + 1] = ry + Math.sin(r * 0.01) * 18;
         pos[i3 + 2] = Math.sin(armAngle + spin) * r + rz;
 
         let c;
@@ -645,7 +696,7 @@
         size: 3.0,
         vertexColors: true,
         transparent: true,
-        opacity: 0.75,
+        opacity: 0.72,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
@@ -654,9 +705,9 @@
       galaxyGroup.add(spiralDustPoints);
     }
 
-    // Image 1: 4-Point Sparkle Cross Stars
+    // Discrete 4-Point Sparkle Cross Stars (Matching Vector Illustration)
     function buildSparkleStars() {
-      const count = 320;
+      const count = 350;
       const geo = new THREE.BufferGeometry();
       const pos = new Float32Array(count * 3);
       const col = new Float32Array(count * 3);
@@ -666,7 +717,6 @@
       sparkleCanvas.height = 64;
       const ctx = sparkleCanvas.getContext('2d');
 
-      // Draw 4-point sparkle cross texture
       const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 28);
       grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
       grad.addColorStop(0.25, 'rgba(253, 224, 71, 0.85)');
@@ -675,13 +725,11 @@
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 64, 64);
 
-      // Horizontal ray
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
       ctx.beginPath();
       ctx.moveTo(0, 32); ctx.lineTo(32, 30); ctx.lineTo(64, 32); ctx.lineTo(32, 34); ctx.closePath();
       ctx.fill();
 
-      // Vertical ray
       ctx.beginPath();
       ctx.moveTo(32, 0); ctx.lineTo(30, 32); ctx.lineTo(32, 64); ctx.lineTo(34, 32); ctx.closePath();
       ctx.fill();
@@ -690,17 +738,17 @@
 
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
-        const r = Math.pow(Math.random(), 1.2) * 550 + 15;
+        const r = Math.pow(Math.random(), 1.2) * 580 + 15;
         const ang = Math.random() * Math.PI * 2;
-        const y = (Math.random() - 0.5) * 40.0 + Math.sin(r * 0.01) * 15.0;
+        const y = (Math.random() - 0.5) * 35.0 + Math.sin(r * 0.01) * 15.0;
 
         pos[i3] = Math.cos(ang) * r;
         pos[i3 + 1] = y;
         pos[i3 + 2] = Math.sin(ang) * r;
 
         const isGold = Math.random() < 0.6;
-        col[i3] = isGold ? 1.0 : 0.8;
-        col[i3 + 1] = isGold ? 0.95 : 0.85;
+        col[i3] = isGold ? 1.0 : 0.85;
+        col[i3 + 1] = isGold ? 0.95 : 0.9;
         col[i3 + 2] = isGold ? 0.6 : 1.0;
       }
 
@@ -728,10 +776,8 @@
         if (!res.ok) return;
         galaxyData = await res.json();
         const bodiesChanged = galaxyData.bodies.length !== lastRenderedCount;
-        const linesChanged = (galaxyData.lines ? galaxyData.lines.length : 0) !== lastRenderedLines;
-        if (bodiesChanged || linesChanged) {
+        if (bodiesChanged) {
           lastRenderedCount = galaxyData.bodies.length;
-          lastRenderedLines = galaxyData.lines ? galaxyData.lines.length : 0;
           lastRenderedTimestamp = galaxyData.timestamp || 0;
           renderDatabaseStars(galaxyData);
           populateClusterSidebar(galaxyData);
@@ -760,7 +806,6 @@
       });
 
       lastRenderedCount = -1;
-      lastRenderedLines = -1;
       await fetchGalaxy();
       resetToGalacticView();
     }
@@ -789,7 +834,7 @@
 
       let tierCol;
       if (b.id.includes(':core:')) {
-        tierCol = { r: 1.0, g: 0.95, b: 0.5 };
+        tierCol = { r: 1.0, g: 0.98, b: 0.6 };
       } else if (b.id.includes(':lang:')) {
         tierCol = { r: 0.98, g: 0.85, b: 0.2 };
       } else if (b.id.includes(':version:')) {
@@ -819,13 +864,15 @@
       colAttr.needsUpdate = true;
     }
 
-    // Renders database stars with recency glow
+    // Passive State: Renders Discrete Memory Star Nodes (ZERO cluttering lines in passive state)
     function renderDatabaseStars(data) {
-      document.getElementById('stat-stars').textContent = `✨ ${data.bodies.length} Stars`;
-      document.getElementById('stat-links').textContent = `🔗 ${data.lines.length} Links`;
+      document.getElementById('stat-total-nodes').textContent = `${data.bodies.length} ENTRIES`;
 
       if (starPoints) galaxyGroup.remove(starPoints);
-      if (constellationLines) galaxyGroup.remove(constellationLines);
+      if (dynamicActiveEdges) {
+        galaxyGroup.remove(dynamicActiveEdges);
+        dynamicActiveEdges = null;
+      }
 
       const count = data.bodies.length;
       const geo = new THREE.BufferGeometry();
@@ -848,51 +895,48 @@
       geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
       const mat = new THREE.PointsMaterial({
-        size: 4.5,
+        size: 5.0,
         vertexColors: true,
         transparent: true,
-        opacity: 0.75,
+        opacity: 0.85,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
 
       starPoints = new THREE.Points(geo, mat);
       galaxyGroup.add(starPoints);
+    }
 
-      // Render Constellation Link Filaments with typed alpha & length fade
+    // Selection State: Dynamically renders radiant blue-green edges for the active star ONLY
+    function renderActiveSelectionEdges(selectedBody) {
+      if (dynamicActiveEdges) {
+        galaxyGroup.remove(dynamicActiveEdges);
+        dynamicActiveEdges = null;
+      }
+
+      if (!selectedBody || !galaxyData.lines) return;
+
+      const bodyMap = new Map();
+      galaxyData.bodies.forEach(b => bodyMap.set(b.id, b));
+
       const linePos = [];
       const lineCol = [];
-      const bodyMap = new Map();
-      data.bodies.forEach(b => bodyMap.set(b.id, b));
 
-      data.lines.forEach(l => {
-        const s = bodyMap.get(l.source_id);
-        const t = bodyMap.get(l.target_id);
-        if (s && t) {
-          linePos.push(s.x, s.y, s.z);
-          linePos.push(t.x, t.y, t.z);
+      // Radiant blue-green / cyan connecting line color (#22d3ee)
+      const edgeR = 0.13, edgeG = 0.82, edgeB = 0.93;
 
-          const dist = Math.sqrt((s.x - t.x)**2 + (s.y - t.y)**2 + (s.z - t.z)**2);
-          let spoke_op = 0.25;
-          let r = 0.65, g = 0.35, b = 0.98;
+      galaxyData.lines.forEach(l => {
+        if (l.source_id === selectedBody.id || l.target_id === selectedBody.id) {
+          const s = bodyMap.get(l.source_id);
+          const t = bodyMap.get(l.target_id);
+          if (s && t) {
+            linePos.push(s.x, s.y, s.z);
+            linePos.push(t.x, t.y, t.z);
 
-          if (l.relationship === 'core_gravitational_ray') {
-            spoke_op = 0.08;
-            r = 0.98; g = 0.85; b = 0.3;
-          } else if (l.relationship === 'interstellar_bridge') {
-            const lengthFade = Math.max(0.2, 1.0 - (dist / 200.0));
-            spoke_op = 0.12 * lengthFade;
-            r = 0.75; g = 0.45; b = 0.95;
-          } else if (l.relationship === 'version_orbit') {
-            spoke_op = 0.30;
-            r = 0.22; g = 0.75; b = 0.98;
-          } else if (l.relationship === 'contains_chapter') {
-            spoke_op = 0.25;
-            r = 0.60; g = 0.40; b = 0.95;
+            // Bright radiant glow on active selection edges
+            lineCol.push(edgeR, edgeG, edgeB);
+            lineCol.push(edgeR, edgeG, edgeB);
           }
-
-          lineCol.push(r * spoke_op, g * spoke_op, b * spoke_op);
-          lineCol.push(r * spoke_op, g * spoke_op, b * spoke_op);
         }
       });
 
@@ -903,11 +947,13 @@
         const lineMat = new THREE.LineBasicMaterial({
           vertexColors: true,
           transparent: true,
+          opacity: 0.95,
           blending: THREE.AdditiveBlending,
           depthWrite: false,
+          linewidth: 2,
         });
-        constellationLines = new THREE.LineSegments(lineGeo, lineMat);
-        galaxyGroup.add(constellationLines);
+        dynamicActiveEdges = new THREE.LineSegments(lineGeo, lineMat);
+        galaxyGroup.add(dynamicActiveEdges);
       }
     }
 
@@ -930,8 +976,6 @@
           }
         });
 
-        document.getElementById('stat-langs').textContent = `✨ 32 Asterisms`;
-
         // 1. Zodiac Section
         const zTitle = document.createElement('div');
         zTitle.className = 'cluster-category-title';
@@ -941,7 +985,7 @@
         zodiacBodies.forEach(c => {
           const item = document.createElement('div');
           item.className = 'cluster-item';
-          item.innerHTML = `<span>♈ ${c.label}</span><span style="color:#fde047; font-size:0.68rem;">WARP →</span>`;
+          item.innerHTML = `<span>♈ ${c.label}</span><span style="color:#38bdf8; font-size:0.68rem; font-family:monospace;">LOCK →</span>`;
           item.onclick = () => onSelectStar(c);
           list.appendChild(item);
         });
@@ -956,18 +1000,17 @@
         asterismBodies.forEach(c => {
           const item = document.createElement('div');
           item.className = 'cluster-item';
-          item.innerHTML = `<span>✨ ${c.label}</span><span style="color:#38bdf8; font-size:0.68rem;">WARP →</span>`;
+          item.innerHTML = `<span>✨ ${c.label}</span><span style="color:#38bdf8; font-size:0.68rem; font-family:monospace;">LOCK →</span>`;
           item.onclick = () => onSelectStar(c);
           list.appendChild(item);
         });
       } else {
         const clusters = data.bodies.filter(b => b.id.includes(':lang:'));
-        document.getElementById('stat-langs').textContent = `🪐 ${clusters.length} Clusters`;
 
         clusters.forEach(c => {
           const item = document.createElement('div');
           item.className = 'cluster-item';
-          item.innerHTML = `<span>✦ ${c.label}</span><span style="color:#94a3b8; font-size:0.7rem;">ORBIT →</span>`;
+          item.innerHTML = `<span>✦ ${c.label}</span><span style="color:#38bdf8; font-size:0.7rem; font-family:monospace;">WARP →</span>`;
           item.onclick = () => onSelectStar(c);
           list.appendChild(item);
         });
@@ -993,66 +1036,56 @@
         document.getElementById('nav-version').textContent = `✦ ${body.label}`;
       }
 
-      // Transform local coordinates into world coordinates
+      // 1. Dynamic Radiant Edge Rendering for this node
+      renderActiveSelectionEdges(body);
+
+      // 2. Transform local coordinates into world coordinates and fly camera
       const worldPos = new THREE.Vector3(body.x, body.y, body.z);
       galaxyGroup.localToWorld(worldPos);
+      flyCameraTo(worldPos.x, worldPos.y, worldPos.z, isCluster ? 150 : 90);
 
-      flyCameraTo(worldPos.x, worldPos.y, worldPos.z, isCluster ? 140 : 80);
-
-      // Open Note Inspector HUD
+      // 3. Open Futuristic Cyan Line-Art HUD Panel
       showInspector(body);
     }
 
+    // Displays the Technical Blueprint Specification HUD
     async function showInspector(body) {
       const inspector = document.getElementById('note-inspector');
-      const badge = document.getElementById('inspector-badge');
       const title = document.getElementById('inspector-title');
+      const subtitle = document.getElementById('inspector-subtitle');
       const content = document.getElementById('inspector-content');
       const tagsRow = document.getElementById('inspector-tags');
       const grid = document.getElementById('constellation-grid');
 
-      if (body.id.includes(':core:')) {
-        badge.textContent = 'SUPERMASSIVE CORE';
-        badge.className = 'badge badge-core';
-      } else if (body.id.includes(':lang:')) {
-        badge.textContent = 'KNOWLEDGE CLUSTER';
-        badge.className = 'badge badge-lang';
-      } else if (body.id.includes(':version:')) {
-        badge.textContent = 'EDITION STAR';
-        badge.className = 'badge badge-version';
-      } else {
-        badge.textContent = 'MEMORY NOTE';
-        badge.className = 'badge badge-book';
-      }
+      // Title & System Readout
+      title.textContent = `STELLAR SYSTEM: ${body.label.toUpperCase()}`;
+      subtitle.textContent = `ENTRY ID: ${computeHexHash(body.id)} — CLASSIFICATION: MEMORY RECORD`;
 
-      title.textContent = body.label;
-      const lum = (body.luminosity || 0.9);
-      const mass = (body.mass || 0.85);
-      document.getElementById('meta-luminosity').textContent = `🔥 Recency: ${lum.toFixed(2)}`;
-      document.getElementById('meta-retention').textContent = `Mass: ${mass.toFixed(2)}`;
-
-      // Update Spec Grid
+      // Technical Readout Values
+      const lum = (body.luminosity || 0.92);
       const rDist = Math.sqrt(body.x * body.x + body.z * body.z);
-      document.getElementById('spec-radius').textContent = `${rDist.toFixed(1)} AU`;
-      document.getElementById('spec-flux').textContent = `${(lum * 100).toFixed(1)}%`;
-      document.getElementById('spec-tier').textContent = body.tier ? body.tier.toUpperCase() : 'SEMANTIC';
-      document.getElementById('spec-phase').textContent = `${(Math.atan2(body.z, body.x)).toFixed(2)} rad`;
+      document.getElementById('tech-entry-id').textContent = computeHexHash(body.id);
+      document.getElementById('tech-classification').textContent = 'MEMORY RECORD';
+      document.getElementById('tech-timestamp').textContent = computeFormattedUtcTime();
+      document.getElementById('tech-tier').textContent = body.tier ? body.tier.toUpperCase() : 'SEMANTIC';
+      document.getElementById('tech-radius').textContent = `${rDist.toFixed(1)} AU`;
+      document.getElementById('tech-flux').textContent = `${(lum * 100).toFixed(1)}%`;
 
-      content.textContent = body.content || "Cognitive celestial memory star active in second brain matrix.";
+      content.textContent = body.content || `Memory record "${body.label}" indexed in cognitive celestial second brain matrix.`;
 
       // Tags
       tagsRow.innerHTML = '';
-      const tags = body.tags && body.tags.length > 0 ? body.tags : ['memory', 'second-brain'];
+      const tags = body.tags && body.tags.length > 0 ? body.tags : ['history', 'civilization', 'ancient', 'memory'];
       tags.forEach(t => {
         const pill = document.createElement('span');
         pill.className = 'tag-pill';
-        pill.textContent = `#${t}`;
+        pill.textContent = `#${t.toUpperCase()}`;
         tagsRow.appendChild(pill);
       });
 
-      // Find connected stars
+      // Find connected neighbors (moons / sub-files / chapter nodes)
       const connected = galaxyData.bodies.filter(b => {
-        return galaxyData.lines.some(l => (l.source_id === body.id && l.target_id === b.id) || (l.target_id === body.id && l.source_id === b.id));
+        return galaxyData.lines && galaxyData.lines.some(l => (l.source_id === body.id && l.target_id === b.id) || (l.target_id === body.id && l.source_id === b.id));
       });
 
       grid.innerHTML = '';
@@ -1061,7 +1094,7 @@
         connected.slice(0, 8).forEach(m => {
           const card = document.createElement('div');
           card.className = 'constellation-card';
-          card.innerHTML = `<div class="constellation-title">✦ ${m.label}</div><div class="constellation-sub">${m.id.split(':')[1] || 'node'}</div>`;
+          card.innerHTML = `<div class="constellation-title">✦ ${m.label}</div><div class="constellation-sub">${m.id.split(':')[1] || 'sub-node'}</div>`;
           card.onclick = () => onSelectStar(m);
           grid.appendChild(card);
         });
@@ -1072,15 +1105,33 @@
       inspector.style.display = 'block';
     }
 
+    function computeHexHash(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return '0x' + (Math.abs(hash) % 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+    }
+
+    function computeFormattedUtcTime() {
+      const d = new Date();
+      return `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')} UTC`;
+    }
+
     function closeInspector() {
       document.getElementById('note-inspector').style.display = 'none';
       document.getElementById('hud-callout-svg').style.display = 'none';
+      if (dynamicActiveEdges) {
+        galaxyGroup.remove(dynamicActiveEdges);
+        dynamicActiveEdges = null;
+      }
       currentFocusNode = null;
     }
 
-    // Image 2: Animated Saturnian Ringed Planet Canvas in HUD
-    function drawPlanetSchematic(body, time) {
-      const canvas = document.getElementById('planet-schematic-canvas');
+    // Component 1: Interactive Planetary System Diagram (Solar System / Sub-Nodes)
+    function drawPlanetarySystemDiagram(body, time) {
+      const canvas = document.getElementById('planet-system-diagram');
       if (!canvas || !body) return;
       const ctx = canvas.getContext('2d');
       const w = canvas.width;
@@ -1088,120 +1139,80 @@
       ctx.clearRect(0, 0, w, h);
 
       const cx = w * 0.5;
-      const cy = h * 0.55;
-      const planetRadius = 26;
-      const ringTilt = 0.32;
-      const t = time * 0.0015;
+      const cy = h * 0.5;
+      const t = time * 0.0012;
 
-      // 1. Back half of Saturnian Rings
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(ringTilt);
-      ctx.scale(1, 0.32);
+      // Concentric Orbit Tracks
+      const orbits = [30, 55, 80, 110, 140];
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.18)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 5]);
+      orbits.forEach(r => {
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, r * 1.3, r * 0.45, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
 
-      ctx.beginPath();
-      ctx.arc(0, 0, 58, Math.PI, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
-      ctx.lineWidth = 14;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(0, 0, 72, Math.PI, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(192, 132, 252, 0.3)';
-      ctx.lineWidth = 6;
-      ctx.stroke();
-      ctx.restore();
-
-      // 2. Planet Sphere with Gradient & Banding
-      const grad = ctx.createRadialGradient(cx - 8, cy - 8, 4, cx, cy, planetRadius);
-      grad.addColorStop(0, '#fef08a');
-      grad.addColorStop(0.35, '#ea580c');
-      grad.addColorStop(0.7, '#7c3aed');
-      grad.addColorStop(1, '#1e1b4b');
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, planetRadius, 0, Math.PI * 2);
+      // Central Parent Star (Alpha Node)
+      const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, 18);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.3, '#fde047');
+      grad.addColorStop(0.7, '#f97316');
+      grad.addColorStop(1, 'rgba(234, 88, 12, 0)');
       ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 18, 0, Math.PI * 2);
       ctx.fill();
 
-      // Horizontal cloud bands
-      ctx.clip();
-      ctx.strokeStyle = 'rgba(253, 224, 71, 0.25)';
-      ctx.lineWidth = 3;
-      for (let y = -planetRadius + 6; y < planetRadius; y += 8) {
-        ctx.beginPath();
-        ctx.moveTo(cx - planetRadius, cy + y);
-        ctx.lineTo(cx + planetRadius, cy + y);
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      // 3. Front half of Saturnian Rings
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(ringTilt);
-      ctx.scale(1, 0.32);
-
+      ctx.fillStyle = '#fff';
       ctx.beginPath();
-      ctx.arc(0, 0, 58, 0, Math.PI);
-      ctx.strokeStyle = 'rgba(250, 204, 21, 0.65)';
-      ctx.lineWidth = 14;
-      ctx.stroke();
+      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+      ctx.fill();
 
-      ctx.beginPath();
-      ctx.arc(0, 0, 72, 0, Math.PI);
-      ctx.strokeStyle = 'rgba(192, 132, 252, 0.45)';
-      ctx.lineWidth = 6;
-      ctx.stroke();
-      ctx.restore();
-
-      // 4. Orbiting Moons / Satellites (Editions / Chapters)
-      const moons = [
-        { r: 42, speed: 1.2, size: 3.5, col: '#38bdf8' },
-        { r: 76, speed: 0.7, size: 4.0, col: '#facc15' },
-        { r: 94, speed: -0.45, size: 3.0, col: '#c084fc' }
+      // Revolving Orbiting Planets / Moons (Sub-Files & Versions)
+      const planets = [
+        { r: 30, speed: 1.8, size: 3.5, col: '#38bdf8', label: 'MOD-1' },
+        { r: 55, speed: 1.1, size: 4.5, col: '#facc15', label: 'DAT-A' },
+        { r: 80, speed: 0.65, size: 4.0, col: '#c084fc', label: 'REC-0' },
+        { r: 110, speed: -0.45, size: 3.8, col: '#4ade80', label: 'SUB-2' },
+        { r: 140, speed: 0.3, size: 4.2, col: '#f43f5e', label: 'EXT-9' }
       ];
 
-      moons.forEach(m => {
-        const mAngle = t * m.speed;
-        const mx = cx + Math.cos(mAngle) * m.r;
-        const my = cy + Math.sin(mAngle) * (m.r * 0.38);
+      planets.forEach(p => {
+        const ang = t * p.speed;
+        const px = cx + Math.cos(ang) * (p.r * 1.3);
+        const py = cy + Math.sin(ang) * (p.r * 0.45);
 
-        // Orbit trail ellipse
-        ctx.save();
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, m.r, m.r * 0.38, 0, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([2, 4]);
-        ctx.stroke();
-        ctx.restore();
-
-        // Moon dot with glow
-        ctx.beginPath();
-        ctx.arc(mx, my, m.size, 0, Math.PI * 2);
-        ctx.fillStyle = m.col;
-        ctx.shadowColor = m.col;
+        // Planet Dot with Luminous Glow
+        ctx.fillStyle = p.col;
+        ctx.shadowColor = p.col;
         ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(px, py, p.size, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
+
+        // Label
+        ctx.font = '8px monospace';
+        ctx.fillStyle = 'rgba(203, 213, 225, 0.7)';
+        ctx.fillText(p.label, px + 5, py - 4);
       });
     }
 
-    // Image 2: Animated Harmonic Cognitive Telemetry Waveform in HUD
-    function drawTelemetryWaveform(body, time) {
-      const canvas = document.getElementById('telemetry-canvas');
+    // Component 3: MEMORY DEPTH PATTERN (Complex Intersecting Sine and Cosine Waveforms)
+    function drawMemoryDepthPattern(body, time) {
+      const canvas = document.getElementById('memory-depth-canvas');
       if (!canvas || !body) return;
       const ctx = canvas.getContext('2d');
       const w = canvas.width;
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
 
-      // Grid background
-      ctx.strokeStyle = 'rgba(168, 85, 247, 0.15)';
+      // Futuristic Grid Lines
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
       ctx.lineWidth = 1;
-      for (let x = 0; x < w; x += 30) {
+      for (let x = 0; x < w; x += 25) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
       }
       for (let y = 0; y < h; y += 15) {
@@ -1212,44 +1223,43 @@
       const lum = body.luminosity || 0.9;
       const midY = h * 0.5;
 
-      // 1. Primary Resonance Wave (Gold/Amber)
+      // 1. Sine Waveform (Cyan / Blue-Green)
       ctx.beginPath();
-      ctx.strokeStyle = '#facc15';
+      ctx.strokeStyle = '#22d3ee';
       ctx.lineWidth = 2.0;
-      ctx.shadowColor = '#facc15';
+      ctx.shadowColor = '#22d3ee';
       ctx.shadowBlur = 6;
       for (let x = 0; x < w; x += 2) {
         const nx = x / w;
-        const decay = Math.exp(-nx * 0.8);
-        const y = midY + Math.sin(nx * 14.0 - t * 4.0) * Math.cos(nx * 5.0 + t) * (18.0 * lum) * decay;
+        const decay = Math.exp(-nx * 0.7);
+        const y = midY + Math.sin(nx * 16.0 - t * 4.0) * Math.cos(nx * 6.0 + t) * (20.0 * lum) * decay;
         if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
       ctx.stroke();
       ctx.shadowBlur = 0;
 
-      // 2. Secondary Harmonic Wave (Cyan/Purple)
+      // 2. Intersecting Cosine Harmonic Waveform (Amber / Magenta)
       ctx.beginPath();
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.65)';
-      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = 'rgba(250, 204, 21, 0.75)';
+      ctx.lineWidth = 1.4;
       for (let x = 0; x < w; x += 2) {
         const nx = x / w;
-        const y = midY + Math.sin(nx * 24.0 + t * 3.0) * (9.0 * lum);
+        const y = midY + Math.cos(nx * 22.0 + t * 3.5) * (11.0 * lum);
         if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
       ctx.stroke();
 
-      // 3. Live Scanline Bar
-      const scanX = (time * 0.12) % w;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      // 3. Scanline Sweep
+      const scanX = (time * 0.15) % w;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(scanX, 0); ctx.lineTo(scanX, h);
       ctx.stroke();
 
-      // Readout Label
-      ctx.font = '9px monospace';
+      ctx.font = '8px monospace';
       ctx.fillStyle = '#38bdf8';
-      ctx.fillText(`HARMONIC SYNC: ${(lum * 99.8).toFixed(1)}%`, 8, 12);
+      ctx.fillText(`FREQUENCY: ${(lum * 432.8).toFixed(1)} Hz | DEPTH: ${(lum * 99.4).toFixed(1)}%`, 8, 12);
     }
 
     function flyCameraTo(tx, ty, tz, distance) {
@@ -1271,7 +1281,7 @@
       document.getElementById('nav-version').style.display = 'none';
       closeInspector();
 
-      flyCameraTo(0, 0, 0, 1100);
+      flyCameraTo(0, 0, 0, 1150);
     }
 
     function zoomToCurrentCluster() {
@@ -1304,12 +1314,12 @@
           label: label,
           content: `New memory node created in second brain matrix: ${label}`,
           tier: 'semantic',
-          tags: ['second-brain', 'agent-context']
+          tags: ['second-brain', 'agent-context', 'database']
         })
       });
 
       document.getElementById('new-concept-label').value = '';
-      lastRenderedCount = -1; // Trigger redraw
+      lastRenderedCount = -1;
       fetchGalaxy();
     }
 
@@ -1327,7 +1337,7 @@
       requestAnimationFrame(animate);
       TWEEN.update();
 
-      // Gentle, smooth, low-CPU orbital rotation
+      // Smooth, low-CPU orbital rotation
       if (galaxyGroup && controls.autoRotate) {
         galaxyGroup.rotation.y += 0.0004;
       }
@@ -1340,12 +1350,12 @@
       controls.update();
       renderer.render(scene, camera);
 
-      // Image 2: Screen-projected Callout Brackets & Animated Telemetry
+      // Selection State: HUD Callout Brackets & Animated Technical Diagram Components
       const inspector = document.getElementById('note-inspector');
       if (inspector.style.display !== 'none' && currentFocusNode) {
-        // Draw HUD Canvas elements
-        drawPlanetSchematic(currentFocusNode, time);
-        drawTelemetryWaveform(currentFocusNode, time);
+        // Draw 2D Blueprint Components
+        drawPlanetarySystemDiagram(currentFocusNode, time);
+        drawMemoryDepthPattern(currentFocusNode, time);
 
         // Project 3D star coordinates to 2D screen coordinates
         const p = new THREE.Vector3(currentFocusNode.x, currentFocusNode.y, currentFocusNode.z);
@@ -1358,7 +1368,7 @@
 
           const rect = inspector.getBoundingClientRect();
           const tx = rect.left;
-          const ty = rect.top + 70;
+          const ty = rect.top + 60;
 
           const midX = sx + (tx > sx ? 45 : -45);
           const d = `M ${sx} ${sy} L ${midX} ${sy - 20} L ${tx - 20} ${sy - 20} L ${tx} ${ty}`;
@@ -1366,6 +1376,8 @@
           document.getElementById('callout-line').setAttribute('d', d);
           document.getElementById('callout-reticle').setAttribute('cx', sx);
           document.getElementById('callout-reticle').setAttribute('cy', sy);
+          document.getElementById('callout-reticle-inner').setAttribute('cx', sx);
+          document.getElementById('callout-reticle-inner').setAttribute('cy', sy);
           document.getElementById('callout-dot').setAttribute('cx', sx);
           document.getElementById('callout-dot').setAttribute('cy', sy);
           document.getElementById('hud-callout-svg').style.display = 'block';
