@@ -1,4 +1,4 @@
-use crate::celestial::body::CelestialBody;
+use crate::galaxy::celestial::body::CelestialBody;
 use crate::cognitive::node::AssociativeLink;
 use std::collections::HashMap;
 

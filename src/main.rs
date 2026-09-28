@@ -9,7 +9,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 #[derive(Parser, Debug)]
 #[command(author, version, about = "Mazzaroth Cognitive Celestial Memory Daemon & MCP Server")]
 struct Cli {
-    #[arg(short, long, default_value = "0.0.0.0:8080")]
+    #[arg(short, long, default_value = "127.0.0.1:8080")]
     bind: SocketAddr,
 
     #[arg(short, long, default_value = "data/mazzaroth.db")]

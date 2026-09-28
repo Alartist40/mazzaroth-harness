@@ -1,4 +1,4 @@
-use crate::celestial::{build_constellation_lines, CelestialBody, CelestialPhysicsEngine, ConstellationLine};
+use crate::galaxy::celestial::{build_constellation_lines, CelestialBody, CelestialPhysicsEngine, ConstellationLine};
 use crate::cognitive::{AssociativeLink, CognitiveDecayEngine, MemoryNode, MemoryTier};
 use crate::store::MazzarothStore;
 use anyhow::Result;

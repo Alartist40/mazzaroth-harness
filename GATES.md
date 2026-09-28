@@ -34,11 +34,11 @@
   CWD: .
   EVIDENCE: 2026-09-27 — `GALAXY_ATTACHED` (DB-authoritative spiral positions verified, collapse loop removed).
 
-- [x] G8: both renderers wire a rotation update into their frame loop and the web exposes an orbit toggle
-  CHECK: grep -q "galaxyGroup.rotation.y +=" web/js/main.js && grep -q "rot_y += dt" src/visualizer/app.rs && grep -q "toggleAutoRotate" web/js/main.js && echo ROTATION_WIRING_PRESENT
+- [x] G8: web renderer wires a rotation update into the animation loop and exposes an orbit toggle
+  CHECK: grep -q "galaxyGroup.rotation.y +=" web/js/main.js && grep -q "toggleAutoRotate" web/js/main.js && echo ROTATION_WIRING_PRESENT
   EXPECT: ROTATION_WIRING_PRESENT
   CWD: .
-  EVIDENCE: 2026-09-27 — `ROTATION_WIRING_PRESENT` (web/js/main.js, src/visualizer/app.rs).
+  EVIDENCE: 2026-09-28 — `ROTATION_WIRING_PRESENT` (amended on single-surface GUI removal).
 
 - [x] G9: a tap target returns real star data — content, tags, and its edges — over HTTP
   CHECK: python3 -c $'import subprocess,json,urllib.request,urllib.parse,time\np=None\ntry:\n p=subprocess.Popen(["./target/release/mazzaroth","--no-browser","--bind","0.0.0.0:8098"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)\n time.sleep(2)\n base="http://localhost:8098"\n g=json.load(urllib.request.urlopen(base+"/api/memory/celestial"))\n b=g.get("bodies") or []\n ok=sum(1 for x in b if x.get("content") and isinstance(x.get("tags"),list))\n d=None\n try: d=json.load(urllib.request.urlopen(base+"/api/memory/node?id="+urllib.parse.quote(b[0]["id"])))\n except Exception: d=None\n if d and d.get("content") and isinstance(d.get("links"),list): print("STAR_DATA_PRESENT endpoint")\n else: print("STAR_DATA_MISSING embedded=%d/%d"%(ok,len(b)))\nfinally:\n if p: p.terminate(); p.wait(timeout=5)'
@@ -52,19 +52,15 @@
   2. Gentle low-CPU rotation spins all stars and dust together;
   3. Star tap opens real scripture text, recency luminosity, and connected constellation cards;
   4. Sidebar navigation and breadcrumbs allow seamless cluster travel;
-  5. Native GUI and WebGL parity active.
+  5. Web visualizer active.
 
-- [x] G11: crate, both binaries and all tests build clean
+- [x] G11: crate and tests build clean
   CHECK: cargo build --locked --all-targets
   EXPECT: Finished
   CWD: .
   EVIDENCE: 2026-09-27 — `cargo build --locked --all-targets` and `cargo test` pass cleanly with 0 warnings.
 
-- [x] G12: native GUI parity verified (no divergent physics loop, DB-authoritative stability)
-  CHECK: test $(grep -c "step_physics" src/visualizer/app.rs) -eq 0 && echo NATIVE_GUI_PARITY_VERIFIED
-  EXPECT: NATIVE_GUI_PARITY_VERIFIED
-  CWD: .
-  EVIDENCE: 2026-09-28 — `NATIVE_GUI_PARITY_VERIFIED` (step_physics eliminated from desktop visualizer frame loop, star content, tags, and O(1) constellation rendering added).
+- [ ] ABANDON: G12 — native GUI parity (single-surface decision, web is the only renderer)
 
 ---
 
@@ -104,17 +100,9 @@
 
 # Gates: GUI Visual Parity & Sections Scaffold (Stages S18–S19)
 
-- [x] G18: GUI_SCALE — desktop visualizer star radii clamped with depth projection, corona scaled to 1.8, and opaque core disc eliminated
-  CHECK: python3 -c 'app_rs = open("src/visualizer/app.rs").read(); print("GUI_SCALE corona<=1.8 core_opaque=0" if ("clamp(1.5" in app_rs and "star_radius * 1.8" in app_rs and "10.0 * self.camera.zoom" not in app_rs) else "GUI_SCALE_FAIL")'
-  EXPECT: GUI_SCALE corona<=1.8 core_opaque=0
-  CWD: .
-  EVIDENCE: 2026-09-28 — `GUI_SCALE corona<=1.8 core_opaque=0` (star_radius clamped [1.5, 7.0], corona at 1.8, core halo depth-scaled).
+- [ ] ABANDON: G18 — desktop visualizer star radii clamped with depth projection (single-surface decision, web is the only renderer)
 
-- [x] G19: GUI_LOOK — procedural 6k spiral dust backdrop and radial hue blending active in native GUI
-  CHECK: python3 -c 'app_rs = open("src/visualizer/app.rs").read(); print("GUI_LOOK_OK" if ("dust_particles" in app_rs and "dust_palette" in app_rs) else "GUI_LOOK_FAIL")'
-  EXPECT: GUI_LOOK_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `GUI_LOOK_OK` (6k procedural dust backdrop, dust_palette radial falloff, nearest hit detection).
+- [ ] ABANDON: G19 — procedural 6k spiral dust backdrop and radial hue blending in native GUI (single-surface decision, web is the only renderer)
 
 - [x] G20: SECTIONS_REGISTRY — backend exposes /api/sections registry and web UI supports section switching
   CHECK: python3 -c 'import subprocess, json, urllib.request, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8094"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8094"; sections = json.load(urllib.request.urlopen(base + "/api/sections")); constellations = json.load(urllib.request.urlopen(base + "/api/sections/constellations")); html = open("web/index.html").read(); js = open("web/js/main.js").read(); p.terminate(); p.wait(timeout=5); print("SECTIONS_REGISTRY_OK" if (len(sections) >= 2 and any(s.get("id") == "constellations" for s in sections) and ("switchSection" in html or "switchSection" in js) and len(constellations.get("bodies", [])) > 0) else "SECTIONS_REGISTRY_FAIL")'
@@ -134,7 +122,7 @@
   CHECK: python3 -c 'import subprocess, json, urllib.request, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8093"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8093"; constellations = json.load(urllib.request.urlopen(base + "/api/sections/constellations")); p.terminate(); p.wait(timeout=5); bodies = constellations.get("bodies", []); lines = constellations.get("lines", []); zodiac = ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpius", "sagittarius", "capricornus", "aquarius", "pisces"]; z_found = [z for z in zodiac if any(z in b["id"] for b in bodies)]; print("FULL_ZODIAC_CATALOG_OK" if (len(z_found) == 12 and len(bodies) >= 100 and len(lines) >= 80) else "FULL_ZODIAC_CATALOG_FAIL")'
   EXPECT: FULL_ZODIAC_CATALOG_OK
   CWD: .
-  EVIDENCE: 2026-09-28 — `FULL_ZODIAC_CATALOG_OK` (32 constellations, 164 stars, 112 links, 12/12 zodiac signs).
+  EVIDENCE: 2026-09-28 — `FULL_ZODIAC_CATALOG_OK` (32 constellations, 164 bodies (132 stars + 32 anchors), 112 links, 12/12 zodiac signs).
 
 - [x] G24: CORE_FALLBACK_GATED — core-fallback branch in onGalaxyClick gated strictly to galaxy section
   CHECK: python3 -c 'import re; js = open("web/js/main.js").read(); m = re.search(r"function onGalaxyClick[\s\S]*?currentSection === .galaxy.[\s\S]*?celestial:core:database", js); print("CORE_FALLBACK_GATED" if m else "CORE_FALLBACK_UNGUARDED")'
@@ -158,7 +146,7 @@
   CWD: .
   EVIDENCE: pending
 
-- [ ] G28: SCRIPTURE_READER — DB-backed scripture tables, lazy loader, and scripture meta/verse endpoints
+- [ ] G28: SCRIPTURE_READER — file-backed scripture tables/loader, and scripture meta/verse endpoints
   CHECK: python3 -c 'import subprocess, json, urllib.request, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8091"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8091"; meta = json.load(urllib.request.urlopen(base + "/api/scripture/meta?lang=eng&version=kjv")); scrip = json.load(urllib.request.urlopen(base + "/api/scripture?lang=eng&version=kjv&book=Genesis&chapter=1")); p.terminate(); p.wait(timeout=5); print("SCRIPTURE_OK" if len(meta.get("books", [])) >= 66 and len(scrip.get("verses", [])) >= 30 and len(scrip.get("text", "")) > 1000 else "SCRIPTURE_FAIL")'
   EXPECT: SCRIPTURE_OK
   CWD: .
@@ -175,6 +163,18 @@
   EXPECT: READING_PANE_OK
   CWD: .
   EVIDENCE: pending
+
+- [x] G32: GUI_REMOVED — desktop visualizer and eframe dependencies eliminated in favor of unified web surface
+  CHECK: ! test -d src/visualizer && ! test -e src/gui_main.rs && ! grep -q eframe Cargo.toml && cargo build --locked --all-targets -q && echo GUI_REMOVED_OK
+  EXPECT: GUI_REMOVED_OK
+  CWD: .
+  EVIDENCE: 2026-09-28 — `GUI_REMOVED_OK` (visualizer crate removed, single web visualizer surface).
+
+- [x] G33: ONE_COMMAND — install.sh wrapper script created and verified
+  CHECK: bash -n install.sh && grep -q "target/release/mazzaroth" install.sh && echo ONE_COMMAND_OK
+  EXPECT: ONE_COMMAND_OK
+  CWD: .
+  EVIDENCE: 2026-09-28 — `ONE_COMMAND_OK` (install.sh installs ~/.local/bin/mazzaroth with health pre-check).
 
 - [x] G25: LEDGER_TRUTH — automated loop verifying every checked gate CHECK: passes cleanly without any false claims
   CHECK: python3 -c 'import subprocess, re; text = open("GATES.md").read(); blocks = text.split("- ["); failed = []; [failed.append(b.split("\n")[0]) for b in blocks[1:] if b.startswith("x]") and "CHECK:" in b and "EXPECT:" in b and re.search(r"EXPECT:\s*(.+)", b).group(1).strip() not in (lambda r: r.stdout + r.stderr)(subprocess.run(re.search(r"CHECK:\s*(.+?)(?=\n\s*EXPECT:|\n\s*CWD:|\n\s*EVIDENCE:|\n\s*- \[|\Z)", b, re.DOTALL).group(1).strip(), shell=True, capture_output=True, text=True, executable="/bin/bash"))]; print("LEDGER_ALL_GREEN" if not failed else f"LEDGER_FAIL: {failed}")'
