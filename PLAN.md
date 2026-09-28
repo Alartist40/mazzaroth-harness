@@ -1,53 +1,61 @@
-# PLAN.md — Mazzaroth Reshape & Modular Section Architecture
+# PLAN.md — Mazzaroth Reshape: UX Stabilization, SBC/Offline, Encyclopedia & Astronomy
 
-Scope: Modular section architecture, single-surface web visualizer, UI foundation cleaning, file-backed scripture API, 4-step hierarchical navigator & reading pane.
-Mode: **S28 complete** — Ledger truth verified (G7–G11, G13–G17, G20, G23, G24, G26–G30, G32, G33 MET; G12, G18, G19, G21, G22 ABANDON). Companion ledger: `GATES.md`.
+Mode: **S24–S28 [DONE] + fix-pass [DONE @ 6f0fb07]** — next stage **S29**. Companion ledger: `GATES.md`.
 
 ## Next action
 
-Run `mazzaroth` (or `./run.sh`) to interact with the 3D particle spiral galaxy database, 4-step hierarchical scripture navigator, verse reading pane, and 32 classical/zodiac constellations.
+Execute **Stage S29 (UX STABILIZATION)**: (1) section-switch state isolation, (2) sidebar discoverability
+(path chips + per-step headers + filter-only search). Gates: **G34, G35**.
 
-## 1. Done and verified (re-run, not copied)
+## 0. Audit verdict 2026-09-28 (this review, re-run by me)
 
-| Gate | CHECK re-run | Result |
-|---|---|---|
-| M1–M6 | Crate compilation, cognitive decay, physics projection, SQLite FTS5, MCP server, corpus ingestion | **MET** |
-| G7 | 24 s stability check | `lang_mean=341.6` constant at t=6/12/18/24 s → **MET** |
-| G8 | rotation wiring grep | `ROTATION_WIRING_PRESENT` → **MET** |
-| G9 | endpoint probe | content+tags+links returned (core: 60 links) → **MET** |
-| G10 | manual visual pass | low-CPU 30 FPS rotation, real data inspector, and breadcrumbs → **MET** |
-| G11 | `cargo build --locked --all-targets`, `cargo test` | 0 warnings, 5/5 tests pass → **MET** |
-| G12 | native GUI parity | **ABANDON** (single-surface decision) |
-| G13 | spiral geometric expansion & 0.003 twist alignment | `SPIRAL_ALIGNED dev<=0.05rad gaps_increase bridge_max<=200` → **MET** |
-| G14 | star point scaling & depthWrite:false | `STAR_SCALE_OK` → **MET** |
-| G15 | radial brightness & dynamic luminosity modulation | `RADIAL_GLOW_OK` → **MET** |
-| G16 | on-demand screen-space curved Bezier filaments | `ON_DEMAND_FILAMENTS_OK` → **MET** |
-| G17 | centre & rim star readability | `READABILITY_OK` → **MET** |
-| G18 | native GUI star scale | **ABANDON** (single-surface decision) |
-| G19 | native GUI 6k spiral dust | **ABANDON** (single-surface decision) |
-| G20 | sections registry backend and frontend switching | `SECTIONS_REGISTRY_OK` → **MET** |
-| G21 | spiral ribbons | **ABANDON** (superseded by clean 3D dust) |
-| G22 | planetary schematic | **ABANDON** (superseded by clean HUD + square reticle) |
-| G23 | full 12 Zodiac signs + 20 asterisms catalog | `FULL_ZODIAC_CATALOG_OK` → **MET** |
-| G24 | core fallback guarded strictly to galaxy section | `CORE_FALLBACK_GATED` → **MET** |
-| G26 | section layout & ServeDir static serving | `SECTION_LAYOUT_OK` → **MET** |
-| G27 | UI clean, emoji removal, scrollbars, inline style elimination | `UI_CLEAN_OK` → **MET** |
-| G28 | file-backed scripture loader & endpoints | `SCRIPTURE_OK` → **MET** |
-| G29 | 4-step drill-down navigator & live filtering | `NAV_DRILLDOWN_OK` → **MET** |
-| G30 | HUD scripture reading pane & verse numbers | `READING_PANE_OK` → **MET** |
-| G32 | GUI & eframe removal | `GUI_REMOVED_OK` → **MET** |
-| G33 | install.sh one-command launcher | `ONE_COMMAND_OK` → **MET** |
-| G25 | automated ledger verification loop | `LEDGER_ALL_GREEN` → **MET** |
+1. Fixes verified: `currentCelestialData` = 0 hits, `openHud` resets reading pane, galaxy route wired,
+   empty dirs gone, hardened G29 present; **G25 loop re-run: 25/25 `LEDGER_ALL_GREEN`**; build/test/clippy clean.
+2. **Reported bug — section-switch overlap (root cause):** `switchSection` (`web/js/main.js:260`) never
+   closes the HUD / `currentFocusNode` / hover tooltip / SVG selection overlay / breadcrumb buttons /
+   drilldown position. Stale panels and filaments from the old section stay drawn over the new one.
+3. **Reported bug — sidebar not user-friendly (root causes):** three competing headers (SECTOR DIRECTORY,
+   STEP badge, cluster-header-text); no visible path ("eng › kjv › Genesis"); search box does double duty
+   (filter vs Enter = FTS warp to arbitrary star); no hint that step 1 IS the language list; drilldown
+   state persists across section switches (land mid-flow); reading pane discoverable only at step 4.
 
-## 2. Completed Steps
+## 1. Stages
 
-- **S24 — RESTRUCTURE.** [DONE] Single crate with `#[path]` module wiring (`galaxy/`, `constellation/`), static serving via `tower_http::services::ServeDir`, and web split into `web/index.html`, `web/css/base.css`, `web/js/main.js`. Gate G26 verified.
-- **S25 — UI FOUNDATION.** [DONE] Removed emojis from chrome and dynamically from DB labels via `cleanLabel`, added global thin scrollbar rules, applied 2-accent design tokens, removed inline styles, preserved square reticles. Gate G27 verified.
-- **S26 — SCRIPTURE API.** [DONE] File-backed scripture reader with LRU caching, `/api/scripture/meta`, `/api/scripture`, `/api/scripture/languages`, `/api/scripture/versions`. Gate G28 verified.
-- **S27 — UX NAVIGATOR & READING PANE.** [DONE] 4-step drill-down (Language → Version → Book → Chapter), type-ahead search filtering, verse-by-verse reading pane with prev/next chapter navigation and Esc step-back. Gates G29, G30 verified.
-- **S28 — CLOSEOUT & SINGLE LAUNCHER.** [DONE] Removed desktop GUI + eframe dep, added `install.sh` for one-command execution (`mazzaroth`), updated documentation and verified full G25 ledger loop. Gates G32, G33 verified.
+- **S29 — UX STABILIZATION** [PENDING] — OWNS: `web/js/main.js`, `web/index.html`, `web/css/base.css`.
+  a) `switchSection` resets: closeHud, hide tooltip, clear `#selection-overlay-svg`, hide nav crumbs,
+  `drilldownState = step 1`, clear search input. b) Sidebar: persistent path chips (`#drill-path`),
+  per-step list header (`#drill-list-header`, e.g. "60 languages — pick one"), step-1 hint line,
+  search = filter only (Enter selects first hit, FTS moves to its own quiet entry), back button always
+  visible at step ≥ 2. Gates: **G34 SECTION_ISOLATION, G35 NAV_DISCOVERABILITY**.
+- **S30 — OFFLINE & SBC** [PENDING] — OWNS: `web/vendor/`, `web/index.html`, `Cargo.toml`, `install.sh`.
+  Vendor three.js r128 + OrbitControls + tween locally (currently CDN — breaks offline/SBC);
+  `[profile.release] lto=true, codegen-units=1, strip=true`; scripture cache cap via `MAZZAROTH_CACHE`
+  (baseline measured: binary 8.87 MB, RSS 9.4 MB); headless auto `--no-browser`; aarch64 build note.
+  Gates: **G36 OFFLINE_ASSETS, G37 SBC_FOOTPRINT (binary ≤ 9 MB, RSS ≤ 64 MB)**.
+- **S31 — ENCYCLOPEDIA SECTION** [PENDING] — OWNS: `encyclopedia/{src,data,web}`, `src/lib.rs`,
+  `src/server/http.rs`, registry entry. Offline packs (JSON: domain/title/body — bible, biology, medicine,
+  survival; user-provided + public-domain corpora). Reuse FTS via `memory/ingest` ids `encyclopedia:*`,
+  reuse drilldown (Domain → Topic) + reading pane. Gate: **G38 ENCYCLOPEDIA_SECTION**.
+- **S32 — ASTRONOMY SECTION** [PENDING] — OWNS: `astronomy/{src,data,web}`, registry entry.
+  Data (planets, moons, asteroids vs comets, glossary) + card visuals: scale comparison, body bios,
+  minor-body classifier. Pattern = constellation (JSON data + section mount + grid cards). Gate: **G39 ASTRONOMY_SECTION**.
+- **S33 — GUI** [PENDING — awaiting user-provided spec] — contract = HTTP API (parity by API, not code).
+  Gate: **G40 GUI_SURFACE** (placeholder).
+
+## 2. Reconciliation vs this request
+
+| Request | Status |
+|---|---|
+| Review applied fixes | DONE — verified, ledger 25/25 |
+| Section-switch overlap | ROOT-CAUSED → S29a / G34 |
+| Sidebar discoverability | ROOT-CAUSED → S29b / G35 |
+| PLAN.md discipline (skill) | DONE — this file, live from here |
+| SBC optimization | STRATEGIZED → S30 / G36–G37 (baseline measured) |
+| Encyclopedia section | STRATEGIZED → S31 / G38 |
+| Astronomy section | STRATEGIZED → S32 / G39 |
+| GUI later | PLACEHOLDER → S33 / G40 |
 
 ## Scope boundaries
 
-In scope: `src/**`, `galaxy/**`, `constellation/**`, `web/**`, `GATES.md`, `PLAN.md`, `README.md`.
-Out of scope: anything outside `/home/xander/Documents/portfolio/mazzaroth/`.
+In scope: `src/**`, `galaxy/**`, `constellation/**`, `encyclopedia/**`, `astronomy/**`, `web/**`,
+`Cargo.toml`, `install.sh`, `GATES.md`, `PLAN.md`. Out of scope: anything outside this repo.

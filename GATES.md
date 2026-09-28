@@ -181,3 +181,49 @@
   EXPECT: LEDGER_ALL_GREEN
   CWD: .
   EVIDENCE: 2026-09-28 — `LEDGER_ALL_GREEN` (all active checked gates in GATES.md re-evaluated and verified passing).
+
+---
+
+# Gates: UX Stabilization, SBC/Offline & New Sections (Stages S29–S33)
+
+- [ ] G34: SECTION_ISOLATION — switching galaxy/constellations fully resets cross-section UI state
+  CHECK: python3 -c 'import re; js=open("web/js/main.js").read(); m=re.search(r"async function switchSection[\s\S]*?\n    \}", js); b=m.group(0) if m else ""; need=["closeHud","node-hover-tooltip","selection-overlay-svg","drilldown"]; miss=[t for t in need if t not in b]; print("SECTION_ISOLATION_OK" if not miss else "MISSING:"+",".join(miss))'
+  EXPECT: SECTION_ISOLATION_OK
+  CWD: .
+  EVIDENCE: pending
+
+- [ ] G35: NAV_DISCOVERABILITY — sidebar shows path chips, per-step list header, and filter-only search
+  CHECK: grep -q "drill-path" web/index.html && grep -q "drill-list-header" web/index.html && grep -q "drillPath\|drill-path" web/js/main.js && node --check web/js/main.js && echo NAV_DISCOVERABILITY_OK
+  EXPECT: NAV_DISCOVERABILITY_OK
+  CWD: .
+  EVIDENCE: pending
+
+- [ ] G36: OFFLINE_ASSETS — no CDN dependencies; all web assets vendored and served locally
+  CHECK: ! grep -qE "cdnjs.cloudflare.com|cdn.jsdelivr.net" web/index.html && test -f web/vendor/three.min.js && test -f web/vendor/orbit-controls.js && node --check web/js/main.js && echo OFFLINE_ASSETS_OK
+  EXPECT: OFFLINE_ASSETS_OK
+  CWD: .
+  EVIDENCE: pending
+
+- [ ] G37: SBC_FOOTPRINT — release build lean enough for SBC deployment (baseline 8.87 MB / 9.4 MB RSS)
+  CHECK: python3 -c 'import os,subprocess,time,signal; sz=os.path.getsize("target/release/mazzaroth"); p=subprocess.Popen(["./target/release/mazzaroth","--no-browser","--bind","127.0.0.1:8090"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL); time.sleep(2); rss=int(open(f"/proc/{p.pid}/status").read().split("VmRSS:")[1].split("kB")[0].strip()); p.send_signal(signal.SIGTERM); p.wait(timeout=5); print("SBC_FOOTPRINT_OK size=%.1fMB rss=%.1fMB"%(sz/1e6,rss/1024) if sz<=9e6 and rss<=64*1024 else "FAIL size=%d rss=%d"%(sz,rss))'
+  EXPECT: SBC_FOOTPRINT_OK
+  CWD: .
+  EVIDENCE: pending
+
+- [ ] G38: ENCYCLOPEDIA_SECTION — encyclopedia folder, registry entry, domain/topic API and reading UI
+  CHECK: test -d encyclopedia/data && grep -q "encyclopedia" src/server/http.rs && curl -s http://127.0.0.1:8090/api/sections | grep -q encyclopedia && echo ENCYCLOPEDIA_SECTION_OK
+  EXPECT: ENCYCLOPEDIA_SECTION_OK
+  CWD: .
+  EVIDENCE: pending
+
+- [ ] G39: ASTRONOMY_SECTION — astronomy folder, registry entry, body data and comparison visuals
+  CHECK: test -d astronomy/data && grep -q "astronomy" src/server/http.rs && echo ASTRONOMY_SECTION_OK
+  EXPECT: ASTRONOMY_SECTION_OK
+  CWD: .
+  EVIDENCE: pending
+
+- [ ] G40: GUI_SURFACE — second renderer over the HTTP API (placeholder, awaiting user spec)
+  CHECK: echo GUI_SPEC_PENDING
+  EXPECT: GUI_SPEC_PENDING
+  CWD: .
+  EVIDENCE: pending
