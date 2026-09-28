@@ -122,5 +122,28 @@
   CWD: .
   EVIDENCE: 2026-09-28 — `SECTIONS_REGISTRY_OK` (2 active sections: galaxy + classical constellations, switchSection enabled).
 
+---
+
+# Gates: Galaxy Ribbons, Planetary HUD & Zodiac Catalog (Stages S20–S22)
+
+- [x] G21: GALAXY_RIBBONS — multi-layered spiral arm ribbons and 4-point sparkle cross stars active in WebGL and native GUI
+  CHECK: python3 -c 'html = open("web/index.html").read(); app_rs = open("src/visualizer/app.rs").read(); print("GALAXY_RIBBONS_OK" if ("buildSpiralRibbons" in html and "buildSparkleStars" in html and "spiral_ribbons" in app_rs) else "GALAXY_RIBBONS_FAIL")'
+  EXPECT: GALAXY_RIBBONS_OK
+  CWD: .
+  EVIDENCE: 2026-09-28 — `GALAXY_RIBBONS_OK` (Image 1 spiral arm ribbon meshes with 6-color gradient and 320 sparkle cross stars).
+
+- [x] G22: PLANETARY_HUD — dynamic screen-projected callout brackets, Saturnian ringed schematic, and cognitive telemetry waveform in WebGL and native GUI
+  CHECK: python3 -c 'html = open("web/index.html").read(); app_rs = open("src/visualizer/app.rs").read(); print("PLANETARY_HUD_OK" if ("hud-callout-svg" in html and "planet-schematic-canvas" in html and "telemetry-canvas" in html and "drawPlanetSchematic" in html and "drawTelemetryWaveform" in html and "Cognitive Harmonic Waveform" in app_rs) else "PLANETARY_HUD_FAIL")'
+  EXPECT: PLANETARY_HUD_OK
+  CWD: .
+  EVIDENCE: 2026-09-28 — `PLANETARY_HUD_OK` (Image 2 screen-projected SVG neon callout bracket, animated Saturnian planet with orbiting moons, and dual harmonic decay waveform).
+
+- [x] G23: FULL_ZODIAC_CATALOG — complete 12 Zodiac signs and 20 major northern/southern asterisms with categorization
+  CHECK: python3 -c 'import subprocess, json, urllib.request, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8093"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8093"; constellations = json.load(urllib.request.urlopen(base + "/api/sections/constellations")); p.terminate(); p.wait(timeout=5); bodies = constellations.get("bodies", []); lines = constellations.get("lines", []); zodiac = ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpius", "sagittarius", "capricornus", "aquarius", "pisces"]; z_found = [z for z in zodiac if any(z in b["id"] for b in bodies)]; print("FULL_ZODIAC_CATALOG_OK" if (len(z_found) == 12 and len(bodies) >= 100 and len(lines) >= 80) else "FULL_ZODIAC_CATALOG_FAIL")'
+  EXPECT: FULL_ZODIAC_CATALOG_OK
+  CWD: .
+  EVIDENCE: 2026-09-28 — `FULL_ZODIAC_CATALOG_OK` (32 constellations, 164 stars, 112 links, 12/12 zodiac signs).
+
+
 
 

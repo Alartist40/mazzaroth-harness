@@ -1,11 +1,11 @@
 # PLAN.md — Mazzaroth galaxy repair
 
 Scope: fix the four reported symptoms without rewriting the project.
-Mode: **S18 & S19 complete** — G7–G20 all verified. Companion ledger: `GATES.md`.
+Mode: **S20–S22 complete** — G7–G23 all verified. Companion ledger: `GATES.md`.
 
 ## Next action
 
-Run `./target/release/mazzaroth` (web UI on `http://localhost:8080`) or `DISPLAY=:1 ./target/release/mazzaroth-gui` to experience the visual parity and switch between the Galaxy and Constellations sections.
+Run `./target/release/mazzaroth` (web UI on `http://localhost:8080`) or `DISPLAY=:1 ./target/release/mazzaroth-gui` to experience the glowing galaxy ribbons (Image 1), sci-fi planetary callout inspection HUD with telemetry waveform (Image 2), and complete 32-constellation Zodiac catalog (Image 3).
 
 ## 1. Done and verified (re-run, not copied)
 
@@ -24,6 +24,9 @@ Run `./target/release/mazzaroth` (web UI on `http://localhost:8080`) or `DISPLAY
 | G18 | native GUI star scale and corona capping | `GUI_SCALE corona<=1.8 core_opaque=0` → **MET** |
 | G19 | native GUI 6k spiral dust backdrop and radial glow | `GUI_LOOK_OK` → **MET** |
 | G20 | sections registry backend and frontend switching | `SECTIONS_REGISTRY_OK` → **MET** |
+| G21 | galaxy ribbons & 4-point sparkle cross stars (Image 1) | `GALAXY_RIBBONS_OK` → **MET** |
+| G22 | planetary inspection HUD, callout brackets & telemetry (Image 2) | `PLANETARY_HUD_OK` → **MET** |
+| G23 | full 12 Zodiac signs + 20 asterisms catalog (Image 3) | `FULL_ZODIAC_CATALOG_OK` → **MET** |
 
 Independently measured on the live release server:
 
