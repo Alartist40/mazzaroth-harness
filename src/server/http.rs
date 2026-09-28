@@ -1,5 +1,6 @@
 use crate::cognitive::MemoryTier;
 use crate::engine::MazzarothEngine;
+use crate::galaxy::ScriptureReader;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::response::Json;
@@ -30,9 +31,52 @@ pub struct NodeQuery {
     pub id: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct ScriptureMetaQuery {
+    pub lang: Option<String>,
+    pub version: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ScriptureChapterQuery {
+    pub lang: Option<String>,
+    pub version: Option<String>,
+    pub book: Option<String>,
+    pub chapter: Option<usize>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ScriptureVersionsQuery {
+    pub lang: Option<String>,
+}
+
 #[derive(Clone)]
 pub struct ServerState {
     pub engine: MazzarothEngine,
+    pub scripture: ScriptureReader,
+}
+
+impl ServerState {
+    pub fn new(engine: MazzarothEngine) -> Self {
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let bibles_dir = PathBuf::from(manifest_dir).join("galaxy/data/bibles");
+        let dir = if bibles_dir.exists() {
+            bibles_dir
+        } else {
+            PathBuf::from("galaxy/data/bibles")
+        };
+        Self {
+            engine,
+            scripture: ScriptureReader::new(dir),
+        }
+    }
+
+    pub fn with_bibles_dir(engine: MazzarothEngine, bibles_dir: PathBuf) -> Self {
+        Self {
+            engine,
+            scripture: ScriptureReader::new(bibles_dir),
+        }
+    }
 }
 
 fn resolve_web_dir() -> PathBuf {
@@ -58,6 +102,10 @@ pub fn create_router(state: ServerState) -> Router {
         .route("/api/memory/node", get(handle_get_single_node))
         .route("/api/memory/celestial", get(handle_celestial))
         .route("/api/memory/nodes", get(handle_all_nodes))
+        .route("/api/scripture/meta", get(handle_scripture_meta))
+        .route("/api/scripture", get(handle_scripture_chapter))
+        .route("/api/scripture/languages", get(handle_scripture_languages))
+        .route("/api/scripture/versions", get(handle_scripture_versions))
         .route("/api/mcp", post(crate::server::mcp::handle_mcp_post))
         .fallback_service(ServeDir::new(&web_dir).fallback(ServeFile::new(index_file)))
         .layer(CorsLayer::permissive())
@@ -151,4 +199,56 @@ async fn handle_sections() -> Json<serde_json::Value> {
             "description": "Astronomical asterisms and anchor stellar geometries"
         }
     ]))
+}
+
+async fn handle_scripture_meta(
+    State(state): State<ServerState>,
+    Query(query): Query<ScriptureMetaQuery>,
+) -> Result<Json<crate::galaxy::ScriptureMetaResponse>, StatusCode> {
+    let lang = query.lang.as_deref().unwrap_or("eng");
+    let version = query.version.as_deref().unwrap_or("kjv");
+
+    state
+        .scripture
+        .get_meta(lang, version)
+        .map(Json)
+        .map_err(|_| StatusCode::NOT_FOUND)
+}
+
+async fn handle_scripture_chapter(
+    State(state): State<ServerState>,
+    Query(query): Query<ScriptureChapterQuery>,
+) -> Result<Json<crate::galaxy::ScriptureChapterResponse>, StatusCode> {
+    let lang = query.lang.as_deref().unwrap_or("eng");
+    let version = query.version.as_deref().unwrap_or("kjv");
+    let book = query.book.as_deref().unwrap_or("Genesis");
+    let chapter = query.chapter.unwrap_or(1);
+
+    state
+        .scripture
+        .get_chapter(lang, version, book, chapter)
+        .map(Json)
+        .map_err(|_| StatusCode::NOT_FOUND)
+}
+
+async fn handle_scripture_languages(
+    State(state): State<ServerState>,
+) -> Result<Json<Vec<String>>, StatusCode> {
+    state
+        .scripture
+        .list_languages()
+        .map(Json)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}
+
+async fn handle_scripture_versions(
+    State(state): State<ServerState>,
+    Query(query): Query<ScriptureVersionsQuery>,
+) -> Result<Json<Vec<String>>, StatusCode> {
+    let lang = query.lang.as_deref().unwrap_or("eng");
+    state
+        .scripture
+        .list_versions(lang)
+        .map(Json)
+        .map_err(|_| StatusCode::NOT_FOUND)
 }

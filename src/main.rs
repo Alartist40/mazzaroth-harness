@@ -56,7 +56,7 @@ async fn main() -> anyhow::Result<()> {
         info!(imported_nodes = count, "Corpus seeded into Mazzaroth Galaxy");
     }
 
-    let state = ServerState { engine };
+    let state = ServerState::with_bibles_dir(engine, resolved_bibles_dir);
     let router = create_router(state);
 
     let listener = TcpListener::bind(&cli.bind).await?;

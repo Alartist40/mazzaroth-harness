@@ -146,11 +146,11 @@
   CWD: .
   EVIDENCE: 2026-09-28 — `UI_CLEAN_OK` (0 emojis in HTML/chrome, scrollbar-width rules active, 0 style= in index.html, cleanLabel dynamic stripping).
 
-- [ ] G28: SCRIPTURE_READER — file-backed scripture tables/loader, and scripture meta/verse endpoints
+- [x] G28: SCRIPTURE_READER — file-backed scripture loader, and scripture meta/verse endpoints
   CHECK: python3 -c 'import subprocess, json, urllib.request, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8091"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8091"; meta = json.load(urllib.request.urlopen(base + "/api/scripture/meta?lang=eng&version=kjv")); scrip = json.load(urllib.request.urlopen(base + "/api/scripture?lang=eng&version=kjv&book=Genesis&chapter=1")); p.terminate(); p.wait(timeout=5); print("SCRIPTURE_OK" if len(meta.get("books", [])) >= 66 and len(scrip.get("verses", [])) >= 30 and len(scrip.get("text", "")) > 1000 else "SCRIPTURE_FAIL")'
   EXPECT: SCRIPTURE_OK
   CWD: .
-  EVIDENCE: pending
+  EVIDENCE: 2026-09-28 — `SCRIPTURE_OK` (66 books returned in /meta, 31 verses and >2000 chars in Genesis 1, file-backed cache active).
 
 - [ ] G29: NAV_DRILLDOWN — 4-step language -> version -> book -> chapter drill-down navigator with search filtering
   CHECK: python3 -c 'js = open("web/js/main.js").read(); print("NAV_DRILLDOWN_OK" if ("drilldown" in js.lower() or "navigatescripture" in js.lower() or "selectlanguage" in js.lower()) and "filter" in js.lower() else "NAV_DRILLDOWN_FAIL")'

@@ -8,7 +8,7 @@ use tower::ServiceExt;
 #[tokio::test]
 async fn test_mcp_tools_and_jsonrpc_conformance() {
     let engine = MazzarothEngine::in_memory().unwrap();
-    let state = ServerState { engine };
+    let state = ServerState::new(engine);
     let app = create_router(state);
 
     // 1. List MCP Tools
