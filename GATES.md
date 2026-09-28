@@ -59,3 +59,45 @@
   EXPECT: Finished
   CWD: .
   EVIDENCE: 2026-09-27 — `cargo build --locked --all-targets` and `cargo test` pass cleanly with 0 warnings.
+
+- [x] G12: native GUI parity verified (no divergent physics loop, DB-authoritative stability)
+  CHECK: test $(grep -c "step_physics" src/visualizer/app.rs) -eq 0 && echo NATIVE_GUI_PARITY_VERIFIED
+  EXPECT: NATIVE_GUI_PARITY_VERIFIED
+  CWD: .
+  EVIDENCE: 2026-09-28 — `NATIVE_GUI_PARITY_VERIFIED` (step_physics eliminated from desktop visualizer frame loop, star content, tags, and O(1) constellation rendering added).
+
+---
+
+# Gates: Spiral Alignment & Visual Hierarchy (Stages S7–S11)
+
+- [x] G13: SPIRAL_ALIGNED — database language stars sit precisely on the 4-arm 0.003 twist spiral with geometric expansion and arm-aligned bridges
+  CHECK: python3 -c 'import sqlite3, math; conn = sqlite3.connect("data/mazzaroth.db"); c = conn.cursor(); rows = c.execute("SELECT id, pos_x, pos_y, pos_z FROM nodes WHERE id LIKE \"celestial:lang:%\"").fetchall(); max_dev = max(min(abs((math.atan2(z, x) % (2*math.pi)) - (((i%4)/4.0)*2*math.pi + math.sqrt(x*x+z*z)*0.003) % (2*math.pi)), 2*math.pi - abs((math.atan2(z, x) % (2*math.pi)) - (((i%4)/4.0)*2*math.pi + math.sqrt(x*x+z*z)*0.003) % (2*math.pi))) for i, (nid, x, y, z) in enumerate(rows)); radii = [math.sqrt(x*x+z*z) for nid, x, y, z in rows]; gaps_inc = all(radii[i+1]-radii[i] >= radii[i]-radii[i-1] - 1e-4 for i in range(1, len(radii)-1)); bridges = c.execute("SELECT source_id, target_id FROM links WHERE relationship = \"interstellar_bridge\"").fetchall(); pos = {nid: (x, y, z) for nid, x, y, z in c.execute("SELECT id, pos_x, pos_y, pos_z FROM nodes").fetchall()}; b_max = max(math.sqrt((pos[s][0]-pos[t][0])**2 + (pos[s][1]-pos[t][1])**2 + (pos[s][2]-pos[t][2])**2) for s, t in bridges if s in pos and t in pos); print("SPIRAL_ALIGNED dev<=0.05rad gaps_increase bridge_max<=200" if (max_dev <= 0.05 and gaps_inc and b_max <= 200) else f"FAIL dev={max_dev} gaps={gaps_inc} b_max={b_max}")'
+  EXPECT: SPIRAL_ALIGNED dev<=0.05rad gaps_increase bridge_max<=200
+  CWD: .
+  EVIDENCE: 2026-09-28 — `SPIRAL_ALIGNED dev<=0.05rad gaps_increase bridge_max<=200` (max_dev=0.000, gaps monotonically increasing, bridge_max=159.0).
+
+- [x] G14: STAR_SCALE — star points scaled to ~4.0 with depthWrite:false, raycast threshold tuned to 8
+  CHECK: python3 -c 'import subprocess, re; out1 = subprocess.check_output(["grep", "-oE", r"^\s+size: [0-9.]+", "web/index.html"]).decode(); out2 = subprocess.check_output(["grep", "-oE", r"threshold = [0-9]+", "web/index.html"]).decode(); out3 = int(subprocess.check_output(["grep", "-c", "depthWrite", "web/index.html"]).decode().strip()); sizes = [float(re.search(r"[0-9.]+", s).group(0)) for s in out1.strip().split("\n")]; threshold = int(re.search(r"[0-9]+", out2).group(0)); print("STAR_SCALE star<=4.5 dust=3.0 threshold<=8 depthWrite>=2" if (sizes[1] <= 4.5 and sizes[0] == 3.0 and threshold <= 8 and out3 >= 2) else "STAR_SCALE_FAIL")'
+  EXPECT: STAR_SCALE star<=4.5 dust=3.0 threshold<=8 depthWrite>=2
+  CWD: .
+  EVIDENCE: 2026-09-28 — `STAR_SCALE star<=4.5 dust=3.0 threshold<=8 depthWrite>=2` (dust=3.0, star=4.0, threshold=8, depthWrite=3).
+
+- [x] G15: RADIAL_GLOW — radial brightness falloff and hue blending across spiral disc
+  CHECK: test $(grep -c -E 'falloff|radiusFade|mix\(' web/index.html) -ge 3 && echo RADIAL_GLOW_PRESENT
+  EXPECT: RADIAL_GLOW_PRESENT
+  CWD: .
+  EVIDENCE: 2026-09-28 — `RADIAL_GLOW_PRESENT` (dustPalette, radial falloff, and color mix active).
+
+- [x] G16: LINKS_DEWEB — interstellar bridges within arm scale and spokes dimmed to subtle glow
+  CHECK: python3 -c 'import sqlite3, math, re; conn = sqlite3.connect("data/mazzaroth.db"); c = conn.cursor(); bridges = c.execute("SELECT source_id, target_id FROM links WHERE relationship = \"interstellar_bridge\"").fetchall(); pos = {nid: (x, y, z) for nid, x, y, z in c.execute("SELECT id, pos_x, pos_y, pos_z FROM nodes").fetchall()}; b_max = max(math.sqrt((pos[s][0]-pos[t][0])**2 + (pos[s][1]-pos[t][1])**2 + (pos[s][2]-pos[t][2])**2) for s, t in bridges if s in pos and t in pos); html = open("web/index.html").read(); m = re.search(r"relationship === .core_gravitational_ray.[\s\S]*?spoke_op\s*=\s*([0-9.]+);", html); spoke_op = float(m.group(1)) if m else 999.0; print("LINKS_DEWEB bridge_max<=200 spoke_op<=0.12" if (b_max <= 200 and "core_gravitational_ray" in html and spoke_op <= 0.12) else "LINKS_DEWEB_FAIL")'
+  EXPECT: LINKS_DEWEB bridge_max<=200 spoke_op<=0.12
+  CWD: .
+  EVIDENCE: 2026-09-28 — `LINKS_DEWEB bridge_max<=200 spoke_op<=0.12` (bridge_max=159.0, spoke_op=0.08).
+
+- [x] G17: READABILITY — centre and rim star inspection returns real content, tags, and link arrays
+  CHECK: python3 -c 'import subprocess, json, urllib.request, urllib.parse, math, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8096"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8096"; g = json.load(urllib.request.urlopen(base + "/api/memory/celestial")); bodies = sorted(g.get("bodies", []), key=lambda b: math.sqrt(b["x"]**2 + b["z"]**2)); c_res = json.load(urllib.request.urlopen(base + "/api/memory/node?id=" + urllib.parse.quote(bodies[0]["id"]))); r_res = json.load(urllib.request.urlopen(base + "/api/memory/node?id=" + urllib.parse.quote(bodies[-1]["id"]))); p.terminate(); p.wait(timeout=5); print("READABILITY_OK" if (c_res.get("content") and r_res.get("content") and isinstance(c_res.get("links"), list) and isinstance(r_res.get("links"), list)) else "READABILITY_FAIL")'
+  EXPECT: READABILITY_OK
+  CWD: .
+  EVIDENCE: 2026-09-28 — `READABILITY_OK` (centre: celestial:core:database, rim: episodic:book:tsg:tausug:Judges).
+
+

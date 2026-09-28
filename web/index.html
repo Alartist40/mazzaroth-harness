@@ -294,8 +294,9 @@
     let starPoints, spiralDustPoints, constellationLines;
     let galaxyData = { bodies: [], lines: [] };
     let currentFocusNode = null;
-    let currentClusterNode = null;
     let lastRenderedCount = -1;
+    let lastRenderedLines = -1;
+    let lastRenderedTimestamp = 0;
 
     const container = document.getElementById('canvas-container');
 
@@ -336,7 +337,7 @@
 
       // Click / Raycast
       const raycaster = new THREE.Raycaster();
-      raycaster.params.Points.threshold = 14;
+      raycaster.params.Points.threshold = 8;
       const mouse = new THREE.Vector2();
 
       window.addEventListener('click', (e) => {
@@ -420,12 +421,73 @@
         const res = await fetch('/api/memory/celestial');
         if (!res.ok) return;
         galaxyData = await res.json();
-        if (galaxyData.bodies.length !== lastRenderedCount) {
+        const bodiesChanged = galaxyData.bodies.length !== lastRenderedCount;
+        const linesChanged = (galaxyData.lines ? galaxyData.lines.length : 0) !== lastRenderedLines;
+        if (bodiesChanged || linesChanged) {
           lastRenderedCount = galaxyData.bodies.length;
+          lastRenderedLines = galaxyData.lines ? galaxyData.lines.length : 0;
+          lastRenderedTimestamp = galaxyData.timestamp || 0;
           renderDatabaseStars(galaxyData);
           populateClusterSidebar(galaxyData);
+        } else if (galaxyData.timestamp && galaxyData.timestamp !== lastRenderedTimestamp) {
+          lastRenderedTimestamp = galaxyData.timestamp;
+          updateStarLuminosities(galaxyData);
         }
       } catch (e) {}
+    }
+
+    function dustPalette(r) {
+      const coreC = new THREE.Color(0xfef08a);
+      const midC = new THREE.Color(0xc084fc);
+      const rimC = new THREE.Color(0x38bdf8);
+      if (r < 300) return coreC.clone().lerp(midC, r / 300);
+      return midC.clone().lerp(rimC, Math.min(1.0, (r - 300) / 600));
+    }
+
+    function mix(c1, c2, factor) {
+      return {
+        r: c1.r * (1 - factor) + c2.r * factor,
+        g: c1.g * (1 - factor) + c2.g * factor,
+        b: c1.b * (1 - factor) + c2.b * factor,
+      };
+    }
+
+    function getStarColor(b) {
+      const r = Math.sqrt(b.x * b.x + b.z * b.z);
+      const falloff = Math.max(0.0, 1.0 - (r / 900.0));
+      const radiusFade = 0.35 + 0.65 * falloff;
+      const lum = (b.luminosity || 0.85) * radiusFade;
+
+      let tierCol;
+      if (b.id.includes(':core:')) {
+        tierCol = { r: 1.0, g: 0.95, b: 0.5 };
+      } else if (b.id.includes(':lang:')) {
+        tierCol = { r: 0.98, g: 0.85, b: 0.2 };
+      } else if (b.id.includes(':version:')) {
+        tierCol = { r: 0.22, g: 0.75, b: 0.98 };
+      } else {
+        tierCol = { r: 0.75, g: 0.52, b: 0.98 };
+      }
+
+      const dp = dustPalette(r);
+      const blended = mix(tierCol, dp, 0.45);
+      return {
+        r: blended.r * lum,
+        g: blended.g * lum,
+        b: blended.b * lum,
+      };
+    }
+
+    function updateStarLuminosities(data) {
+      if (!starPoints || !starPoints.geometry) return;
+      const colAttr = starPoints.geometry.getAttribute('color');
+      if (!colAttr) return;
+      const count = data.bodies.length;
+      for (let i = 0; i < count; i++) {
+        const c = getStarColor(data.bodies[i]);
+        colAttr.setXYZ(i, c.r, c.g, c.b);
+      }
+      colAttr.needsUpdate = true;
     }
 
     // Renders database stars with recency glow
@@ -447,53 +509,73 @@
         pos[i * 3 + 1] = b.y;
         pos[i * 3 + 2] = b.z;
 
-        // Recency Luminosity Glow
-        const lum = Math.min(Math.max(b.luminosity || 0.85, 0.4), 1.0);
-
-        if (b.id.includes(':core:')) {
-          col[i * 3] = 1.0 * lum; col[i * 3 + 1] = 0.95 * lum; col[i * 3 + 2] = 0.5;
-        } else if (b.id.includes(':lang:')) {
-          col[i * 3] = 0.98 * lum; col[i * 3 + 1] = 0.85 * lum; col[i * 3 + 2] = 0.2; // Gold cluster
-        } else if (b.id.includes(':version:')) {
-          col[i * 3] = 0.22 * lum; col[i * 3 + 1] = 0.75 * lum; col[i * 3 + 2] = 0.98; // Cyan star
-        } else {
-          col[i * 3] = 0.75 * lum; col[i * 3 + 1] = 0.52 * lum; col[i * 3 + 2] = 0.98; // Violet star
-        }
+        const c = getStarColor(b);
+        col[i * 3] = c.r;
+        col[i * 3 + 1] = c.g;
+        col[i * 3 + 2] = c.b;
       }
 
       geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
       geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
       const mat = new THREE.PointsMaterial({
-        size: 8.0,
+        size: 4.0,
         vertexColors: true,
         transparent: true,
-        opacity: 0.95,
+        opacity: 0.65,
         blending: THREE.AdditiveBlending,
+        depthWrite: false,
       });
 
       starPoints = new THREE.Points(geo, mat);
       galaxyGroup.add(starPoints);
 
-      // Render Constellation Link Filaments
+      // Render Constellation Link Filaments with typed alpha & length fade
       const linePos = [];
+      const lineCol = [];
+      const bodyMap = new Map();
+      data.bodies.forEach(b => bodyMap.set(b.id, b));
+
       data.lines.forEach(l => {
-        const s = data.bodies.find(b => b.id === l.source_id);
-        const t = data.bodies.find(b => b.id === l.target_id);
+        const s = bodyMap.get(l.source_id);
+        const t = bodyMap.get(l.target_id);
         if (s && t) {
           linePos.push(s.x, s.y, s.z);
           linePos.push(t.x, t.y, t.z);
+
+          const dist = Math.sqrt((s.x - t.x)**2 + (s.y - t.y)**2 + (s.z - t.z)**2);
+          let spoke_op = 0.25;
+          let r = 0.65, g = 0.35, b = 0.98;
+
+          if (l.relationship === 'core_gravitational_ray') {
+            spoke_op = 0.08;
+            r = 0.98; g = 0.85; b = 0.3;
+          } else if (l.relationship === 'interstellar_bridge') {
+            const lengthFade = Math.max(0.2, 1.0 - (dist / 200.0));
+            spoke_op = 0.12 * lengthFade;
+            r = 0.75; g = 0.45; b = 0.95;
+          } else if (l.relationship === 'version_orbit') {
+            spoke_op = 0.30;
+            r = 0.22; g = 0.75; b = 0.98;
+          } else if (l.relationship === 'contains_chapter') {
+            spoke_op = 0.25;
+            r = 0.60; g = 0.40; b = 0.95;
+          }
+
+          lineCol.push(r * spoke_op, g * spoke_op, b * spoke_op);
+          lineCol.push(r * spoke_op, g * spoke_op, b * spoke_op);
         }
       });
 
       if (linePos.length > 0) {
         const lineGeo = new THREE.BufferGeometry();
         lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
+        lineGeo.setAttribute('color', new THREE.Float32BufferAttribute(lineCol, 3));
         const lineMat = new THREE.LineBasicMaterial({
-          color: 0xa855f7,
+          vertexColors: true,
           transparent: true,
-          opacity: 0.32,
           blending: THREE.AdditiveBlending,
+          depthWrite: false,
         });
         constellationLines = new THREE.LineSegments(lineGeo, lineMat);
         galaxyGroup.add(constellationLines);

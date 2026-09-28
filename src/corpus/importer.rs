@@ -71,15 +71,16 @@ impl CorpusImporter {
         for (lang_idx, lang_path) in lang_dirs.iter().enumerate() {
             let lang_code = lang_path.file_name().unwrap_or_default().to_string_lossy().to_string();
 
-            // Logarithmic Spiral: r = a * exp(b * theta)
+            // Logarithmic Spiral matching visual galaxy dust: twist = 0.003, disc wave = sin(r * 0.01) * 20.0
             let arm_idx = (lang_idx as f32) % num_spiral_arms;
             let arm_offset = (arm_idx / num_spiral_arms) * std::f32::consts::PI * 2.0;
-            let dist_from_center = 120.0 + (lang_idx as f32 * 7.5);
-            let spiral_angle = arm_offset + (dist_from_center * 0.025);
+            // Geometric radial expansion: r_i = 90 * exp(0.033 * i) -> spreads from 90 to ~630 AU
+            let dist_from_center = 90.0 * (0.033 * lang_idx as f32).exp();
+            let spiral_angle = arm_offset + (dist_from_center * 0.003);
 
             let lang_x = spiral_angle.cos() * dist_from_center;
             let lang_z = spiral_angle.sin() * dist_from_center;
-            let lang_y = (spiral_angle * 3.0).sin() * 20.0; // Galactic disc thickness wave
+            let lang_y = (dist_from_center * 0.01).sin() * 20.0; // Galactic disc thickness wave aligned with dust
 
             let lang_sector_id = format!("celestial:lang:{}", lang_code);
             let sector_node = MemoryNode {
@@ -222,17 +223,18 @@ impl CorpusImporter {
             }
         }
 
-        // 5. Cross-Linguistic Bridge Constellations (Interstellar Filaments across spiral arms)
+        // 5. Cross-Linguistic Bridge Constellations (Interstellar Filaments along each spiral arm)
         for i in 0..language_nodes.len() {
-            let next_idx = (i + 1) % language_nodes.len();
-            links_to_insert.push(AssociativeLink {
-                source_id: language_nodes[i].1.clone(),
-                target_id: language_nodes[next_idx].1.clone(),
-                weight: 0.6,
-                relationship: "interstellar_bridge".to_string(),
-                created_at: Self::now(),
-                last_reinforced: Self::now(),
-            });
+            if i + 4 < language_nodes.len() {
+                links_to_insert.push(AssociativeLink {
+                    source_id: language_nodes[i].1.clone(),
+                    target_id: language_nodes[i + 4].1.clone(),
+                    weight: 0.6,
+                    relationship: "interstellar_bridge".to_string(),
+                    created_at: Self::now(),
+                    last_reinforced: Self::now(),
+                });
+            }
         }
 
         info!(

@@ -122,18 +122,22 @@ impl MazzarothEngine {
         let mut node = MemoryNode::new(&id, tier, label, content);
         node.tags = tags;
 
-        // Position nodes in orbits based on tier
-        let angle = rand_simple() * std::f32::consts::PI * 2.0;
+        // Position nodes along 4-arm spiral with matching 0.003 twist and disc wave
+        let arms = 4.0;
+        let arm = (rand_simple() * arms).floor().min(3.0);
+        let arm_offset = (arm / arms) * std::f32::consts::PI * 2.0;
         let radius = match tier {
             MemoryTier::Celestial => 0.0,
-            MemoryTier::Semantic => 80.0 + rand_simple() * 40.0,
-            MemoryTier::Episodic => 150.0 + rand_simple() * 60.0,
-            MemoryTier::Working => 240.0 + rand_simple() * 80.0,
+            MemoryTier::Semantic => 100.0 + rand_simple() * 150.0,
+            MemoryTier::Episodic => 250.0 + rand_simple() * 250.0,
+            MemoryTier::Working => 500.0 + rand_simple() * 300.0,
         };
+        let spiral_angle = arm_offset + (radius * 0.003);
+        let fuzz = (rand_simple() - 0.5) * 20.0;
 
-        node.pos_x = angle.cos() * radius;
-        node.pos_y = (rand_simple() - 0.5) * 40.0;
-        node.pos_z = angle.sin() * radius;
+        node.pos_x = spiral_angle.cos() * radius + fuzz;
+        node.pos_y = (radius * 0.01).sin() * 20.0 + (rand_simple() - 0.5) * 10.0;
+        node.pos_z = spiral_angle.sin() * radius + fuzz;
 
         self.store.insert_node(&node)?;
 
