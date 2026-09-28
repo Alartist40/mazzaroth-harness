@@ -4,6 +4,17 @@ use crate::engine::{CelestialGalaxyState, MazzarothEngine};
 use eframe::egui::{self, Color32, FontId, Pos2, Rect, Stroke, Vec2};
 use std::time::Instant;
 
+#[derive(Debug, Clone)]
+pub struct DustPoint {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+    pub a: u8,
+}
+
 pub struct MazzarothVisualizerApp {
     pub engine: MazzarothEngine,
     pub camera: Camera3D,
@@ -13,11 +24,63 @@ pub struct MazzarothVisualizerApp {
     pub new_label: String,
     pub new_content: String,
     pub new_tier: MemoryTier,
+    pub dust_particles: Vec<DustPoint>,
     last_frame: Instant,
+}
+
+fn dust_palette(r: f32) -> (f32, f32, f32) {
+    if r < 300.0 {
+        let t = (r / 300.0).clamp(0.0, 1.0);
+        (1.0 * (1.0 - t) + 0.75 * t, 0.94 * (1.0 - t) + 0.52 * t, 0.54 * (1.0 - t) + 0.99 * t)
+    } else {
+        let t = ((r - 300.0) / 800.0).clamp(0.0, 1.0);
+        (0.75 * (1.0 - t) + 0.22 * t, 0.52 * (1.0 - t) + 0.74 * t, 0.99 * (1.0 - t) + 0.97 * t)
+    }
+}
+
+fn mix_color(c1: (f32, f32, f32), c2: (f32, f32, f32), factor: f32) -> (f32, f32, f32) {
+    (
+        c1.0 * (1.0 - factor) + c2.0 * factor,
+        c1.1 * (1.0 - factor) + c2.1 * factor,
+        c1.2 * (1.0 - factor) + c2.2 * factor,
+    )
 }
 
 impl MazzarothVisualizerApp {
     pub fn new(engine: MazzarothEngine) -> Self {
+        // Pre-generate 6,000 cosmic dust particles matching visual 4-arm spiral law
+        let mut dust_particles = Vec::with_capacity(6000);
+        let mut seed: u64 = 1337;
+        let mut rand = || -> f32 {
+            seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
+            ((seed >> 33) as f32) / 2147483648.0
+        };
+        let num_arms = 4.0;
+        for i in 0..6000 {
+            let arm = (i as f32) % num_arms;
+            let arm_angle = (arm / num_arms) * std::f32::consts::PI * 2.0;
+            let r = rand().powf(1.5) * 1100.0 + 20.0;
+            let spin = r * 0.003;
+            let rx = (rand().powf(3.0) * if rand() < 0.5 { 1.0 } else { -1.0 } * 0.28) * r;
+            let ry = (rand().powf(3.0) * if rand() < 0.5 { 1.0 } else { -1.0 } * 0.12) * r;
+            let rz = (rand().powf(3.0) * if rand() < 0.5 { 1.0 } else { -1.0 } * 0.28) * r;
+
+            let x = (arm_angle + spin).cos() * r + rx;
+            let y = ry + (r * 0.01).sin() * 20.0;
+            let z = (arm_angle + spin).sin() * r + rz;
+
+            let (cr, cg, cb) = dust_palette(r);
+            dust_particles.push(DustPoint {
+                x,
+                y,
+                z,
+                r: (cr * 255.0) as u8,
+                g: (cg * 255.0) as u8,
+                b: (cb * 255.0) as u8,
+                a: 35,
+            });
+        }
+
         Self {
             engine,
             camera: Camera3D {
@@ -33,6 +96,7 @@ impl MazzarothVisualizerApp {
             new_label: String::new(),
             new_content: String::new(),
             new_tier: MemoryTier::Episodic,
+            dust_particles,
             last_frame: Instant::now(),
         }
     }
@@ -177,7 +241,16 @@ impl eframe::App for MazzarothVisualizerApp {
 
             let painter = ui.painter_at(rect);
             // Deep space cosmic background
-            painter.rect_filled(rect, 0.0, Color32::from_rgb(5, 7, 15));
+            painter.rect_filled(rect, 0.0, Color32::from_rgb(4, 1, 10));
+
+            // Draw 6k Procedural Dust Backdrop
+            for d in &self.dust_particles {
+                let (dx, dy, d_depth) = self.camera.project(d.x, d.y, d.z);
+                let dust_pos = Pos2::new(dx, dy);
+                if d_depth > 10.0 && rect.contains(dust_pos) {
+                    painter.circle_filled(dust_pos, 1.0, Color32::from_rgba_unmultiplied(d.r, d.g, d.b, d.a));
+                }
+            }
 
             let galaxy_state = self.engine.get_galaxy_state().unwrap_or_else(|_| CelestialGalaxyState {
                 bodies: Vec::new(),
@@ -190,29 +263,48 @@ impl eframe::App for MazzarothVisualizerApp {
                 galaxy_state.bodies.iter().map(|b| (b.id.as_str(), b)).collect();
 
             // Draw Galactic Center Black Hole / Core Halo
-            let (cx, cy, _) = self.camera.project(0.0, 0.0, 0.0);
-            painter.circle_filled(Pos2::new(cx, cy), 18.0 * self.camera.zoom, Color32::from_rgba_unmultiplied(255, 215, 0, 40));
-            painter.circle_filled(Pos2::new(cx, cy), 10.0 * self.camera.zoom, Color32::from_rgb(255, 215, 0));
+            let (cx, cy, c_depth) = self.camera.project(0.0, 0.0, 0.0);
+            let proj_scale_core = if c_depth > 1.0 { (400.0 / c_depth) * self.camera.zoom } else { self.camera.zoom };
+            painter.circle_filled(Pos2::new(cx, cy), (12.0 * proj_scale_core).clamp(4.0, 14.0), Color32::from_rgba_unmultiplied(255, 215, 0, 35));
+            painter.circle_filled(Pos2::new(cx, cy), (4.5 * proj_scale_core).clamp(2.0, 5.0), Color32::from_rgb(255, 215, 0));
 
-            // Draw Constellation Lines with depth
+            // Draw Constellation Lines with depth & relationship weighting
             for line in &galaxy_state.lines {
                 let src = body_map.get(line.source_id.as_str()).copied();
                 let tgt = body_map.get(line.target_id.as_str()).copied();
 
                 if let (Some(s), Some(t)) = (src, tgt) {
-                    let (sx, sy, _) = self.camera.project(s.x, s.y, s.z);
-                    let (tx, ty, _) = self.camera.project(t.x, t.y, t.z);
+                    let (sx, sy, s_depth) = self.camera.project(s.x, s.y, s.z);
+                    let (tx, ty, t_depth) = self.camera.project(t.x, t.y, t.z);
 
-                    let alpha = (line.weight * 180.0) as u8;
-                    painter.line_segment(
-                        [Pos2::new(sx, sy), Pos2::new(tx, ty)],
-                        Stroke::new(1.2 * self.camera.zoom, Color32::from_rgba_unmultiplied(100, 149, 237, alpha)),
-                    );
+                    if s_depth > 10.0 || t_depth > 10.0 {
+                        let avg_depth = (s_depth + t_depth) * 0.5;
+                        let proj_scale = if avg_depth > 1.0 { (400.0 / avg_depth) * self.camera.zoom } else { self.camera.zoom };
+                        let stroke_w = (0.8 * proj_scale).clamp(0.4, 1.8);
+
+                        let (r, g, b, alpha) = match line.relationship.as_str() {
+                            "core_gravitational_ray" => (250, 217, 77, 20), // 0.08 alpha
+                            "interstellar_bridge" => {
+                                let dist = ((s.x - t.x).powi(2) + (s.y - t.y).powi(2) + (s.z - t.z).powi(2)).sqrt();
+                                let len_fade = (1.0 - dist / 200.0).max(0.2);
+                                (192, 132, 252, (30.0 * len_fade) as u8) // 0.12 * lenFade
+                            }
+                            "version_orbit" => (56, 189, 248, 75), // 0.30 alpha
+                            "contains_chapter" => (168, 85, 247, 60), // 0.25 alpha
+                            _ => (168, 85, 247, 50),
+                        };
+
+                        painter.line_segment(
+                            [Pos2::new(sx, sy), Pos2::new(tx, ty)],
+                            Stroke::new(stroke_w, Color32::from_rgba_unmultiplied(r, g, b, alpha)),
+                        );
+                    }
                 }
             }
 
-            // Draw Celestial Bodies (Stars, Planets, Comets) with glow halos
-            let mut hovered_body = None;
+            // Draw Celestial Bodies with scaled perspective, radial glow & nearest hit detection
+            let mut best_hit_body = None;
+            let mut best_hit_dist = f32::MAX;
             let mouse_pos = ctx.input(|i| i.pointer.hover_pos());
 
             for body in &galaxy_state.bodies {
@@ -220,45 +312,62 @@ impl eframe::App for MazzarothVisualizerApp {
                 let screen_pos = Pos2::new(px, py);
 
                 if depth > 10.0 && rect.contains(screen_pos) {
-                    let star_radius = (body.radius * self.camera.zoom).max(3.0);
-                    let base_color = Color32::from_rgb(body.color.r, body.color.g, body.color.b);
+                    let proj_scale = if depth > 1.0 { (400.0 / depth) * self.camera.zoom } else { self.camera.zoom };
+                    let star_radius = (body.radius * proj_scale * 0.35).clamp(1.5, 7.0);
+
+                    // Radial glow & hue blend
+                    let r = (body.x * body.x + body.z * body.z).sqrt();
+                    let falloff = (1.0 - r / 900.0).max(0.0);
+                    let radius_fade = 0.35 + 0.65 * falloff;
+                    let lum = body.luminosity * radius_fade;
+                    let tier_col = (body.color.r as f32 / 255.0, body.color.g as f32 / 255.0, body.color.b as f32 / 255.0);
+                    let dp = dust_palette(r);
+                    let blended = mix_color(tier_col, dp, 0.45);
+                    let final_r = ((blended.0 * lum * 255.0).clamp(0.0, 255.0)) as u8;
+                    let final_g = ((blended.1 * lum * 255.0).clamp(0.0, 255.0)) as u8;
+                    let final_b = ((blended.2 * lum * 255.0).clamp(0.0, 255.0)) as u8;
+                    let star_color = Color32::from_rgb(final_r, final_g, final_b);
 
                     // Outer glowing corona
                     painter.circle_filled(
                         screen_pos,
-                        star_radius * 2.5,
-                        Color32::from_rgba_unmultiplied(body.color.r, body.color.g, body.color.b, 40),
+                        star_radius * 1.8,
+                        Color32::from_rgba_unmultiplied(final_r, final_g, final_b, 25),
                     );
 
-                    // Core star
-                    painter.circle_filled(screen_pos, star_radius, base_color);
+                    // Core star point
+                    painter.circle_filled(screen_pos, star_radius, star_color);
 
-                    // Star Label
-                    painter.text(
-                        Pos2::new(px, py + star_radius + 4.0),
-                        egui::Align2::CENTER_TOP,
-                        &body.label,
-                        FontId::proportional(11.0),
-                        Color32::from_rgb(226, 232, 240),
-                    );
+                    // Star Label: Only for core or selected stars to eliminate clutter
+                    let is_selected = self.selected_body.as_ref().is_some_and(|s| s.id == body.id);
+                    let is_core = body.id.contains(":core:");
+                    if is_core || is_selected {
+                        painter.text(
+                            Pos2::new(px, py + star_radius + 4.0),
+                            egui::Align2::CENTER_TOP,
+                            &body.label,
+                            FontId::proportional(11.0),
+                            Color32::from_rgb(226, 232, 240),
+                        );
+                    }
 
-                    // Click detection
+                    // Nearest Click / Hover detection
                     if let Some(mpos) = mouse_pos {
-                        if (mpos.x - px).hypot(mpos.y - py) < (star_radius * 2.0).max(12.0) {
-                            hovered_body = Some(body.clone());
-                            if ctx.input(|i| i.pointer.primary_clicked()) {
-                                self.selected_body = Some(body.clone());
-                            }
+                        let dist = (mpos.x - px).hypot(mpos.y - py);
+                        let hit_radius = (star_radius * 1.5).max(6.0);
+                        if dist < hit_radius && dist < best_hit_dist {
+                            best_hit_dist = dist;
+                            best_hit_body = Some(body.clone());
                         }
                     }
                 }
             }
 
-            if let Some(h) = hovered_body {
+            if let Some(h) = best_hit_body {
                 ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
                 let (hx, hy, _) = self.camera.project(h.x, h.y, h.z);
                 painter.rect_filled(
-                    Rect::from_min_size(Pos2::new(hx + 10.0, hy - 20.0), Vec2::new(140.0, 24.0)),
+                    Rect::from_min_size(Pos2::new(hx + 10.0, hy - 20.0), Vec2::new(160.0, 24.0)),
                     4.0,
                     Color32::from_rgba_unmultiplied(15, 23, 42, 220),
                 );
@@ -269,6 +378,10 @@ impl eframe::App for MazzarothVisualizerApp {
                     FontId::proportional(12.0),
                     Color32::WHITE,
                 );
+
+                if ctx.input(|i| i.pointer.primary_clicked()) {
+                    self.selected_body = Some(h.clone());
+                }
             }
         });
     }

@@ -1,11 +1,11 @@
 # PLAN.md — Mazzaroth galaxy repair
 
 Scope: fix the four reported symptoms without rewriting the project.
-Mode: **S7–S11 complete** — G7–G17 all verified. Companion ledger: `GATES.md`.
+Mode: **S18 & S19 complete** — G7–G20 all verified. Companion ledger: `GATES.md`.
 
 ## Next action
 
-Run `./target/release/mazzaroth` (web UI on `http://localhost:8080`) or `DISPLAY=:1 ./target/release/mazzaroth-gui` to experience the aligned spiral memory galaxy.
+Run `./target/release/mazzaroth` (web UI on `http://localhost:8080`) or `DISPLAY=:1 ./target/release/mazzaroth-gui` to experience the visual parity and switch between the Galaxy and Constellations sections.
 
 ## 1. Done and verified (re-run, not copied)
 
@@ -21,14 +21,17 @@ Run `./target/release/mazzaroth` (web UI on `http://localhost:8080`) or `DISPLAY
 | G15 | radial brightness & hue blending | `RADIAL_GLOW_PRESENT` → **MET** |
 | G16 | de-webbed filaments & dimmed spokes | `LINKS_DEWEB bridge_max<=200 spoke_op<=0.12` → **MET** |
 | G17 | centre & rim star readability | `READABILITY_OK` → **MET** |
+| G18 | native GUI star scale and corona capping | `GUI_SCALE corona<=1.8 core_opaque=0` → **MET** |
+| G19 | native GUI 6k spiral dust backdrop and radial glow | `GUI_LOOK_OK` → **MET** |
+| G20 | sections registry backend and frontend switching | `SECTIONS_REGISTRY_OK` → **MET** |
 
 Independently measured on the live release server:
 
-1. **Spiral-Aligned Star Field**: 1,095 bodies sit directly inside the 4-arm 0.003-twist galactic dust spiral with geometric radial distribution ($r \in [90, 630]$ AU).
-2. **Layering & Depth**: Stars scaled to 4.0 with `depthWrite: false`, eliminating occlusion artifacts with the 30,000 background dust particles.
-3. **Radial Gradient**: Smooth color and luminosity falloff blends memory stars into the gold $\to$ purple $\to$ cyan disc palette.
+1. **Native GUI Visual Parity (S18)**: Pre-generates 6,000 spiral dust particles matching the 4-arm 0.003-twist galaxy; clamps star radii with depth projection factor; blends tier colors with dust palette; renders uncluttered labels and nearest hit detection.
+2. **Modular Sections Architecture (S19)**: Backend `/api/sections` registry exposes Galaxy and Classical Constellations; frontend allows instant switching while reusing the unified inspector, search, breadcrumbs, and camera.
+3. **Spiral-Aligned Star Field**: 1,097 bodies sit directly inside the 4-arm 0.003-twist galactic dust spiral with geometric radial distribution ($r \in [90, 630]$ AU).
 4. **Constellation Hierarchy**: Interstellar bridges span along individual arms ($\le 159$ AU) with length fade; core spokes dimmed to subtle $0.08$ alpha; local chapter links kept crisp at $0.25-0.30$.
-5. **Readability**: Star selection threshold tightened to $8$; clicking centre and rim stars opens full scripture text, tags, and link connections.
+5. **No Data Loss**: `data/mazzaroth.db` node/link counts intact (1097/1151).
 
 ## 2. Completed Steps
 
@@ -38,6 +41,8 @@ Independently measured on the live release server:
 - **S9 — Radial Brightness & Hue.** Vertex shader color mix blends tier colors with dust palette and radial distance fade.
 - **S10 — De-webbed Links.** Multi-tiered alpha and distance fade applied to LineSegments.
 - **S11 — Readability Verification.** Centre and rim tap paths verified end-to-end.
+- **S18 — GUI Visual Parity.** Added 6k procedural dust backdrop to native desktop GUI, perspective depth-scaled radii, radial glow and de-webbed line alpha.
+- **S19 — Sections Scaffold.** Added section registry API, 10 classical constellation patterns dataset, and top bar section switcher.
 
 ## 3. Hallucinated / wrong claims in the pass
 

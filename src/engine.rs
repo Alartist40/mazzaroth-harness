@@ -133,11 +133,12 @@ impl MazzarothEngine {
             MemoryTier::Working => 500.0 + rand_simple() * 300.0,
         };
         let spiral_angle = arm_offset + (radius * 0.003);
-        let fuzz = (rand_simple() - 0.5) * 20.0;
+        let fuzz_x = (rand_simple() - 0.5) * 20.0;
+        let fuzz_z = (rand_simple() - 0.5) * 20.0;
 
-        node.pos_x = spiral_angle.cos() * radius + fuzz;
+        node.pos_x = spiral_angle.cos() * radius + fuzz_x;
         node.pos_y = (radius * 0.01).sin() * 20.0 + (rand_simple() - 0.5) * 10.0;
-        node.pos_z = spiral_angle.sin() * radius + fuzz;
+        node.pos_z = spiral_angle.sin() * radius + fuzz_z;
 
         self.store.insert_node(&node)?;
 

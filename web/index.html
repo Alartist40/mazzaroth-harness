@@ -226,9 +226,12 @@
 <body>
   <div id="canvas-container"></div>
 
-  <!-- Top Breadcrumbs & Galaxy Reset -->
+  <!-- Top Breadcrumbs & Section Switcher -->
   <div class="top-bar">
-    <button class="top-btn active" onclick="resetToGalacticView()">🌌 Universal Galaxy</button>
+    <button class="top-btn active" id="tab-galaxy" onclick="switchSection('galaxy')">🌌 Galaxy</button>
+    <button class="top-btn" id="tab-constellations" onclick="switchSection('constellations')">✨ Constellations</button>
+    <span class="top-sep">|</span>
+    <button class="top-btn" onclick="resetToGalacticView()">🌌 Reset View</button>
     <span class="top-sep" id="sep-1" style="display:none;">›</span>
     <button class="top-btn" id="nav-lang" style="display:none;" onclick="zoomToCurrentCluster()">🪐 Cluster</button>
     <span class="top-sep" id="sep-2" style="display:none;">›</span>
@@ -294,9 +297,36 @@
     let starPoints, spiralDustPoints, constellationLines;
     let galaxyData = { bodies: [], lines: [] };
     let currentFocusNode = null;
+    let currentClusterNode = null;
     let lastRenderedCount = -1;
     let lastRenderedLines = -1;
     let lastRenderedTimestamp = 0;
+
+    let currentSection = 'galaxy';
+    const sections = {
+      galaxy: {
+        id: 'galaxy',
+        label: '🌌 Celestial Galaxy',
+        api: '/api/memory/celestial',
+        hasDust: true,
+        mount: () => {
+          if (spiralDustPoints) spiralDustPoints.visible = true;
+        },
+        unmount: () => {
+          if (spiralDustPoints) spiralDustPoints.visible = false;
+        }
+      },
+      constellations: {
+        id: 'constellations',
+        label: '✨ Classical Constellations',
+        api: '/api/sections/constellations',
+        hasDust: false,
+        mount: () => {
+          if (spiralDustPoints) spiralDustPoints.visible = false;
+        },
+        unmount: () => {}
+      }
+    };
 
     const container = document.getElementById('canvas-container');
 
@@ -418,7 +448,8 @@
 
     async function fetchGalaxy() {
       try {
-        const res = await fetch('/api/memory/celestial');
+        const sec = sections[currentSection] || sections.galaxy;
+        const res = await fetch(sec.api);
         if (!res.ok) return;
         galaxyData = await res.json();
         const bodiesChanged = galaxyData.bodies.length !== lastRenderedCount;
@@ -436,12 +467,35 @@
       } catch (e) {}
     }
 
+    async function switchSection(sectionId) {
+      if (sections[currentSection] && sections[currentSection].unmount) {
+        sections[currentSection].unmount();
+      }
+      currentSection = sectionId;
+      if (sections[currentSection] && sections[currentSection].mount) {
+        sections[currentSection].mount();
+      }
+
+      document.querySelectorAll('.top-btn').forEach(btn => {
+        if (btn.id === 'tab-' + sectionId) {
+          btn.classList.add('active');
+        } else if (btn.id && btn.id.startsWith('tab-')) {
+          btn.classList.remove('active');
+        }
+      });
+
+      lastRenderedCount = -1;
+      lastRenderedLines = -1;
+      await fetchGalaxy();
+      resetToGalacticView();
+    }
+
     function dustPalette(r) {
       const coreC = new THREE.Color(0xfef08a);
       const midC = new THREE.Color(0xc084fc);
       const rimC = new THREE.Color(0x38bdf8);
       if (r < 300) return coreC.clone().lerp(midC, r / 300);
-      return midC.clone().lerp(rimC, Math.min(1.0, (r - 300) / 600));
+      return midC.clone().lerp(rimC, Math.min(1.0, (r - 300) / 800));
     }
 
     function mix(c1, c2, factor) {

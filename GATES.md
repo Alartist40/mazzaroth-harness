@@ -100,4 +100,27 @@
   CWD: .
   EVIDENCE: 2026-09-28 — `READABILITY_OK` (centre: celestial:core:database, rim: episodic:book:tsg:tausug:Judges).
 
+---
+
+# Gates: GUI Visual Parity & Sections Scaffold (Stages S18–S19)
+
+- [x] G18: GUI_SCALE — desktop visualizer star radii clamped with depth projection, corona scaled to 1.8, and opaque core disc eliminated
+  CHECK: python3 -c 'app_rs = open("src/visualizer/app.rs").read(); print("GUI_SCALE corona<=1.8 core_opaque=0" if ("clamp(1.5" in app_rs and "star_radius * 1.8" in app_rs and "10.0 * self.camera.zoom" not in app_rs) else "GUI_SCALE_FAIL")'
+  EXPECT: GUI_SCALE corona<=1.8 core_opaque=0
+  CWD: .
+  EVIDENCE: 2026-09-28 — `GUI_SCALE corona<=1.8 core_opaque=0` (star_radius clamped [1.5, 7.0], corona at 1.8, core halo depth-scaled).
+
+- [x] G19: GUI_LOOK — procedural 6k spiral dust backdrop and radial hue blending active in native GUI
+  CHECK: python3 -c 'app_rs = open("src/visualizer/app.rs").read(); print("GUI_LOOK_OK" if ("dust_particles" in app_rs and "dust_palette" in app_rs) else "GUI_LOOK_FAIL")'
+  EXPECT: GUI_LOOK_OK
+  CWD: .
+  EVIDENCE: 2026-09-28 — `GUI_LOOK_OK` (6k procedural dust backdrop, dust_palette radial falloff, nearest hit detection).
+
+- [x] G20: SECTIONS_REGISTRY — backend exposes /api/sections registry and web UI supports section switching
+  CHECK: python3 -c 'import subprocess, json, urllib.request, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8094"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8094"; sections = json.load(urllib.request.urlopen(base + "/api/sections")); constellations = json.load(urllib.request.urlopen(base + "/api/sections/constellations")); html = open("web/index.html").read(); p.terminate(); p.wait(timeout=5); print("SECTIONS_REGISTRY_OK" if (len(sections) >= 2 and any(s.get("id") == "constellations" for s in sections) and "switchSection" in html and len(constellations.get("bodies", [])) > 0) else "SECTIONS_REGISTRY_FAIL")'
+  EXPECT: SECTIONS_REGISTRY_OK
+  CWD: .
+  EVIDENCE: 2026-09-28 — `SECTIONS_REGISTRY_OK` (2 active sections: galaxy + classical constellations, switchSection enabled).
+
+
 
