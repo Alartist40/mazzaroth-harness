@@ -1,0 +1,38 @@
+{
+  "id": "kjv-genesis",
+  "title": "The Book of Genesis (King James Version)",
+  "category": "scripture",
+  "language": "en",
+  "provenance": {
+    "source": "Project Gutenberg (gutenberg.org/ebooks/10)",
+    "publisher": "Public Domain (Authorized King James Version 1611)",
+    "license": "public-domain",
+    "license_url": "https://www.gutenberg.org/license",
+    "retrieved_date": "2026-09-28",
+    "notes": "Verified public domain scriptural translation"
+  },
+  "structure": [
+    {
+      "id": "gen-01",
+      "title": "Genesis Chapter 1",
+      "sections": [
+        {
+          "id": "gen-01-creation",
+          "title": "The Creation of Heaven and Earth",
+          "text": "1 In the beginning God created the heaven and the earth.\n2 And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters.\n3 And God said, Let there be light: and there was light.\n4 And God saw the light, that it was good: and God divided the light from the darkness.\n5 And God called the light Day, and the darkness he called Night. And the evening and the morning were the first day."
+        }
+      ]
+    },
+    {
+      "id": "gen-02",
+      "title": "Genesis Chapter 2",
+      "sections": [
+        {
+          "id": "gen-02-garden",
+          "title": "The Garden of Eden",
+          "text": "1 Thus the heavens and the earth were finished, and all the host of them.\n2 And on the seventh day God ended his work which he had made; and he rested on the seventh day from all his work which he had made.\n7 And the LORD God formed man of the dust of the ground, and breathed into his nostrils the breath of life; and man became a living soul."
+        }
+      ]
+    }
+  ]
+}

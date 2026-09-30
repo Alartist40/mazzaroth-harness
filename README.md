@@ -1,35 +1,114 @@
-# Mazzaroth: Celestial Cognitive Memory System
+# Librarian Box (Mazzaroth) — Offline Sovereign Knowledge Vault
 
-Mazzaroth is a local-first, sovereign cognitive memory engine and 3D celestial visualizer that models long-term semantic and episodic memory as an evolving 3D particle spiral galaxy.
+An offline librarian in a box. A single, self-contained Rust binary running on any ARM64 SBC (Raspberry Pi 4/5, Orange Pi 5) or desktop machine, serving a curated, legally clean knowledge library through a web interface, and answering questions with a local language model acting as a grounded librarian.
+
+Zero Docker. Zero cloud. Works completely offline.
+
+---
+
+## Key Capabilities
+
+1. **Curated & Provenance-Enforced Library**: Mandatory provenance metadata enforced at ingestion (source, publisher, license, date). Ingestion rejects any unverified or copyrighted text.
+2. **Instant BM25 Search**: SQLite FTS5 search index with highlighted snippet context.
+3. **Grounded AI Librarian**: Local LLM (Ministral 3B via Ollama / OpenAI-compatible endpoint) answers strictly from verified passages with exact citations and dates. Refuses out-of-context queries and degrades gracefully if the LLM is offline.
+4. **3D & 2D Galaxy Graph**: Interactive 3D Three.js logarithmic particle spiral and lightweight 2D Canvas fallback visualizing the knowledge vault by category, document, and field note backlinks.
+5. **Offline PMTiles Maps**: Direct HTTP Range byte-serving for single-file `.pmtiles` regional OpenStreetMap packages.
+6. **Field Notes**: Markdown note-taking with passage backlinks (`[[doc-id#section-id]]`) that link into the Reader and graph.
+
+---
+
+## Hardware Profiles
+
+| Profile | Hardware | Features Active | Memory Footprint |
+|---|---|---|---|
+| `tiny` | Raspberry Pi 4 4GB, Pi Zero 2 W | Reader, FTS5 Search, 2D/3D Galaxy, Maps, Notes (No LLM) | Server < 150 MB |
+| `standard` | Orange Pi 5 8GB, Pi 5 8GB | Everything + Ministral 3B Q4 via Ollama (2–4k context) | Server < 200 MB, LLM ~2.5 GB |
+| `full` | 16GB+ / Desktop | Everything + larger context & models | Unconstrained |
+
+---
 
 ## Quickstart
 
-### 1. Install Single-Command Launcher
+### 1. Build & Install
+
 ```bash
 ./install.sh
 ```
-This builds the release binary and registers `mazzaroth` in `~/.local/bin`.
 
-### 2. Launch
+Installs `librarian` (and symlinked `mazzaroth`) into `~/.local/bin/`.
+
+### 2. Run Diagnostics & Ingest Starter Corpus
+
 ```bash
-mazzaroth
-```
-Opens **http://localhost:8080** in your browser to interact with the 3D particle spiral galaxy, hierarchical scripture navigator, and classical constellation catalogs.
+# Run system diagnostics
+librarian doctor
 
-If the daemon is already running, invoking `mazzaroth` automatically focuses your browser window.
-
-### 3. Development Run
-```bash
-./run.sh
+# Ingest verified public-domain starter corpus
+librarian ingest content/pd-demo/
 ```
 
-### 4. Model Context Protocol (MCP) Integration
-Mazzaroth exposes a standard MCP JSON-RPC 2.0 endpoint at `http://127.0.0.1:8080/api/mcp` with tools:
-- `mazzaroth_remember(label, content, tier, tags)`
-- `mazzaroth_recall(query, limit)`
-- `mazzaroth_get_galaxy()`
+### 3. Launch Server
 
-## Modular Sections Architecture
-- `galaxy/`: Multilingual scriptural corpus, 4-arm 0.003-twist logarithmic spiral physics, and scripture reader API.
-- `constellation/`: 32 classical northern/southern asterisms and complete 12 zodiac sign catalog (`constellations.json`).
-- `web/`: Clean frontend shell (`index.html`, `css/base.css`, `js/main.js`) with 4-step drill-down navigator and reading pane.
+```bash
+librarian serve
+```
+
+Opens **http://127.0.0.1:8080** in your browser.
+
+---
+
+## CLI Reference
+
+```
+Usage: librarian [COMMAND] [OPTIONS]
+
+Commands:
+  serve     Start the offline librarian server (default)
+  ingest    Ingest a directory of JSON books with mandatory provenance validation
+  doctor    Run diagnostic checks on RAM, disk, SQLite FTS5 integrity, and LLM reachability
+  reindex   Optimize SQLite database and rebuild FTS5 index
+  maps      Offline map regions: fetch <MIN_LON,MIN_LAT,MAX_LON,MAX_LAT> street-level packs | list
+  help      Print this message or the help of the given subcommand(s)
+
+Options:
+  -b, --bind <BIND>                  [default: 0.0.0.0:8080]
+  -d, --db <DB>                      [default: data/mazzaroth.db]
+      --profile <PROFILE>            [default: standard] [possible values: tiny, standard, full]
+      --content-dir <CONTENT_DIR>    [default: content]
+      --maps-dir <MAPS_DIR>          [default: maps]
+      --llm-endpoint <LLM_ENDPOINT>  [default: http://127.0.0.1:11434]
+      --llm-model <LLM_MODEL>        [default: ministral-3b]
+```
+
+### Offline Map Regions (street-level packs)
+
+```bash
+# Fetch a bbox pack from the Protomaps planet build (internet once; served offline afterwards)
+mazzaroth maps fetch 18.34,-33.96,18.49,-33.86 --name cape-town        # city ≈ z15
+mazzaroth maps fetch 5.75,49.44,6.53,50.18 --name luxembourg --maxzoom 14  # country tier
+mazzaroth maps list                                                     # installed regions
+```
+
+Packs land in `maps/*.pmtiles`, appear instantly in `/api/maps`, and show up in the
+Map view's **INSTALLED REGIONS** panel — click a chip to switch (schema-aware:
+overview `countries`/`labels` vs street `roads`/`buildings`/`places`). The official
+`pmtiles` extract binary auto-downloads to `data/bin/` on first fetch.
+Data © OpenStreetMap contributors · ODbL (Protomaps builds).
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health` | Healthcheck (`OK`) |
+| `GET` | `/api/categories` | List document categories |
+| `GET` | `/api/documents` | List all document summaries |
+| `GET` | `/api/read/{doc_id}` | Retrieve full structured document with provenance |
+| `GET` | `/api/search?q={query}` | FTS5 BM25 search with highlighted snippets |
+| `POST` | `/api/ask` | Grounded AI Librarian SSE streaming chat |
+| `GET` | `/api/galaxy` | 3D/2D knowledge graph nodes and link edges |
+| `GET` | `/api/notes` | List field notes |
+| `POST` | `/api/notes` | Create field note |
+| `GET` | `/api/maps` | List available `.pmtiles` map regions |
+| `GET` | `/maps/{filename}` | HTTP Range byte-serving for PMTiles |

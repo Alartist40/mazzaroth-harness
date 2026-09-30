@@ -1,0 +1,23 @@
+=== /health ===
+OK
+
+=== /api/status ===
+{"llm_online":true,"llm_endpoint":"http://127.0.0.1:11434","llm_model":"ministral-3b","available_models":["ornith-1.5:9b","nomic-embed-text-v2-moe:latest","ministral-3:3b","frob/unlimited-ocr:f16","frob/unlimited-ocr:q8_0","ornith:9b"],"profile":"standard","total_ram_mb":15381,"total_documents":3,"total_chunks":9,"total_notes":2,"total_constellations":32,"total_maps":0,"total_nodes":1103,"total_links":1154,"version":"3.2.0"}
+
+=== /api/galaxy ===
+{"nodes":[{"id":"core:librarian","label":"Librarian Core","category":"core","kind":"core","tier":"celestial","x":0.0,"y":0.0,"z":0.0,"radius":16.0,"color":"#ffffff","description":"Offline Sovereign Knowledge Core","content":"Offline Sovereign Knowledge Core","doc_id":null,"section_id":null,"tags":["core","librarian"]},{"id":"celestial:core:identity","label":"Core Identity","category":"identity","kind":"celestial","tier":"celestial","x":0.0,"y":0.0,"z":0.0,"radius":8.0,"color":"#ffffff","descript
+
+=== /api/search?q=trauma ===
+[{"chunk_id":9,"doc_id":"fm-4-25-first-aid","doc_title":"US Army First Aid Manual FM 4-25.11","category":"medical","license":"public-domain","retrieved_date":"2026-09-28","section_id":"ch-02-s-02","title_path":"US Army First Aid Manual FM 4-25.11 > Chapter 2: Life-Saving Measures & Bleeding Control > Treating Shock","text":"Shock is a depression of vital body functions resulting from severe blood loss, burns, or severe trauma.\nSymptoms: Pale or clammy skin, rapid weak pulse, confusion, rapid shallow breathing, extreme thirst.\nTreatment:\n1. Position the casualty flat on their back and elevate feet 6 to 12 inches unless head or chest injuries exist.\n2. Loosen restrictive clothing at neck, waist, and boots.\n3. Prevent chilling or overheating by covering with a blanket or poncho.\n4. Reassure the casualty and keep them calm. Do not give fluids if unconscious.","snippet":"Shock is a depression of vital body functions resulting from severe blood loss, burns, or severe <b>trauma</b>.\nSymptoms: Pale or clammy skin, rapid weak...","rank":-1.7359707175655497}]
+
+=== /api/sections/constellations ===
+{"bodies":[{"color":"#ffcc00","constellation_id":"aries","constellation_label":"Aries (The Ram)","content":"Hamal (α Ari) (Aries (The Ram))\nPrincipal star in the head of the Ram\nSeason: AUTUMN · Sky: EQUATORIAL\nLore: The Ram — Golden Fleece, leader of the ancient zodiac flock","id":"constellation:aries:hamal","kind":"zodiac","label":"Hamal (α Ari)","luminosity":0.95,"mass":0.9,"orbit_angle":0.0,"orbit_radius":300.8321838378906,"position":"equatorial","radius":10.0,"season":"autumn","tags
+
+=== /api/notes ===
+[{"id":"1069538f-f2a8-41a2-ba8f-63706f08976b","title":"Wilderness First Aid","content":"Pressure dressing and elevation.","created_at":1790649790,"updated_at":1790649790,"links":[]},{"id":"c793ffda-7285-4304-b7f3-fab55465505e","title":"Trauma Field Protocol","content":"Apply tourniquet high and tight.","created_at":1790649620,"updated_at":1790649620,"links":[]}]
+
+=== /api/documents ===
+[{"id":"kjv-genesis","title":"The Book of Genesis (King James Version)","category":"scripture","language":"en","license":"public-domain","publisher":"Public Domain (Authorized King James Version 1611)","retrieved_date":"2026-09-28","personal_use_only":false},{"id":"fm-4-25-first-aid","title":"US Army First Aid Manual FM 4-25.11","category":"medical","language":"en","license":"public-domain","publisher":"Headquarters, Department of the Army","retrieved_date":"2026-09-28","personal_use_only":false},{"id":"fm-21-76-survival","title":"US Army Survival Manual FM 21-76","category":"survival","language":"en","license":"public-domain","publisher":"Headquarters, Department of the Army","retrieved_date":"2026-09-28","personal_use_only":false}]
+
+=== /api/categories ===
+["medical","scripture","survival"]

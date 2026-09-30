@@ -6,3 +6,7 @@ data/*.db
 data/*.db-wal
 data/*.db-shm
 
+# Downloaded / generated map data (rebuild: tools/gen-map-tiles.py, mazzaroth maps fetch)
+maps/*.pmtiles
+data/bin/
+

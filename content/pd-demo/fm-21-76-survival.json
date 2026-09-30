@@ -1,0 +1,59 @@
+{
+  "id": "fm-21-76-survival",
+  "title": "US Army Survival Manual FM 21-76",
+  "category": "survival",
+  "language": "en",
+  "provenance": {
+    "source": "US Government Printing Office (govinfo.gov)",
+    "publisher": "Headquarters, Department of the Army",
+    "license": "public-domain",
+    "license_url": "https://www.usa.gov/government-works",
+    "retrieved_date": "2026-09-28",
+    "notes": "1992 edition, official public domain United States Government publication"
+  },
+  "structure": [
+    {
+      "id": "ch-01",
+      "title": "Chapter 1: Introduction & Survival Actions",
+      "sections": [
+        {
+          "id": "ch-01-s-01",
+          "title": "Survival Actions Keyword",
+          "text": "Remember the keyword SURVIVAL:\nS - Size Up the Situation (Size up your surroundings, your physical condition, and your equipment).\nU - Use All Your Senses, Undue Haste Makes Waste (Quick movements without thinking can lead to capture or injury).\nR - Remember Where You Are (Always maintain your bearings on a map or mental grid).\nV - Vanquish Fear and Panic (Panic is the greatest enemy in a survival crisis).\nI - Improvise (Use whatever materials are around you to meet your basic needs).\nV - Value Living (Maintain the will to survive above all hardships).\nA - Act Like the Natives (Observe how local fauna and indigenous peoples obtain food and water).\nL - Live By Your Wits (Learn basic skills before an emergency occurs)."
+        },
+        {
+          "id": "ch-01-s-02",
+          "title": "Pattern for Survival",
+          "text": "Develop a survival pattern that meets your basic needs in priority order:\n1. First Aid — Assess yourself and companions for life-threatening injuries, bleeding, or shock.\n2. Shelter — Protect yourself from harsh elements (cold, excessive heat, wind, rain).\n3. Fire — Provides warmth, a means to purify water, signal rescuers, and cook food.\n4. Water — The human body can survive weeks without food, but only days without water.\n5. Food — Necessary for long-term energy and morale once immediate life threats are secured."
+        }
+      ]
+    },
+    {
+      "id": "ch-06",
+      "title": "Chapter 6: Water Procurement & Purification",
+      "sections": [
+        {
+          "id": "ch-06-s-01",
+          "title": "Water Sources",
+          "text": "Water is essential to life. The body loses water through perspiration, respiration, and urination. Never wait until you are out of water before searching for a source.\nLook for signs of water: lush vegetation, swarms of insects, animal tracks converging toward low ground, bird flight paths at dawn and dusk. In mountainous terrain, dig in dry stream beds where gravel is moist."
+        },
+        {
+          "id": "ch-06-s-02",
+          "title": "Water Purification Methods",
+          "text": "Always purify water before drinking unless obtained directly from a clean spring or rain catchment.\n1. Boiling: The most certain method. Bring water to a rolling boil for at least 1 full minute (3 minutes at high altitudes over 2,000 meters) to kill all pathogenic bacteria, viruses, and parasites.\n2. Chemical Treatment: Use water purification tablets (iodine or chlorine) according to directions, or 2 drops of 5% household bleach per liter of clear water, letting it stand for 30 minutes.\n3. Filtration: Pass turbid water through a layered filter of clean sand, crushed charcoal from your campfire, and fine cloth before boiling to remove suspended particulate matter."
+        }
+      ]
+    },
+    {
+      "id": "ch-07",
+      "title": "Chapter 7: Firecraft",
+      "sections": [
+        {
+          "id": "ch-07-s-01",
+          "title": "Basic Fire Principles",
+          "text": "To start and sustain a fire, you require three elements: heat, fuel, and oxygen.\nGather three grades of fuel before lighting:\n1. Tinder: Fine, bone-dry material that ignites with a single spark (dry birch bark, shredded cedar inner bark, dry lint, charred cotton cloth, crushed dry grass).\n2. Kindling: Small dry twigs and split sticks from pencil-lead to thumb thickness.\n3. Fuel: Larger dry logs and hardwoods that provide long-lasting heat and sustained coals."
+        }
+      ]
+    }
+  ]
+}

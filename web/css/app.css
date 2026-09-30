@@ -1,0 +1,149 @@
+:root {
+    /* Light Mode: Technical Paper Grey and Charcoal Ink */
+    --bg-canvas: #dce1e6;
+    --bg-shell: #e4e8ec;
+    --panel-bg: #ffffff;
+    --panel-bg-subtle: #f4f6f8;
+    --panel-border: #14171d;
+    --border-subtle: #ccd1d9;
+    --text-main: #0b0d11;
+    --text-secondary: #58606f;
+    --text-muted: #8c94a2;
+    --contrast-ink: #000000;
+    --contrast-paper: #ffffff;
+    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --particle-rgb: 11, 13, 17;
+    --line-synapse: rgba(11, 13, 17, 0.4);
+    --core-disc-fill: #ffffff;
+    --core-disc-stroke: #0b0d11;
+}
+
+[data-theme="dark"] {
+    /* Dark Mode: Matte Obsidian and Silver Stipple */
+    --bg-canvas: #08090c;
+    --bg-shell: #0e1014;
+    --panel-bg: #13161d;
+    --panel-bg-subtle: #1a1e27;
+    --panel-border: #eef2f6;
+    --border-subtle: #272d38;
+    --text-main: #eef2f6;
+    --text-secondary: #9da6b5;
+    --text-muted: #5f6775;
+    --contrast-ink: #ffffff;
+    --contrast-paper: #08090c;
+    --card-shadow: 0 10px 32px rgba(0, 0, 0, 0.6);
+    --particle-rgb: 238, 242, 246;
+    --line-synapse: rgba(238, 242, 246, 0.4);
+    --core-disc-fill: #08090c;
+    --core-stroke: #eef2f6;
+}
+
+* {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--bg-canvas);
+    color: var(--text-main);
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+}
+
+.mono-card {
+    background-color: var(--panel-bg);
+    border: 1.5px solid var(--panel-border);
+    box-shadow: var(--card-shadow);
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.mono-card-subtle {
+    background-color: var(--panel-bg-subtle);
+    border: 1px solid var(--border-subtle);
+}
+
+.stack-depth-deck {
+    position: relative;
+}
+.stack-depth-deck::before {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    right: 8px;
+    left: 8px;
+    height: 10px;
+    background-color: var(--panel-bg-subtle);
+    border: 1.5px solid var(--panel-border);
+    border-radius: 14px;
+    z-index: -1;
+    transition: all 0.25s ease;
+}
+.stack-depth-deck::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    right: 16px;
+    left: 16px;
+    height: 10px;
+    background-color: var(--panel-bg);
+    border: 1.5px solid var(--border-subtle);
+    border-radius: 14px;
+    z-index: -2;
+    transition: all 0.25s ease;
+}
+
+.nav-deck-item {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease;
+}
+.nav-deck-item:hover {
+    transform: translateX(-4px);
+}
+.nav-deck-item.active-nav {
+    border-color: var(--panel-border) !important;
+    background-color: var(--panel-bg-subtle) !important;
+}
+
+/* Wireframe Inspection Overlay Styling */
+.wireframe-active #zone-yellow { outline: 3px dashed #eab308 !important; outline-offset: -3px; }
+.wireframe-active #zone-red { outline: 3px dashed #ef4444 !important; outline-offset: -3px; }
+.wireframe-active #zone-green { outline: 3px dashed #22c55e !important; outline-offset: -3px; }
+.wireframe-active #zone-blue { outline: 3px dashed #3b82f6 !important; outline-offset: -3px; }
+.wireframe-active #zone-purple { outline: 3px dashed #d946ef !important; outline-offset: -3px; }
+
+.reader-scroll::-webkit-scrollbar { width: 5px; }
+.reader-scroll::-webkit-scrollbar-track { background: transparent; }
+.reader-scroll::-webkit-scrollbar-thumb {
+    background-color: var(--border-subtle);
+    border-radius: 4px;
+}
+
+/* MapLibre offline basemap view (PMTiles) */
+#maplibre-container { position: absolute; inset: 0; z-index: 10; }
+#maplibre-container .maplibregl-canvas:focus { outline: none; }
+.geocache-marker { position: absolute; width: 0; height: 0; cursor: pointer; z-index: 20; }
+.geocache-ring {
+    position: absolute; left: -7px; top: -7px; width: 14px; height: 14px;
+    border: 1.5px solid var(--text-main); border-radius: 50%; box-sizing: border-box;
+    background-color: color-mix(in srgb, var(--bg-canvas) 65%, transparent);
+}
+.geocache-ring::after {
+    content: ''; position: absolute; left: 4px; top: 4px; width: 4px; height: 4px;
+    border-radius: 50%; background-color: var(--text-main);
+}
+.geocache-label {
+    position: absolute; left: 12px; top: -7px; white-space: nowrap;
+    font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 700;
+    font-size: 8.5px; color: var(--text-main);
+    text-shadow: 0 0 4px var(--bg-canvas), 0 0 4px var(--bg-canvas);
+    pointer-events: none;
+}

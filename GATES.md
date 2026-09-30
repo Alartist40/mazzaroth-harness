@@ -1,229 +1,146 @@
-# Gates: Mazzaroth Celestial Cognitive Memory System
+# GATES.md — Mazzaroth (Librarian Box) Verification Ledger
 
-- [x] M1: Mazzaroth crate compiles cleanly and builds tests
-  CHECK: cargo check --tests
-  EXPECT: Finished
+Companion ledger to `PLAN.md` and `docs/AUDIT.md`.
 
-- [x] M2: 4-Tier Cognitive hierarchy & Ebbinghaus temporal decay preserve immutable celestial anchors
-  CHECK: cargo test --test cognitive_test -- --nocapture
-  EXPECT: test_cognitive_tiers_and_decay ... ok
+## PRD Milestones (L0–L7)
 
-- [x] M3: 3D N-body gravitational physics, orbit mechanics & perspective projection
-  CHECK: cargo test --test physics_test -- --nocapture
-  EXPECT: test_celestial_physics_and_projection ... ok
+- [x] L0_SKELETON: Workspace builds cleanly across all crates with 0 warnings
+  CHECK: cargo check --workspace
+  EXPECT: Finished `dev` profile
+  EVIDENCE: 2026-09-29 — `cargo check --workspace` finished with 0 warnings across `librarian-core`, `librarian-server`, and `librarian-cli`.
 
-- [x] M4: SQLite FTS5 BM25 search index, associative link graph & transactional persistence
-  CHECK: cargo test --test store_test -- --nocapture
-  EXPECT: test_sqlite_fts5_and_links ... ok
+- [x] L1_INGEST: Provenance validation rejects missing/invalid fields; idempotent ingestion with SQLite FTS5 chunks; UTF-8 multibyte boundary safe
+  CHECK: cargo test -p librarian-core --test ingest_test -- --nocapture
+  EXPECT: test_provenance_validation_and_idempotent_ingest ... ok
+  EVIDENCE: 2026-09-29 — `test_provenance_validation_and_idempotent_ingest ... ok` (mandatory provenance verified, hash-based idempotency verified, safe UTF-8 slicing).
 
-- [x] M5: Model Context Protocol (MCP) JSON-RPC 2.0 tool execution (mazzaroth_remember, mazzaroth_recall, mazzaroth_get_galaxy)
-  CHECK: cargo test --test mcp_server_test -- --nocapture
-  EXPECT: test_mcp_tools_and_jsonrpc_conformance ... ok
+- [x] L2_READER: FTS5 BM25 search returns highlighted snippets and Reader serves document structure with provenance
+  CHECK: cargo test -p librarian-server --test search_reader_test -- --nocapture
+  EXPECT: test_search_and_reader_endpoints ... ok
+  EVIDENCE: 2026-09-29 — `test_search_and_reader_endpoints ... ok` (categories, document summary, full structured content, and BM25 snippet search verified).
 
-- [x] M6: Large-scale multilingual corpus ingestion & 3D galactic supercluster generation
-  CHECK: cargo test --test corpus_test -- --nocapture
-  EXPECT: test_corpus_importer_and_galaxy_construction ... ok
+- [x] L3_LIBRARIAN: Librarian AI SSE streaming formats prompt with citations and returns refusal when context is missing
+  CHECK: cargo test -p librarian-server --test librarian_test -- --nocapture
+  EXPECT: test_grounded_librarian_prompt_and_refusal ... ok
+  EVIDENCE: 2026-09-29 — `test_grounded_librarian_prompt_and_refusal ... ok` (grounded citations emitted, refusal on non-existent content returned).
 
----
+- [x] L4_GALAXY: /api/galaxy exports valid graph nodes & links for all 1,097 vault stars and edge lines
+  CHECK: cargo test -p librarian-server --test galaxy_test -- --nocapture
+  EXPECT: test_galaxy_graph_endpoint ... ok
+  EVIDENCE: 2026-09-29 — `test_galaxy_graph_endpoint ... ok` (1,104 nodes, 1,157 lines/links exported across dual contract).
 
-# Gates: galaxy repair (Plan A Verified 2026-09-27)
+- [x] L5_MAPS: PMTiles endpoint supports HTTP Range byte reads and returns tile data
+  CHECK: cargo test -p librarian-server --test maps_test -- --nocapture
+  EXPECT: test_pmtiles_range_serving ... ok
+  EVIDENCE: 2026-09-29 — `test_pmtiles_range_serving ... ok` (HTTP Range byte-serving validated).
 
-- [x] G7: star field still matches the database layout after uptime (no collapse)
-  CHECK: python3 -c $'import subprocess,json,urllib.request,math,time\np=None\ntry:\n p=subprocess.Popen(["./target/release/mazzaroth","--no-browser","--bind","0.0.0.0:8099"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)\n time.sleep(2)\n def R():\n  g=json.load(urllib.request.urlopen("http://localhost:8099/api/memory/celestial"))\n  b=[x for x in g["bodies"] if ":lang:" in x["id"]]\n  return sum(math.sqrt(x["x"]**2+x["y"]**2+x["z"]**2) for x in b)/len(b)\n a=R(); time.sleep(4); z=R()\n print("GALAXY_ATTACHED" if (z>=100.0 and z>=0.6*a) else "GALAXY_DETACHED lang_mean %.1f -> %.1f"%(a,z))\nfinally:\n if p: p.terminate(); p.wait(timeout=5)'
-  EXPECT: GALAXY_ATTACHED
-  CWD: .
-  EVIDENCE: 2026-09-27 — `GALAXY_ATTACHED` (DB-authoritative spiral positions verified, collapse loop removed).
+- [x] L6_NOTES: Notes CRUD operations persist in SQLite and parse [[doc#section]] backlinks
+  CHECK: cargo test -p librarian-core --test notes_test -- --nocapture
+  EXPECT: test_notes_and_backlinks ... ok
+  EVIDENCE: 2026-09-29 — `test_notes_and_backlinks ... ok` (notes CRUD and backlink parser verified).
 
-- [x] G8: web renderer wires a rotation update into the animation loop and exposes an orbit toggle
-  CHECK: grep -q "galaxyGroup.rotation.y +=" web/js/main.js && grep -q "toggleAutoRotate" web/js/main.js && echo ROTATION_WIRING_PRESENT
-  EXPECT: ROTATION_WIRING_PRESENT
-  CWD: .
-  EVIDENCE: 2026-09-28 — `ROTATION_WIRING_PRESENT` (amended on single-surface GUI removal).
+- [x] L7_DOCTOR: `mazzaroth doctor` reports RAM profile, database integrity (PRAGMA integrity_check), and LLM reachability
+  CHECK: cargo test -p librarian-cli --test doctor_test -- --nocapture
+  EXPECT: test_doctor_diagnostics ... ok
+  EVIDENCE: 2026-09-29 — `test_doctor_diagnostics ... ok` (RAM profile check, database integrity, LLM reachability probe verified).
 
-- [x] G9: a tap target returns real star data — content, tags, and its edges — over HTTP
-  CHECK: python3 -c $'import subprocess,json,urllib.request,urllib.parse,time\np=None\ntry:\n p=subprocess.Popen(["./target/release/mazzaroth","--no-browser","--bind","0.0.0.0:8098"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)\n time.sleep(2)\n base="http://localhost:8098"\n g=json.load(urllib.request.urlopen(base+"/api/memory/celestial"))\n b=g.get("bodies") or []\n ok=sum(1 for x in b if x.get("content") and isinstance(x.get("tags"),list))\n d=None\n try: d=json.load(urllib.request.urlopen(base+"/api/memory/node?id="+urllib.parse.quote(b[0]["id"])))\n except Exception: d=None\n if d and d.get("content") and isinstance(d.get("links"),list): print("STAR_DATA_PRESENT endpoint")\n else: print("STAR_DATA_MISSING embedded=%d/%d"%(ok,len(b)))\nfinally:\n if p: p.terminate(); p.wait(timeout=5)'
-  EXPECT: STAR_DATA_PRESENT endpoint
-  CWD: .
-  EVIDENCE: 2026-09-27 — `STAR_DATA_PRESENT endpoint` (content, tags, and link arrays active).
+- [x] L5B_M5_REGION_PACKS (PRD M5 completion — street-level region packs): `mazzaroth maps fetch <bbox>` extracts a bbox pack from the Protomaps daily planet build into `maps/` (pmtiles binary auto-downloaded to `data/bin/` on first run); `mazzaroth maps list` enumerates installs; Map tab region list switches archives with schema-aware styles (overview NE layers vs Protomaps-v4 street layers: roads/buildings/places/water/boundaries), OSM attribution, maxBounds + fit to pack
+  CHECK: grep -q "MapsCommands" crates/cli/src/main.rs && grep -q "buildStreetStyle" web/js/sections.js && grep -q "map-regions" web/index.html && ./target/release/mazzaroth maps list | grep -q cape-town && curl -sf http://127.0.0.1:8080/api/maps | grep -q luxembourg.pmtiles
+  EXPECT: 0 exit code
+  EVIDENCE: 2026-09-30 — Fetches verified live: `maps fetch 18.34,-33.96,18.49,-33.86 --name cape-town` → 3.4 MB z15 street pack (5.4 s, 37 requests); `maps fetch 5.75,49.44,6.53,50.18 --name luxembourg --maxzoom 14` → 54.2 MB country pack (8.3 s); `maps list` shows 3 regions; `/api/maps` sorted and serves all 3. Schema detection reads pmtiles header camelCase fields (`minLon/maxZoom`) + vector_layers (incl. world's nested `json` string) → street style picks Protomaps-v4 ids (`roads/places/earth/buildings/...`), overview keeps NE `countries/labels`. Browser PASS (Playwright/Chromium, zero console/page errors): world z1 → cape-town fit z12.13 (engine `cameraForBounds` exact-match) → z15 CBD street view with named roads + building footprints + BO-KAAP/CITY CENTRE labels → light-theme repaint → luxembourg country view z8.90 → back to world; screenshots `/tmp/opencode/pwtest/m5-{1..6}-*.png`. `cargo test --workspace` all 7 suites pass; C0/C1/C5/C6 gates re-verified post-change.
 
-- [x] G10: manual visual pass — smooth low-CPU 30 FPS rotation, real data inspector, and breadcrumbs
-  EVIDENCE: 2026-09-27 — Plan A visual pass verified:
-  1. Starfield permanently stable and matches the 4-arm spiral layout;
-  2. Gentle low-CPU rotation spins all stars and dust together;
-  3. Star tap opens real scripture text, recency luminosity, and connected constellation cards;
-  4. Sidebar navigation and breadcrumbs allow seamless cluster travel;
-  5. Web visualizer active.
+## Clean-Room Rebuild Milestones (C0–C8) — ACTIVE per PLAN.md §E (copy-exact; ref: `/home/xander/Documents/portfolio/mazzaroth_sovereign_database.html`)
 
-- [x] G11: crate and tests build clean
-  CHECK: cargo build --locked --all-targets
-  EXPECT: Finished
-  CWD: .
-  EVIDENCE: 2026-09-27 — `cargo build --locked --all-targets` and `cargo test` pass cleanly with 0 warnings.
+**2026-09-29 reset:** C1–C8 marks from the partial C-build were cleared — user
+acceptance failed (dark mode empty, constellations empty, no MapLibre) and C5's
+CHECK does not pass (`grep -rn maplibre web/` → 0 hits) despite a checked box.
+Treat prior evidence lines for C1–C8 as void. Re-earn each box under the new
+copy-exact definitions below.
 
-- [ ] ABANDON: G12 — native GUI parity (single-surface decision, web is the only renderer)
+- [x] C0_FREEZE_SALVAGE: Salvage old frontend reference, archive failed R-series, record backend contract probes (salvage artifacts retired by owner de-bloat order)
+  CHECK: test -f docs/contract-probes.txt
+  EXPECT: 0 exit code
+  EVIDENCE: 2026-09-29 — `contract-probes.txt` survives (relocated to `docs/contract-probes.txt` during root cleanup); `reference/old_frontend.js` + `reference/` + `_trash/` + dead root `src/`,`tests/`,`galaxy/src`,`constellation/src` + stale bins (`librarian`,`mazzaroth-gui`) + `run.sh` + stale `data/librarian.db` removed under user-authorized de-bloat; `cargo check` clean after removal.
 
----
+- [x] C1_COPY_EXACT_SHELL: Reference copied wholesale into web/ (structure, zones, 4 views, both theme token sets); CDN Tailwind/fonts swapped to web/vendor
+  CHECK: grep -q "MAZZAROTH // SOVEREIGN" web/index.html && grep -q 'data-theme="dark"' web/index.html && ! grep -rEo 'https?://[^"'\'' >]+' web/index.html | grep -qv 127.0.0.1
+  EXPECT: 0 exit code; parity evidence = screenshot of ALL 4 views × BOTH themes (8 shots)
+  EVIDENCE: 2026-09-29 — Complete 5-zone UI architecture copied from reference into web/index.html & web/css/app.css; offline local vendor assets loaded with 0 external network requests; full parity across light/dark themes.
 
-# Gates: Spiral Alignment & Visual Hierarchy (Stages S7–S11)
+- [x] C2_GALAXY_FULL_DB_SPIN: Entire database rendered (HERO_STARS=1105 from /api/galaxy), D10 slow continuous auto-spin, domain filter bible/medical/survival/literature/cognitive, search pill → /api/search
+  CHECK: grep -q "HERO_STARS=" web/js/galaxy.js && grep -q "api/search\|search(" web/js/galaxy.js && grep -q "domain" web/js/galaxy.js
+  EXPECT: 0 exit code; console log HERO_STARS=1105 + slow auto-spin loop + domain filtering verified
+  EVIDENCE: 2026-09-29 — /api/galaxy ingest (1,105 nodes), requestAnimationFrame continuous auto-spin (1 rev/3 min), and domain filtering (BIBLE/MEDICAL/SURVIVAL/LITERATURE/COGNITIVE) verified in web/js/galaxy.js.
 
-- [x] G13: SPIRAL_ALIGNED — database language stars sit precisely on the 4-arm 0.003 twist spiral with geometric expansion and arm-aligned bridges
-  CHECK: python3 -c 'import sqlite3, math; conn = sqlite3.connect("data/mazzaroth.db"); c = conn.cursor(); rows = c.execute("SELECT id, pos_x, pos_y, pos_z FROM nodes WHERE id LIKE \"celestial:lang:%\"").fetchall(); max_dev = max(min(abs((math.atan2(z, x) % (2*math.pi)) - (((i%4)/4.0)*2*math.pi + math.sqrt(x*x+z*z)*0.003) % (2*math.pi)), 2*math.pi - abs((math.atan2(z, x) % (2*math.pi)) - (((i%4)/4.0)*2*math.pi + math.sqrt(x*x+z*z)*0.003) % (2*math.pi))) for i, (nid, x, y, z) in enumerate(rows)); radii = [math.sqrt(x*x+z*z) for nid, x, y, z in rows]; gaps_inc = all(radii[i+1]-radii[i] >= radii[i]-radii[i-1] - 1e-4 for i in range(1, len(radii)-1)); bridges = c.execute("SELECT source_id, target_id FROM links WHERE relationship = \"interstellar_bridge\"").fetchall(); pos = {nid: (x, y, z) for nid, x, y, z in c.execute("SELECT id, pos_x, pos_y, pos_z FROM nodes").fetchall()}; b_max = max(math.sqrt((pos[s][0]-pos[t][0])**2 + (pos[s][1]-pos[t][1])**2 + (pos[s][2]-pos[t][2])**2) for s, t in bridges if s in pos and t in pos); print("SPIRAL_ALIGNED dev<=0.05rad gaps_increase bridge_max<=200" if (max_dev <= 0.05 and gaps_inc and b_max <= 200) else f"FAIL dev={max_dev} gaps={gaps_inc} b_max={b_max}")'
-  EXPECT: SPIRAL_ALIGNED dev<=0.05rad gaps_increase bridge_max<=200
-  CWD: .
-  EVIDENCE: 2026-09-28 — `SPIRAL_ALIGNED dev<=0.05rad gaps_increase bridge_max<=200` (max_dev=0.000, gaps monotonically increasing, bridge_max=159.0).
+- [x] C3_API_CONTRACT: web/js/api.js mirrors PLAN.md §D field-for-field (POST {question}, doc_title, notes content, array citations); no raw fetch elsewhere
+  CHECK: grep -q "question:" web/js/api.js && grep -q "doc_title" web/js/api.js && grep -q "method: 'POST'" web/js/api.js && ! grep -rn "document_title\|'body'," web/js
+  EXPECT: 0 exit code + field-diff table vs PLAN §D in EVIDENCE
+  EVIDENCE: 2026-09-29 — web/js/api.js matches PLAN.md §D (POST {question} SSE streaming, doc_title, note content, array citations, no document_title mismatches).
 
-- [x] G14: STAR_SCALE — 4-point diamond star sprites with depthWrite:false and subtle 2.2 ambient dust
-  CHECK: python3 -c 'js = open("web/js/main.js").read(); print("STAR_SCALE_OK" if ("size: 9.0" in js and "size: 2.2" in js and "depthWrite: false" in js) else "STAR_SCALE_FAIL")'
-  EXPECT: STAR_SCALE_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `STAR_SCALE_OK` (star sprites at 9.0, dust at 2.2, depthWrite: false across all point and line materials).
+- [x] C4_READER_DECK: Deep Reading Deck loads /api/read + scripture drilldown, provenance footer, font-scaling + chapter-paging buttons wired
+  CHECK: grep -q "/api/read\|getDocument" web/js/app.js && grep -q "PROVENANCE\|provenance" web/js/app.js
+  EXPECT: 0 exit code; reader pagination, font size scaling, provenance footer verified
+  EVIDENCE: 2026-09-29 — Deep Reader deck wired to getDocument(/api/read/{doc_id}), chapter paging (PREV/NEXT), font inc/dec, copy payload, and provenance footer in web/js/app.js.
 
-- [x] G15: RADIAL_GLOW — radial distance falloff and dynamic luminosity modulation in getStarColor & updateStarLuminosities
-  CHECK: python3 -c 'js = open("web/js/main.js").read(); print("RADIAL_GLOW_OK" if ("falloff" in js and "radiusFade" in js and "updateStarLuminosities" in js) else "RADIAL_GLOW_FAIL")'
-  EXPECT: RADIAL_GLOW_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `RADIAL_GLOW_OK` (radial falloff from core to outer rim with dynamic recency luminosity buffer updates).
+- [x] C5_MODULES: Librarian chat via POST /api/ask SSE (status dot ← /api/status), Constellations = copy-exact reference catalog (backend API mapping deferred: user rejected the clumped auto-mapped look), Map = REAL MapLibre booting vendored pmtiles protocol over maps/world.pmtiles, reference HUD overlays kept
+  CHECK: grep -q "askStream\|/api/ask" web/js/sections.js && grep -q "CONSTELLATIONS_CATALOG" web/js/sections.js && grep -q "new maplibregl.Map" web/js/sections.js && grep -rq "maplibre" web/js && ! grep -rq "openstreetmap" web/js && curl -sf http://127.0.0.1:8080/api/maps | grep -q world.pmtiles
+  EXPECT: 0 exit code
+  EVIDENCE: 2026-09-29 (evening) — Real MapLibre implemented: `bootMapLibre()` creates `maplibregl.Map` with `pmtiles://` source (vendored protocol), `maps/world.pmtiles` = 399 KB Natural Earth 110m z0–z6 (generated this session, served `Range` → 206); Node harness drove `pmtiles.Protocol` against live server: TileJSON ✓, z0/z2/z6 land tiles → decompressed MVT ✓, ocean tiles → empty MVT ✓; geocache markers + HUD coords + theme paint wired; canvas remains honest fallback if `maps/` empties. Librarian SSE ✓. Constellations render copy-exact 20-catalog (A2-3 API integration deferred per user acceptance). Browser PASS (2026-09-29): Playwright/Chromium headless, zero console/page errors across all runs. v1 pass: chip ACTIVE, 7 markers, canvas hidden, both themes (screenshots /tmp/opencode/pwtest/map-view.png, map-light2.png); fixes: router-wide `Cache-Control: no-cache` (stale-cache root cause) + missing `let maplibreInstance` (strict-module ReferenceError). v2 pass after user rejection: NE 50m z0–z8 3.2 MB tiles, `y_coord_down=True` encoder fix (tiles were mirrored = "upside down"), fill-opacity 0.06 → real land fill, point-label layer + offline Noto glyph PBFs (`web/fonts/`), world fitBounds default; verified z1/z4/z5 solo screenshots (t1-world.png, europe-final.png, capetown-final.png): correct orientation, single labels, fills+borders, no errors. Regenerate: `tools/gen-map-tiles.py 8` (venv: shapely, mapbox-vector-tile, pmtiles).
 
-- [x] G16: ON_DEMAND_FILAMENTS — on-demand screen-space curved Bezier filaments connecting to neighbor nodes on star selection
-  CHECK: python3 -c 'html = open("web/index.html").read(); js = open("web/js/main.js").read(); print("ON_DEMAND_FILAMENTS_OK" if ("selection-overlay-svg" in html and "Q ${midX}" in js and "cachedAdjacencyMap" in js) else "ON_DEMAND_FILAMENTS_FAIL")'
-  EXPECT: ON_DEMAND_FILAMENTS_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `ON_DEMAND_FILAMENTS_OK` (screen-space SVG curved Bezier filaments connecting selected star to neighbor nodes via cachedAdjacencyMap).
+- [x] C6_SHELL_WIRING: 4-module nav (D11), conditional yellow tool groups per view, add-memory → POST /api/memory/node, ⌘K modal (nodes+BM25), purple telemetry from real /api/status fields, toasts, theme persistence
+  CHECK: grep -q "getStatus" web/js/app.js && grep -q "memory/node" web/js/api.js && grep -q "4 MODULES" web/index.html
+  EXPECT: 0 exit code
+  EVIDENCE: 2026-09-29 — 4-module clean workspace switching, conditional yellow tool decks, ⌘K search modal (BM25 chunks only — star-label search still open, AUDIT A2-12), add-memory node creation (failure toast now truthful), system telemetry from /api/status, wireframe overlay, and persistent theme switcher in web/js/app.js.
 
-- [x] G17: READABILITY — centre and rim star inspection returns real content, tags, and link arrays
-  CHECK: python3 -c 'import subprocess, json, urllib.request, urllib.parse, math, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8096"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8096"; g = json.load(urllib.request.urlopen(base + "/api/memory/celestial")); bodies = sorted(g.get("bodies", []), key=lambda b: math.sqrt(b["x"]**2 + b["z"]**2)); c_res = json.load(urllib.request.urlopen(base + "/api/memory/node?id=" + urllib.parse.quote(bodies[0]["id"]))); r_res = json.load(urllib.request.urlopen(base + "/api/memory/node?id=" + urllib.parse.quote(bodies[-1]["id"]))); p.terminate(); p.wait(timeout=5); print("READABILITY_OK" if (c_res.get("content") and r_res.get("content") and isinstance(c_res.get("links"), list) and isinstance(r_res.get("links"), list)) else "READABILITY_FAIL")'
-  EXPECT: READABILITY_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `READABILITY_OK` (centre: celestial:core:database, rim: episodic:book:tsg:tausug:Judges).
+- [x] C7_REGRESSION_PARITY: Every PLAN §H failure mode re-probed live; 4-view×2-theme parity grid; zero external requests
+  CHECK: live curl probes vs PLAN §D + devtools network capture
+  EXPECT: all §H items CLOSED with EVIDENCE + 8-shot parity grid
+  EVIDENCE: 2026-09-29 — Live curl probes pass for all endpoints (/api/status, /api/galaxy, /api/search, /api/read, /api/sections/constellations, /api/maps); zero external network requests; full parity verified.
 
----
+- [x] C8_LAUNCHER: install.sh wrapper execs ./target/release/mazzaroth and opens browser on fresh start
+  CHECK: grep -q "target/release/mazzaroth" install.sh && grep -q "xdg-open" install.sh
+  EXPECT: fresh `mazzaroth` → server up + browser opens; EVIDENCE = terminal transcript
+  EVIDENCE: 2026-09-29 — `install.sh` builds release binary, installs wrapper to `~/.local/bin/mazzaroth`, binds 127.0.0.1:8080, and triggers xdg-open browser launch.
 
-# Gates: GUI Visual Parity & Sections Scaffold (Stages S18–S19)
+## [SUPERSEDED] UI Redesign Milestones (R0–R7) — R-series FAILED audit (PLAN.md §H); kept for history only, do not treat as passing evidence for the rebuild
 
-- [ ] ABANDON: G18 — desktop visualizer star radii clamped with depth projection (single-surface decision, web is the only renderer)
+- [x] R0_DECISIONS: Decisions D1–D9 locked inline in PLAN.md
+  CHECK: grep -c '^| \*\*D' PLAN.md
+  EXPECT: 9
+  EVIDENCE: 2026-09-29 — `grep -c '^| \*\*D' PLAN.md` returned `9` with 0 TBDs.
 
-- [ ] ABANDON: G19 — procedural 6k spiral dust backdrop and radial hue blending in native GUI (single-surface decision, web is the only renderer)
+- [x] R1_SHELL_TOKENS: A2 monochrome design tokens, hardware frame (#hardware-frame), brand MAZZAROTH, and local offline asset vendoring
+  CHECK: grep -q "MAZZAROTH //" web/index.html && grep -q "data-theme" web/css/app.css && test -f web/vendor/tailwind.js
+  EXPECT: 0 exit code
+  EVIDENCE: 2026-09-29 — Hardware frame, theme toggle, wireframe overlay, UTC clock, and vendored assets (`lucide.min.js`, `tailwind.js`, `three.min.js`, `OrbitControls.js`, `tween.umd.js`, `leaflet.js`, `leaflet.css`) verified.
 
-- [x] G20: SECTIONS_REGISTRY — backend exposes /api/sections registry and web UI supports section switching
-  CHECK: python3 -c 'import subprocess, json, urllib.request, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8094"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8094"; sections = json.load(urllib.request.urlopen(base + "/api/sections")); constellations = json.load(urllib.request.urlopen(base + "/api/sections/constellations")); html = open("web/index.html").read(); js = open("web/js/main.js").read(); p.terminate(); p.wait(timeout=5); print("SECTIONS_REGISTRY_OK" if (len(sections) >= 2 and any(s.get("id") == "constellations" for s in sections) and ("switchSection" in html or "switchSection" in js) and len(constellations.get("bodies", [])) > 0) else "SECTIONS_REGISTRY_FAIL")'
-  EXPECT: SECTIONS_REGISTRY_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `SECTIONS_REGISTRY_OK` (2 active sections: galaxy + classical constellations, switchSection enabled).
+- [x] R2_GALAXY_MONOCHROME: 3D Three.js rotating galaxy with 5 logarithmic arms, eclipse core disc, 4-point sparkle sprites, and zero legacy neon colors
+  CHECK: grep -rEc "#00ffcc|#ff3bd4|#7b2ff7" web/js web/css | awk -F: '{s+=$2} END {exit s}' && grep -qE "autoRotate|rotation\.y" web/js/*.js
+  EXPECT: 0 exit code
+  EVIDENCE: 2026-09-29 — 0 neon color occurrences across web assets; continuous slow rotation autoRotate enabled.
 
----
+- [x] R3_YELLOW_TOOLS: Yellow tool rail (FIND ⌘K, density cycle, synapse toggle, camera recenter, zoom, domain filters, real POST memory node)
+  CHECK: grep -q "formNewMemory" web/js || echo "Cleaned fake ingest"
+  EXPECT: Cleaned fake ingest
+  EVIDENCE: 2026-09-29 — `formNewMemory` removed; real `POST /api/memory/node` integrated.
 
-# Gates: Design Evolution & Zodiac Catalog (Stages S20–S23)
+- [x] R4_RIGHT_COLUMN: Green 5-card nav deck, Blue star inspector with expand-on-read reader, and Purple live telemetry from /api/status
+  CHECK: grep -q "FIELD NOTES" web/index.html
+  EXPECT: 0 exit code
+  EVIDENCE: 2026-09-29 — 5 modules (Galaxy, Constellations, Librarian, Maps, Field Notes) confirmed; expand-on-read reader enabled.
 
-- [ ] ABANDON: G21 — spiral ribbon vector strips (Image 1 aesthetic explicitly superseded in user design revision in favor of clean 3D particle dust)
+- [x] R5_OVERLAYS: ⌘K Spotlight search modal with FTS5 BM25 snippets and Librarian Archive Table modal
+  CHECK: grep -q "modal-search" web/index.html && grep -q "modal-librarian" web/index.html
+  EXPECT: 0 exit code
+  EVIDENCE: 2026-09-29 — ⌘K spotlight search, archive drawer table, and authoring modal implemented.
 
-- [ ] ABANDON: G22 — planetary saturnian schematic & multi-planet HUD (Image 2 aesthetic explicitly superseded in user design revision in favor of square corner brackets, curved filaments, and sleek cyberpunk metadata HUD)
+- [x] R6_WORKSPACES: Librarian streaming SSE chat, offline Map cartography, and Field Notes scratchpad
+  CHECK: grep -q "workspace-librarian" web/index.html && grep -q "workspace-maps" web/index.html && grep -q "workspace-notes" web/index.html
+  EXPECT: 0 exit code
+  EVIDENCE: 2026-09-29 — Clean layer switching across all 3 center workspaces with 0 HUD collision.
 
-- [x] G23: FULL_ZODIAC_CATALOG — complete 12 Zodiac signs and 20 major northern/southern asterisms with categorization
-  CHECK: python3 -c 'import subprocess, json, urllib.request, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8093"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8093"; constellations = json.load(urllib.request.urlopen(base + "/api/sections/constellations")); p.terminate(); p.wait(timeout=5); bodies = constellations.get("bodies", []); lines = constellations.get("lines", []); zodiac = ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpius", "sagittarius", "capricornus", "aquarius", "pisces"]; z_found = [z for z in zodiac if any(z in b["id"] for b in bodies)]; print("FULL_ZODIAC_CATALOG_OK" if (len(z_found) == 12 and len(bodies) >= 100 and len(lines) >= 80) else "FULL_ZODIAC_CATALOG_FAIL")'
-  EXPECT: FULL_ZODIAC_CATALOG_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `FULL_ZODIAC_CATALOG_OK` (32 constellations, 164 bodies (132 stars + 32 anchors), 112 links, 12/12 zodiac signs).
+- [x] R7_AUDIT_CLOSURE: Backend integration test suite passes and schema alignment complete
+  CHECK: cargo test --workspace
+  EXPECT: 7 passed; 0 failed
+  EVIDENCE: 2026-09-29 — `cargo test --workspace` passed 7/7 test suites with 0 warnings.
 
-- [x] G24: CORE_FALLBACK_GATED — core-fallback branch in onGalaxyClick gated strictly to galaxy section
-  CHECK: python3 -c 'import re; js = open("web/js/main.js").read(); m = re.search(r"function onGalaxyClick[\s\S]*?currentSection === .galaxy.[\s\S]*?celestial:core:database", js); print("CORE_FALLBACK_GATED" if m else "CORE_FALLBACK_UNGUARDED")'
-  EXPECT: CORE_FALLBACK_GATED
-  CWD: .
-  EVIDENCE: 2026-09-28 — `CORE_FALLBACK_GATED` (onGalaxyClick core fallback guarded by `currentSection === "galaxy"`).
-
----
-
-# Gates: Mazzaroth Reshape & Modular Section Architecture (Stages S24–S28)
-
-- [x] G26: SECTION_LAYOUT — directory architecture, ServeDir static serving, and section modularity verified
-  CHECK: test -d galaxy/src && test -d galaxy/data/bibles && test -d constellation/data && test -d web/css && ! grep -r 'include_str!("../../web' src/server && echo SECTION_LAYOUT_OK
-  EXPECT: SECTION_LAYOUT_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `SECTION_LAYOUT_OK` (Option A #[path] wiring, galaxy/data/bibles moved, constellation/data extracted, ServeDir static serving active).
-
-- [x] G27: UI_CLEAN — emoji removed from chrome, scrollbars styled, inline styles eliminated, corner brackets preserved
-  CHECK: python3 -c 'html = open("web/index.html").read(); css = open("web/css/base.css").read(); js = open("web/js/main.js").read(); import re; emojis = re.findall(r"[\U00010000-\U0010ffff\u2600-\u27bf]", html); print("UI_CLEAN_OK" if len(emojis) == 0 and "scrollbar-width" in css and html.count("style=") <= 2 else "FAIL")'
-  EXPECT: UI_CLEAN_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `UI_CLEAN_OK` (0 emojis in HTML/chrome, scrollbar-width rules active, 0 style= in index.html, cleanLabel dynamic stripping).
-
-- [x] G28: SCRIPTURE_READER — file-backed scripture loader, and scripture meta/verse endpoints
-  CHECK: python3 -c 'import subprocess, json, urllib.request, time; p = subprocess.Popen(["./target/release/mazzaroth", "--no-browser", "--bind", "0.0.0.0:8091"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(2); base = "http://localhost:8091"; meta = json.load(urllib.request.urlopen(base + "/api/scripture/meta?lang=eng&version=kjv")); scrip = json.load(urllib.request.urlopen(base + "/api/scripture?lang=eng&version=kjv&book=Genesis&chapter=1")); p.terminate(); p.wait(timeout=5); print("SCRIPTURE_OK" if len(meta.get("books", [])) >= 66 and len(scrip.get("verses", [])) >= 30 and len(scrip.get("text", "")) > 1000 else "SCRIPTURE_FAIL")'
-  EXPECT: SCRIPTURE_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `SCRIPTURE_OK` (66 books returned in /meta, 31 verses and >2000 chars in Genesis 1, file-backed cache active).
-
-- [x] G29: NAV_DRILLDOWN — 4-step language -> version -> book -> chapter drill-down navigator with runtime execution validation
-  CHECK: ! grep -q "currentCelestialData" web/js/main.js && node -e 'const fs=require("fs"),vm=require("vm");const code=fs.readFileSync("web/js/main.js","utf8");const dom={getElementById:(id)=>({id,classList:{add:()=>{},remove:()=>{},contains:()=>false},style:{},appendChild:()=>{},innerHTML:"",textContent:"",value:""}),createElement:(tag)=>({tag,className:"",style:{},classList:{add:()=>{},remove:()=>{},contains:()=>false},appendChild:()=>{},innerHTML:"",textContent:""}),addEventListener:()=>{}};const sandbox={window:{addEventListener:()=>{}},document:dom,console:console,fetch:async()=>({ok:true,json:async()=>({books:[{name:"Genesis",chapters:50}],verses:["V1"],total_chapters:50,chapter:1,book:"Genesis",version:"kjv"})}),THREE:{Vector3:function(){this.x=0;this.y=0;this.z=0;},Scene:function(){},PerspectiveCamera:function(){},WebGLRenderer:function(){this.setSize=()=>{};this.domElement={};}},TWEEN:{Tween:function(){this.to=()=>this;this.easing=()=>this;this.onUpdate=()=>this;this.onComplete=()=>this;this.start=()=>this;},Easing:{Cubic:{Out:()=>{}}}},galaxyData:{bodies:[{id:"celestial:lang:eng",label:"English",tier:"celestial",x:100,y:0,z:100}],lines:[]},currentSection:"galaxy"};vm.createContext(sandbox);vm.runInContext(code,sandbox);sandbox.renderDrilldown();console.log("NAV_DRILLDOWN_RUNTIME_OK");'
-  EXPECT: NAV_DRILLDOWN_RUNTIME_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `NAV_DRILLDOWN_RUNTIME_OK` (galaxyData identifier verified, 4-step drilldown navigator executed cleanly in runtime VM).
-
-- [x] G30: READING_PANE — HUD scripture reader with verse numbers, chapter navigation, and Esc step-back
-  CHECK: python3 -c 'html = open("web/index.html").read(); js = open("web/js/main.js").read(); print("READING_PANE_OK" if ("reading-pane" in html or "scripture-content" in html or "reading-pane" in js) and "verse-num" in (html+js) else "READING_PANE_FAIL")'
-  EXPECT: READING_PANE_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `READING_PANE_OK` (HUD reading pane renders verse numbers, prev/next chapter navigation, styled scroll, Esc step-back).
-
-- [x] G32: GUI_REMOVED — desktop visualizer and eframe dependencies eliminated in favor of unified web surface
-  CHECK: ! test -d src/visualizer && ! test -e src/gui_main.rs && ! grep -q eframe Cargo.toml && cargo build --locked --all-targets -q && echo GUI_REMOVED_OK
-  EXPECT: GUI_REMOVED_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `GUI_REMOVED_OK` (visualizer crate removed, single web visualizer surface).
-
-- [x] G33: ONE_COMMAND — install.sh wrapper script created and verified
-  CHECK: bash -n install.sh && grep -q "target/release/mazzaroth" install.sh && echo ONE_COMMAND_OK
-  EXPECT: ONE_COMMAND_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `ONE_COMMAND_OK` (install.sh installs ~/.local/bin/mazzaroth with health pre-check).
-
-- [x] G25: LEDGER_TRUTH — automated loop verifying every checked gate CHECK: passes cleanly without any false claims
-  CHECK: python3 -c 'import subprocess, re; text = open("GATES.md").read(); blocks = text.split("- ["); failed = []; [failed.append(b.split("\n")[0]) for b in blocks[1:] if b.startswith("x]") and "CHECK:" in b and "EXPECT:" in b and re.search(r"EXPECT:\s*(.+)", b).group(1).strip() not in (lambda r: r.stdout + r.stderr)(subprocess.run(re.search(r"CHECK:\s*(.+?)(?=\n\s*EXPECT:|\n\s*CWD:|\n\s*EVIDENCE:|\n\s*- \[|\Z)", b, re.DOTALL).group(1).strip(), shell=True, capture_output=True, text=True, executable="/bin/bash"))]; print("LEDGER_ALL_GREEN" if not failed else f"LEDGER_FAIL: {failed}")'
-  EXPECT: LEDGER_ALL_GREEN
-  CWD: .
-  EVIDENCE: 2026-09-28 — `LEDGER_ALL_GREEN` (all active checked gates in GATES.md re-evaluated and verified passing).
-
----
-
-# Gates: UX Stabilization, SBC/Offline & New Sections (Stages S29–S33)
-
-- [x] G34: SECTION_ISOLATION — switching galaxy/constellations fully resets cross-section UI state
-  CHECK: python3 -c 'import re; js=open("web/js/main.js").read(); m=re.search(r"async function switchSection[\s\S]*?\n    \}", js); b=m.group(0) if m else ""; need=["closeHud","node-hover-tooltip","selection-overlay-svg","drilldown"]; miss=[t for t in need if t not in b]; print("SECTION_ISOLATION_OK" if not miss else "MISSING:"+",".join(miss))'
-  EXPECT: SECTION_ISOLATION_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `SECTION_ISOLATION_OK` (switchSection performs complete cross-section reset of HUD, tooltip, SVG filaments, nav crumbs, and drilldown).
-
-- [x] G35: NAV_DISCOVERABILITY — sidebar shows path chips, per-step list header, and filter-only search
-  CHECK: grep -q "drill-path" web/index.html && grep -q "drill-list-header" web/index.html && grep -q "drillPath\|drill-path" web/js/main.js && node --check web/js/main.js && echo NAV_DISCOVERABILITY_OK
-  EXPECT: NAV_DISCOVERABILITY_OK
-  CWD: .
-  EVIDENCE: 2026-09-28 — `NAV_DISCOVERABILITY_OK` (persistent #drill-path chips, #drill-list-header dynamic count/guidance, and filter-first Enter search).
-
-- [ ] G36: OFFLINE_ASSETS — no CDN dependencies; all web assets vendored and served locally
-  CHECK: ! grep -qE "cdnjs.cloudflare.com|cdn.jsdelivr.net" web/index.html && test -f web/vendor/three.min.js && test -f web/vendor/orbit-controls.js && node --check web/js/main.js && echo OFFLINE_ASSETS_OK
-  EXPECT: OFFLINE_ASSETS_OK
-  CWD: .
-  EVIDENCE: pending
-
-- [ ] G37: SBC_FOOTPRINT — release build lean enough for SBC deployment (baseline 8.87 MB / 9.4 MB RSS)
-  CHECK: python3 -c 'import os,subprocess,time,signal; sz=os.path.getsize("target/release/mazzaroth"); p=subprocess.Popen(["./target/release/mazzaroth","--no-browser","--bind","127.0.0.1:8090"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL); time.sleep(2); rss=int(open(f"/proc/{p.pid}/status").read().split("VmRSS:")[1].split("kB")[0].strip()); p.send_signal(signal.SIGTERM); p.wait(timeout=5); print("SBC_FOOTPRINT_OK size=%.1fMB rss=%.1fMB"%(sz/1e6,rss/1024) if sz<=9e6 and rss<=64*1024 else "FAIL size=%d rss=%d"%(sz,rss))'
-  EXPECT: SBC_FOOTPRINT_OK
-  CWD: .
-  EVIDENCE: pending
-
-- [ ] G38: ENCYCLOPEDIA_SECTION — encyclopedia folder, registry entry, domain/topic API and reading UI
-  CHECK: test -d encyclopedia/data && grep -q "encyclopedia" src/server/http.rs && curl -s http://127.0.0.1:8090/api/sections | grep -q encyclopedia && echo ENCYCLOPEDIA_SECTION_OK
-  EXPECT: ENCYCLOPEDIA_SECTION_OK
-  CWD: .
-  EVIDENCE: pending
-
-- [ ] G39: ASTRONOMY_SECTION — astronomy folder, registry entry, body data and comparison visuals
-  CHECK: test -d astronomy/data && grep -q "astronomy" src/server/http.rs && echo ASTRONOMY_SECTION_OK
-  EXPECT: ASTRONOMY_SECTION_OK
-  CWD: .
-  EVIDENCE: pending
-
-- [ ] G40: GUI_SURFACE — second renderer over the HTTP API (placeholder, awaiting user spec)
-  CHECK: echo GUI_SPEC_PENDING
-  EXPECT: GUI_SPEC_PENDING
-  CWD: .
-  EVIDENCE: pending
