@@ -283,11 +283,13 @@ impl LibrarianDb {
         doc.validate_provenance()
             .with_context(|| format!("Provenance validation failed for {}", p.display()))?;
 
-        // 4. Ingest into documents, chunks, and log
+        // 4. Ingest into documents, chunks, and log within a single transaction
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs() as i64;
+
+        conn.execute_batch("BEGIN TRANSACTION;")?;
 
         conn.execute(
             r#"
@@ -315,11 +317,13 @@ impl LibrarianDb {
         conn.execute("DELETE FROM chunks WHERE doc_id = ?1", params![doc.id])?;
 
         let chunks = doc.to_chunks();
-        for chunk in &chunks {
-            conn.execute(
-                "INSERT INTO chunks (doc_id, section_id, title_path, text) VALUES (?1, ?2, ?3, ?4)",
-                params![chunk.doc_id, chunk.section_id, chunk.title_path, chunk.text],
+        {
+            let mut chunk_stmt = conn.prepare_cached(
+                "INSERT INTO chunks (doc_id, section_id, title_path, text) VALUES (?1, ?2, ?3, ?4)"
             )?;
+            for chunk in &chunks {
+                chunk_stmt.execute(params![chunk.doc_id, chunk.section_id, chunk.title_path, chunk.text])?;
+            }
         }
 
         conn.execute(
@@ -329,6 +333,8 @@ impl LibrarianDb {
             "#,
             params![p.to_string_lossy(), hash, doc.id, now, Option::<String>::None],
         )?;
+
+        conn.execute_batch("COMMIT;")?;
 
         info!(doc_id = %doc.id, chunks = chunks.len(), "Ingested document successfully");
         Ok(Some(doc.id))

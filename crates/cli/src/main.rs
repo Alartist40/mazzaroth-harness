@@ -95,7 +95,7 @@ async fn main() -> anyhow::Result<()> {
             info!(ingested_docs = count, total_docs = database.count_documents()?, "Ingestion complete");
         }
         Some(Commands::Doctor) => {
-            run_doctor(&cli.db, &cli.llm_endpoint).await?;
+            run_doctor(&cli.db, &cli.llm_endpoint, &cli.bind).await?;
         }
         Some(Commands::Reindex) => {
             info!(db = ?cli.db, "Optimizing database and FTS5 search index");
@@ -188,7 +188,7 @@ async fn run_server(
     Ok(())
 }
 
-pub async fn run_doctor(db_path: &PathBuf, llm_endpoint: &str) -> anyhow::Result<()> {
+pub async fn run_doctor(db_path: &PathBuf, llm_endpoint: &str, bind_addr: &str) -> anyhow::Result<()> {
     println!("\n=== 📚 Mazzaroth System Diagnostics ===");
 
     // 1. Storage & Database Integrity Check
@@ -224,7 +224,14 @@ pub async fn run_doctor(db_path: &PathBuf, llm_endpoint: &str) -> anyhow::Result
         }
     }
 
-    // 3. LLM Reachability Check
+    // 3. Network Interface & Sovereign Exposure Check
+    if bind_addr.starts_with("0.0.0.0") || bind_addr.starts_with("[::]") {
+        println!("  [!] Network:        Bound to {} (LAN accessible — anyone on local network can read vault or trigger map fetches; use 127.0.0.1 for local isolation)", bind_addr);
+    } else {
+        println!("  [✓] Network:        Isolated to loopback {}", bind_addr);
+    }
+
+    // 4. LLM Reachability Check
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_millis(1500))
         .build()?;

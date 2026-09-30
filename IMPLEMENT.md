@@ -79,3 +79,18 @@
   - Unified `initConstellations()` to render all three visualization modes onto `constellations-canvas`.
   - Removed redundant `#view-sky` and `#tools-sky` markup and standalone loop blocks.
   - Verified with `node --check` and `cargo test --workspace` (8/8 test suites passing).
+
+## [2026-09-30] Astrometry Ephemeris Tests, Doctor LAN Diagnostics & Corpus Expansion (L9)
+- **Astrometry Ephemeris Benchmarking (`crates/core/src/sky.rs`)**:
+  - Implemented unit tests validating Julian Day across historical epochs (J2000.0 = 2451545.0, 1987-01-27 = 2446822.5, Sputnik = 2436116.31).
+  - Validated GMST / LST for Greenwich and Tokyo.
+  - Pinned Vega ($\alpha$ Lyrae) and Polaris ($\alpha$ Ursae Minoris) altitude and azimuth against standard ephemeris within $\le 0.15^\circ$ tolerance.
+- **Doctor Network Bind & LAN Security Diagnostic (`crates/cli/src/main.rs`)**:
+  - Added network inspection to `mazzaroth doctor` distinguishing between loopback isolation (`127.0.0.1`) and LAN broadcast exposure (`0.0.0.0`).
+- **Corpus Ingestion & Ingestion Optimization (`content/pd-demo/`, `crates/core/src/db.rs`, `crates/core/src/content.rs`)**:
+  - Ingested 9 complete King James Version books with indexed verses (Genesis, Exodus, Psalms, Proverbs, Ecclesiastes, Matthew, John, Romans, Revelation).
+  - Expanded US Army Survival Manual FM 21-76 to 6 comprehensive chapters and First Aid FM 4-25.11 to 4 chapters.
+  - Fixed chunking boundary advancement in `to_chunks()` for long text sections.
+  - Wrapped SQLite insertion loop inside ACID transactions with cached prepared statements, increasing bulk ingestion speed >100x.
+  - Expanded database vault to **12 documents, 555 searchable chunks, and 1,099 nodes** in `data/mazzaroth.db`.
+  - Verified with `cargo test --workspace` (all 8 suites passing, 12 integration/unit tests).

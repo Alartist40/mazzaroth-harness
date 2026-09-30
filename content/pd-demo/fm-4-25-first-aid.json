@@ -8,23 +8,66 @@
     "publisher": "Headquarters, Department of the Army",
     "license": "public-domain",
     "license_url": "https://www.usa.gov/government-works",
-    "retrieved_date": "2026-09-28",
-    "notes": "Official public domain United States Government medical field publication"
+    "retrieved_date": "2026-09-30",
+    "notes": "Official public domain military medical and first responder manual."
   },
   "structure": [
     {
+      "id": "ch-01",
+      "title": "Chapter 1: Emergency Assessment & Immediate Life Measures",
+      "sections": [
+        {
+          "id": "ch-01-s-01",
+          "title": "The ABCs of Emergency Care",
+          "text": "In any trauma casualty, prioritize immediate life threats in order:\n1. Airway: Ensure the casualty has an open, clear airway without obstruction.\n2. Breathing: Assess chest rise, respiratory rate, and bilateral breath sounds.\n3. Circulation: Check for catastrophic arterial hemorrhage and carotid/radial pulse.\n4. Disability: Evaluate level of consciousness (AVPU: Alert, Voice, Pain, Unresponsive).\n5. Exposure: Protect from hypothermia while inspecting all anatomical regions."
+        },
+        {
+          "id": "ch-01-s-02",
+          "title": "Airway Obstruction & Head-Tilt Chin-Lift",
+          "text": "If the casualty is unconscious and not breathing normally:\n1. Perform head-tilt chin-lift maneuver (or jaw thrust if cervical spine injury is suspected).\n2. Clear foreign material from the oral cavity with a finger sweep only if visible.\n3. Place the casualty in the recovery position (lateral recumbent) if breathing resumes to prevent aspiration of vomit."
+        }
+      ]
+    },
+    {
       "id": "ch-02",
-      "title": "Chapter 2: Life-Saving Measures & Bleeding Control",
+      "title": "Chapter 2: Hemorrhage Control & Shock Management",
       "sections": [
         {
           "id": "ch-02-s-01",
-          "title": "Stopping Severe Bleeding",
-          "text": "Severe arterial bleeding is an immediate life threat that must be controlled immediately:\n1. Direct Pressure: Place a sterile field dressing or clean cloth directly over the wound and apply firm, steady manual pressure with both hands for at least 5 to 10 minutes.\n2. Pressure Dressing: Maintain pressure by securing the dressing tightly with an elastic wrap or roller bandage. Check pulse below the dressing to ensure circulation is not entirely cut off unless a tourniquet is intended.\n3. Tourniquet: Apply a tourniquet 2 to 3 inches above the wound (never over a joint) for severe limb amputations or when direct pressure fails to stop catastrophic arterial bleeding. Tighten until bleeding stops and record the time of application on the patient's forehead (e.g. 'T 14:30')."
+          "title": "Tourniquet Application and Direct Pressure",
+          "text": "For severe extremity hemorrhage:\n1. Apply direct firm pressure with sterile gauze directly over the wound.\n2. If bleeding is pulsatile or arterial, apply a windlass tourniquet 5 to 7 cm proximal to the wound (never over a joint).\n3. Tighten until bleeding stops and distal pulse vanishes.\n4. Mark the casualty's forehead with 'T' and the exact 24-hour time of application."
         },
         {
           "id": "ch-02-s-02",
-          "title": "Treating Shock",
-          "text": "Shock is a depression of vital body functions resulting from severe blood loss, burns, or severe trauma.\nSymptoms: Pale or clammy skin, rapid weak pulse, confusion, rapid shallow breathing, extreme thirst.\nTreatment:\n1. Position the casualty flat on their back and elevate feet 6 to 12 inches unless head or chest injuries exist.\n2. Loosen restrictive clothing at neck, waist, and boots.\n3. Prevent chilling or overheating by covering with a blanket or poncho.\n4. Reassure the casualty and keep them calm. Do not give fluids if unconscious."
+          "title": "Recognizing and Treating Shock",
+          "text": "Hemorrhagic shock is a life-threatening collapse of tissue perfusion.\nSigns: Pale, cold, clammy skin; rapid, weak pulse (>100 bpm); tachypnea; thirst; altered mental status.\nTreatment:\n1. Control all active bleeding immediately.\n2. Elevate lower extremities 20 to 30 cm if no spinal or pelvic fractures exist.\n3. Keep the casualty insulated from ground cold with blankets.\n4. Reassure the patient and do not give fluids by mouth if surgery or airway compromise is possible."
+        }
+      ]
+    },
+    {
+      "id": "ch-03",
+      "title": "Chapter 3: Fractures, Splinting & Bandaging",
+      "sections": [
+        {
+          "id": "ch-03-s-01",
+          "title": "Principles of Immobilization",
+          "text": "To splint a fractured extremity:\n1. Check distal pulse, motor function, and sensation (PMS) before and after splinting.\n2. Immobilize the joint above and the joint below the fracture site.\n3. Pad rigid splints (sticks, rolled magazines, SAM splints) with cloth to prevent pressure necrosis.\n4. Secure firmly with bandages without constricting distal circulation."
+        }
+      ]
+    },
+    {
+      "id": "ch-04",
+      "title": "Chapter 4: Environmental Injuries: Heat & Cold Trauma",
+      "sections": [
+        {
+          "id": "ch-04-s-01",
+          "title": "Heat Exhaustion vs Heat Stroke",
+          "text": "Heat exhaustion: Profuse sweating, pale clammy skin, nausea, normal core temperature. Move to shade, loosen clothing, give cool oral electrolyte fluids.\nHeat stroke: Medical emergency! Core temperature >40\u00b0C (104\u00b0F), hot dry or flushed skin, confusion, seizures, loss of consciousness.\nTreatment: Rapid aggressive evaporative cooling (strip clothing, spray cool water, fan vigorously, place ice packs in axillae and groin)."
+        },
+        {
+          "id": "ch-04-s-02",
+          "title": "Hypothermia and Frostbite",
+          "text": "Hypothermia occurs when body core temperature drops below 35\u00b0C (95\u00b0F).\nSigns: Shivering, slurred speech, clumsy hands, apathy ('umbles').\nTreatment: Remove wet clothing immediately, insulate with dry sleeping bags, provide warm sweet liquids if alert, apply gentle external heat to torso (never rub limbs).\nFor frostbite: Rewarm frozen tissue in warm water (38-40\u00b0C) only if there is zero danger of refreezing."
         }
       ]
     }

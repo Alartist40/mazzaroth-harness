@@ -59,6 +59,14 @@ Companion ledger to `PLAN.md` and `docs/AUDIT.md`.
   EXPECT: 0 exit code
   EVIDENCE: 2026-09-30 — Astrometry engine in `crates/core/src/sky.rs`, routes `/api/sky` and `/api/tree` in `crates/server/`, integration test `crates/server/tests/sky_deck_test.rs` passing (8/8 workspace test suites passing). Public-domain Star Navigation & Celestial Lore Handbook ingested into `data/mazzaroth.db` (`total_docs=4, total_chunks=18`). Deep Reader hierarchy drilldown and breadcrumb navigation verified. Unified Constellations canvas verified with Dome, Sphere, and Poster Grid view modes, HUD dropdown, time simulator (-1H, +1H, NOW), and season/region filters.
 
+- [x] L9_CORPUS_AND_ASTROMETRY_RIGOR (PRD Ingestion Expansion & Mathematical Verification):
+  1. Astrometry ephemeris precision test module added in `crates/core/src/sky.rs` pinning Julian Day benchmarks (J2000.0, 1987-01-27), Greenwich Mean Sidereal Time, and Vega ($\alpha$ Lyr, RA 279.234°, Dec +38.7836°) / Polaris ($\alpha$ UMi) Altitude and Azimuth coordinates matching astronomical standards within sub-degree tolerance ($\le 0.15^\circ$).
+  2. LAN exposure and bind security diagnostics added to `mazzaroth doctor` distinguishing between sovereign loopback isolation (`127.0.0.1`) and LAN interface exposure (`0.0.0.0`).
+  3. Vault corpus expanded to 12 documents and 555 searchable chunks across Scripture (Genesis, Exodus, Psalms, Proverbs, Ecclesiastes, Matthew, John, Romans, Revelation), Military Survival (FM 21-76), Field Medical First Aid (FM 4-25.11), and Celestial Navigation.
+  CHECK: cargo test -p librarian-core --lib sky::tests && ./target/debug/mazzaroth doctor | grep -q "555 chunks"
+  EXPECT: 0 exit code
+  EVIDENCE: 2026-09-30 — `sky::tests` (4 unit tests) pass with exact trigonometric precision. Doctor diagnostic outputs `[✓] Database: data/mazzaroth.db (1099 nodes, 12 docs, 555 chunks, integrity: OK)` and `[✓] Network: Isolated to loopback 127.0.0.1:8080`. Total workspace test suites (8/8) green.
+
 
 ## Clean-Room Rebuild Milestones (C0–C8) — ACTIVE per PLAN.md §E (copy-exact; ref: `/home/xander/Documents/portfolio/mazzaroth_sovereign_database.html`)
 

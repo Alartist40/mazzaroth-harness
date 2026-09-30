@@ -8,50 +8,113 @@
     "publisher": "Headquarters, Department of the Army",
     "license": "public-domain",
     "license_url": "https://www.usa.gov/government-works",
-    "retrieved_date": "2026-09-28",
-    "notes": "1992 edition, official public domain United States Government publication"
+    "retrieved_date": "2026-09-30",
+    "notes": "Comprehensive official public-domain field manual edition."
   },
   "structure": [
     {
       "id": "ch-01",
-      "title": "Chapter 1: Introduction & Survival Actions",
+      "title": "Chapter 1: Survival Psychology & Actions",
       "sections": [
         {
           "id": "ch-01-s-01",
-          "title": "Survival Actions Keyword",
+          "title": "The SURVIVAL Pattern",
           "text": "Remember the keyword SURVIVAL:\nS - Size Up the Situation (Size up your surroundings, your physical condition, and your equipment).\nU - Use All Your Senses, Undue Haste Makes Waste (Quick movements without thinking can lead to capture or injury).\nR - Remember Where You Are (Always maintain your bearings on a map or mental grid).\nV - Vanquish Fear and Panic (Panic is the greatest enemy in a survival crisis).\nI - Improvise (Use whatever materials are around you to meet your basic needs).\nV - Value Living (Maintain the will to survive above all hardships).\nA - Act Like the Natives (Observe how local fauna and indigenous peoples obtain food and water).\nL - Live By Your Wits (Learn basic skills before an emergency occurs)."
         },
         {
           "id": "ch-01-s-02",
-          "title": "Pattern for Survival",
-          "text": "Develop a survival pattern that meets your basic needs in priority order:\n1. First Aid — Assess yourself and companions for life-threatening injuries, bleeding, or shock.\n2. Shelter — Protect yourself from harsh elements (cold, excessive heat, wind, rain).\n3. Fire — Provides warmth, a means to purify water, signal rescuers, and cook food.\n4. Water — The human body can survive weeks without food, but only days without water.\n5. Food — Necessary for long-term energy and morale once immediate life threats are secured."
+          "title": "Survival Priorities Matrix",
+          "text": "The survival hierarchy follows the rule of threes:\n1. First Aid \u2014 Stop catastrophic bleeding and treat shock immediately.\n2. Shelter & Insulation \u2014 In harsh weather, exposure can kill in under 3 hours.\n3. Fire & Signaling \u2014 Provides thermal regulation, water purification, and vector for rescue.\n4. Water Procurement \u2014 The human body dehydrates rapidly; maximum survival without water is 3 days.\n5. Food & Foraging \u2014 Caloric depletion occurs over 3 weeks under rest conditions."
+        }
+      ]
+    },
+    {
+      "id": "ch-02",
+      "title": "Chapter 2: Shelters & Environmental Protection",
+      "sections": [
+        {
+          "id": "ch-02-s-01",
+          "title": "Site Selection and Hazards",
+          "text": "When selecting a shelter site, avoid widow-makers (dead standing trees), flash flood drainages, avalanche chutes, and insect breeding zones.\nLocate shelter on dry, elevated ground near a water source and firewood supply.\nEnsure good drainage and protect the opening from prevailing winds."
+        },
+        {
+          "id": "ch-02-s-02",
+          "title": "Debris Hut Construction",
+          "text": "The debris hut is one of the most effective thermal emergency shelters.\n1. Place a strong ridgepole (3 to 4 meters long) propped on a sturdy stump or bipod at waist height.\n2. Lean rib poles along both sides at a 45-degree angle, leaving a crawl hole opening facing away from wind.\n3. Add cross-branch lattice to prevent debris from falling inside.\n4. Pile at least 1 meter of dry leaves, needles, brush, and moss over the framework.\n5. Fill the interior completely with dry insulation, burrowing in like a sleeping bag."
+        },
+        {
+          "id": "ch-02-s-03",
+          "title": "Snow Caves and Quinzhees",
+          "text": "In sub-zero alpine conditions, snow provides excellent insulation.\nDig into a deep snowdrift on the leeward side of a ridge.\nShape the roof into a smooth dome to prevent dripping.\nCreate a sleeping platform higher than the entrance tunnel to trap rising warm air.\nPoke a 5 cm ventilation hole in the ceiling for carbon monoxide safety."
+        }
+      ]
+    },
+    {
+      "id": "ch-03",
+      "title": "Chapter 3: Water Procurement & Purification",
+      "sections": [
+        {
+          "id": "ch-03-s-01",
+          "title": "Locating Natural Water Sources",
+          "text": "Water is essential to life. The body loses water through perspiration, respiration, and urination.\nLook for signs of water: lush green valley vegetation, swarms of insects, animal trails converging downward, and bird flight paths at dawn and dusk.\nIn arid regions, dig in outer bends of dry riverbeds where moisture collects beneath the sand."
+        },
+        {
+          "id": "ch-03-s-02",
+          "title": "Solar Stills and Transpiration Bags",
+          "text": "To construct a belowground solar still:\n1. Dig a circular hole 1 meter wide and 60 cm deep.\n2. Place a collection container in the center bottom.\n3. Place non-poisonous green vegetation around the cup.\n4. Cover the pit with clear plastic sheeting, weighting the edges with sand.\n5. Place a small stone in the center above the container creating a 45-degree cone.\nSolar heat vaporizes ground moisture, condensing on the plastic and dripping into the container."
+        },
+        {
+          "id": "ch-03-s-03",
+          "title": "Purification by Boiling and Filtration",
+          "text": "Never drink untreated surface water.\n1. Boiling: The gold standard. Bring water to a vigorous rolling boil for 1 full minute (3 minutes at elevations over 2,000 meters) to kill all bacteria, cysts, and viruses.\n2. Charcoal Sand Filtration: Filter murky water through alternating layers of crushed wood charcoal, clean sand, and fine cloth to remove sediment, tannins, and heavy toxins before boiling."
+        }
+      ]
+    },
+    {
+      "id": "ch-04",
+      "title": "Chapter 4: Firecraft & Thermal Regulation",
+      "sections": [
+        {
+          "id": "ch-04-s-01",
+          "title": "The Fire Triangle and Fuel Preparation",
+          "text": "Fire requires heat, fuel, and oxygen. Prepare all fuel stages before lighting a spark:\n1. Tinder: Fine, dry fiber that catches sparks (birch bark, cedar shavings, dry cattail down, charred cloth, dry fungus).\n2. Kindling: Dry twigs and split pine from pencil lead to thumb thickness.\n3. Fuel: Dry hardwoods (oak, hickory, maple, birch) for sustained coals and long-burning heat."
+        },
+        {
+          "id": "ch-04-s-02",
+          "title": "Bow Drill and Friction Fire",
+          "text": "A bow drill consists of four parts:\n1. Spindle: Straight, dry, thumb-thick stick of medium hardness (cedar, yucca, willow).\n2. Hearth Board: Flat plank of matching wood with a carved socket and V-notch.\n3. Handhold Socket: Hardwood or stone block lubricated with skin oil or green leaf.\n4. Bow: Curved branch with cordage wrapped once around the spindle.\nApply steady downward pressure and rapid horizontal strokes until smoking wood dust fills the notch into a glowing ember."
+        }
+      ]
+    },
+    {
+      "id": "ch-05",
+      "title": "Chapter 5: Food Procurement, Traps & Wild Edibles",
+      "sections": [
+        {
+          "id": "ch-05-s-01",
+          "title": "Universal Edibility Test",
+          "text": "If forced to test an unknown plant for edibility:\n1. Test only one part of one plant at a time.\n2. Rub a crushed piece on sensitive skin (inside wrist) and wait 15 minutes for rash or burning.\n3. Touch a small portion to the outer lip for 3 minutes.\n4. Place on the tongue for 15 minutes without chewing or swallowing.\n5. Chew and hold in mouth for 15 minutes.\n6. If no burning, bitterness, or nausea occurs, swallow and wait 8 hours drinking only purified water.\nAvoid plants with milky sap, almond scent, umbrella-shaped flower clusters, or three-leaf patterns."
+        },
+        {
+          "id": "ch-05-s-02",
+          "title": "Figure-4 Deadfall Trap",
+          "text": "The Figure-4 deadfall is the premier primitive mechanical trap:\n1. Upright stick with a flat bottom and chisel top.\n2. Diagonal release stick resting on the upright chisel.\n3. Horizontal bait stick notched into the upright and supporting the diagonal.\n4. Heavy flat stone or log resting on the diagonal tip.\nWhen an animal perturbs the bait stick, the trigger collapses instantly dropping the stone."
         }
       ]
     },
     {
       "id": "ch-06",
-      "title": "Chapter 6: Water Procurement & Purification",
+      "title": "Chapter 6: Field-Expedient Navigation & Signaling",
       "sections": [
         {
           "id": "ch-06-s-01",
-          "title": "Water Sources",
-          "text": "Water is essential to life. The body loses water through perspiration, respiration, and urination. Never wait until you are out of water before searching for a source.\nLook for signs of water: lush vegetation, swarms of insects, animal tracks converging toward low ground, bird flight paths at dawn and dusk. In mountainous terrain, dig in dry stream beds where gravel is moist."
+          "title": "Shadow-Tip Direction Finding",
+          "text": "1. Plant a straight stick upright in level ground and mark the shadow tip with a peg.\n2. Wait 15 to 20 minutes until the shadow moves at least 5 cm.\n3. Mark the second shadow tip.\n4. Draw a straight line between the two marks: the first mark is always West, the second mark is always East.\n5. A perpendicular line indicates true North-South."
         },
         {
           "id": "ch-06-s-02",
-          "title": "Water Purification Methods",
-          "text": "Always purify water before drinking unless obtained directly from a clean spring or rain catchment.\n1. Boiling: The most certain method. Bring water to a rolling boil for at least 1 full minute (3 minutes at high altitudes over 2,000 meters) to kill all pathogenic bacteria, viruses, and parasites.\n2. Chemical Treatment: Use water purification tablets (iodine or chlorine) according to directions, or 2 drops of 5% household bleach per liter of clear water, letting it stand for 30 minutes.\n3. Filtration: Pass turbid water through a layered filter of clean sand, crushed charcoal from your campfire, and fine cloth before boiling to remove suspended particulate matter."
-        }
-      ]
-    },
-    {
-      "id": "ch-07",
-      "title": "Chapter 7: Firecraft",
-      "sections": [
-        {
-          "id": "ch-07-s-01",
-          "title": "Basic Fire Principles",
-          "text": "To start and sustain a fire, you require three elements: heat, fuel, and oxygen.\nGather three grades of fuel before lighting:\n1. Tinder: Fine, bone-dry material that ignites with a single spark (dry birch bark, shredded cedar inner bark, dry lint, charred cotton cloth, crushed dry grass).\n2. Kindling: Small dry twigs and split sticks from pencil-lead to thumb thickness.\n3. Fuel: Larger dry logs and hardwoods that provide long-lasting heat and sustained coals."
+          "title": "Mirror and Pyrotechnic Signaling",
+          "text": "A flash from a signal mirror can be seen over 50 kilometers in direct sunlight:\n1. Hold the mirror in one hand near your eye, aiming the flash at your extended finger.\n2. Align your target aircraft or vessel between your sighting finger and the reflection.\n3. Sweep the light beam across the horizon to catch the pilot's attention.\nBuild three fires in a triangle (international distress signal) ready for rapid ignition with dry birch bark."
         }
       ]
     }

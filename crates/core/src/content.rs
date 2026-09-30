@@ -138,13 +138,21 @@ impl ContentDocument {
                         let target_end = floor_char_boundary(text, (start + 3000).min(text.len()));
                         let mut end = target_end;
                         
-                        // Try to split on sentence or newline boundary
+                        // Try to split on sentence or newline boundary in the latter half of the chunk
                         if end < text.len() {
                             let slice_search = &text[start..end];
                             if let Some(pos) = slice_search.rfind("\n\n") {
-                                end = floor_char_boundary(text, start + pos + 2);
+                                if pos >= 1000 {
+                                    end = floor_char_boundary(text, start + pos + 2);
+                                }
+                            } else if let Some(pos) = slice_search.rfind('\n') {
+                                if pos >= 1000 {
+                                    end = floor_char_boundary(text, start + pos + 1);
+                                }
                             } else if let Some(pos) = slice_search.rfind(". ") {
-                                end = floor_char_boundary(text, start + pos + 2);
+                                if pos >= 1000 {
+                                    end = floor_char_boundary(text, start + pos + 2);
+                                }
                             }
                         }
 
@@ -161,11 +169,8 @@ impl ContentDocument {
                         if end >= text.len() {
                             break;
                         }
-                        let overlap_target = if end > 200 { end - 200 } else { end };
-                        start = floor_char_boundary(text, overlap_target);
-                        if start >= end {
-                            start = end;
-                        }
+                        // Advance to end of current chunk
+                        start = end;
                     }
                 }
             }
