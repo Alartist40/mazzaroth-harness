@@ -43,3 +43,24 @@
 - **Zoom In/Out Inversion Fix**: Corrected zoom direction so `tool-zoom-in` smoothly zooms in closer and `tool-zoom-out` zooms out.
 - **Reference-Exact Constellations**: Integrated the full 20-constellation catalog, poster grid reticles, dashed connecting vector lines, double-circle bright star vertices, and celestial sphere dome mode copied directly from `/home/xander/Documents/portfolio/mazzaroth_sovereign_database.html`.
 - **Reference-Exact Map**: Integrated the coordinate graticule grid, vector continent blocks, double-concentric target geocache pins, coordinate hover HUD, and pan/zoom handlers copied directly from `/home/xander/Documents/portfolio/mazzaroth_sovereign_database.html`.
+
+## [2026-09-30] Sky Deck Live Astrometry Dome & Category Hierarchy Explorer
+- **05 SKY DECK Astrometry Engine (`crates/core/src/sky.rs`)**:
+  - Implemented 100% offline closed-form astronomical equations: Julian Day Calculation (Howard Hinnant civil calendar conversion), Greenwich Mean Sidereal Time (GMST polynomial), Local Sidereal Time (LST = GMST + Longitude), Hour Angle ($H = LST - RA$), and Horizontal Alt/Az Spherical Trigonometry ($\sin(Alt) = \sin\delta\sin\phi + \cos\delta\cos\phi\cos H$, $\cos(Az) = (\sin\delta - \sin\phi\sin Alt)/(\cos\phi\cos Alt)$).
+  - Built comprehensive star catalog with 115+ bright navigational stars across 30+ constellations, 40+ vector stick figure lines, and 800+ background starfield points.
+  - Added dynamic centroid labeling and Zenith/Nadir circular stereographic dome projections.
+- **Backend Sky & Tree Endpoints (`crates/server/src/routes/`)**:
+  - Registered `GET /api/sky?lat=...&lon=...&time=...` returning real-time dome-projected stars, azimuth/elevation coordinates, vector lines, and visibility filters.
+  - Registered `GET /api/tree` returning the complete hierarchically indexed knowledge categories, languages, documents, chapters, and section IDs.
+  - Created automated test suite `crates/server/tests/sky_deck_test.rs` covering coordinate calculations, vector lines, and tree hierarchy traversal.
+- **Star Navigation Handbook Ingestion**:
+  - Authored and validated public-domain `content/pd-demo/star-navigation-handbook.json` with 4 detailed technical chapters (Introduction to Celestial Navigation, Bright Star Identification & Sight Reduction, Polar Alignment & Latitude Determination, Constellation Lore & Astrometry Tables).
+  - Ingested into `data/mazzaroth.db` SQLite FTS5 database (`total_docs=4, total_chunks=18`).
+- **Interactive Deep Reader Hierarchy Explorer (`web/js/app.js`, `web/css/app.css`)**:
+  - Overhauled Deep Reader with an interactive Category Hierarchy Explorer when `#NEXUS-0` is focused.
+  - Added visual drilldown: `Theme (Astronomy, Survival, Medical, Scripture, Cognitive) > Language > Document/Book > Chapter > Passage`.
+  - Added interactive breadcrumbs (`#reader-breadcrumbs`) with direct jump buttons back to any level in the knowledge tree.
+- **Sky Deck UI Canvas & Controls (`web/js/sections.js`, `web/index.html`)**:
+  - Added 5th System Section `05 SKY DECK` in Zone 3 nav deck and `#view-sky` canvas in Zone 2.
+  - Implemented exact visual design parity with Constellations module: `[3, 3]` dashed vector lines, concentric double-circle halos (`r=6px, lineWidth=0.6`) on bright navigational stars, alt/az coordinate rings, and dark/light token compatibility.
+  - Added Time/Date and GPS Lat/Lon HUD controls with live recalculation and star click-to-reader integration.

@@ -6,6 +6,7 @@ pub mod notes;
 pub mod read;
 pub mod scripture;
 pub mod search;
+pub mod sky;
 pub mod status;
 
 use axum::response::Json;
@@ -26,6 +27,12 @@ pub async fn handle_sections() -> Json<serde_json::Value> {
             "description": "32 classical asterisms and complete 12 Zodiac sign geometries"
         },
         {
+            "id": "sky",
+            "label": "Sky Deck",
+            "api": "/api/sky",
+            "description": "Live local night sky dome renderer with date/time and GPS lat/lon positioning"
+        },
+        {
             "id": "librarian",
             "label": "AI Librarian",
             "api": "/api/ask",
@@ -39,3 +46,4 @@ pub async fn handle_sections() -> Json<serde_json::Value> {
         }
     ]))
 }
+

@@ -1,5 +1,6 @@
-// MAZZAROTH Sections: Constellations, Sovereign Vector Cartography Map, and Librarian AI
-import { askStream, getStatus, getMaps, startMapFetch, getMapFetchStatus, deleteMapRegion } from './api.js';
+// MAZZAROTH Sections: Constellations, Sovereign Vector Cartography Map, Librarian AI, and Sky Deck
+import { askStream, getStatus, getMaps, startMapFetch, getMapFetchStatus, deleteMapRegion, getSkyProjection } from './api.js';
+
 
 /* ========================================================================= */
 /* 1. AUTHORITATIVE CONSTELLATIONS DATASET (Copy-Exact from Reference)       */
@@ -2078,3 +2079,476 @@ function escapeHtml(text) {
     div.innerText = text || '';
     return div.innerHTML;
 }
+
+/* ========================================================================= */
+/* 4. SKY DECK: LIVE CELESTIAL DOME & ASTROMETRY RENDERER                    */
+/* ========================================================================= */
+let skyCanvas = null;
+let skyCtx = null;
+let skyProjection = null;
+let skyLat = 35.6762;
+let skyLon = 139.6503;
+let skyDateTime = new Date();
+let skyZoom = 1.0;
+let skyPanX = 0;
+let skyPanY = 0;
+let skyHeading = 0;
+let showSkyLines = true;
+let hoveredSkyStar = null;
+let onSelectSkyStarCb = null;
+let isSkyDragging = false;
+let skyDragStart = { x: 0, y: 0 };
+let skyDomeRadius = 260;
+
+export function initSkyDeck(canvas, onSelectStar) {
+    if (!canvas) return;
+    skyCanvas = canvas;
+    skyCtx = canvas.getContext('2d');
+    onSelectSkyStarCb = onSelectStar;
+
+    resizeSkyDeck();
+    setupSkyControls();
+    setupSkyEvents();
+    refreshSkyData();
+}
+
+function setupSkyControls() {
+    const presetSelect = document.getElementById('sky-preset-select');
+    const dtInput = document.getElementById('sky-datetime-input');
+    const prevHourBtn = document.getElementById('tool-sky-prev-hour');
+    const nextHourBtn = document.getElementById('tool-sky-next-hour');
+    const nowBtn = document.getElementById('tool-sky-now');
+    const linesBtn = document.getElementById('tool-sky-lines');
+    const recenterBtn = document.getElementById('tool-sky-recenter');
+
+    if (dtInput) {
+        dtInput.value = formatDateTimeLocal(skyDateTime);
+        dtInput.addEventListener('change', (e) => {
+            if (e.target.value) {
+                skyDateTime = new Date(e.target.value);
+                refreshSkyData();
+            }
+        });
+    }
+
+    if (presetSelect) {
+        presetSelect.addEventListener('change', (e) => {
+            const [latStr, lonStr] = e.target.value.split(',');
+            skyLat = parseFloat(latStr);
+            skyLon = parseFloat(lonStr);
+            updateSkyCoordsHUD();
+            refreshSkyData();
+        });
+    }
+
+    if (prevHourBtn) {
+        prevHourBtn.addEventListener('click', () => stepSkyHour(-1));
+    }
+    if (nextHourBtn) {
+        nextHourBtn.addEventListener('click', () => stepSkyHour(1));
+    }
+    if (nowBtn) {
+        nowBtn.addEventListener('click', () => {
+            skyDateTime = new Date();
+            if (dtInput) dtInput.value = formatDateTimeLocal(skyDateTime);
+            refreshSkyData();
+        });
+    }
+    if (linesBtn) {
+        linesBtn.addEventListener('click', () => {
+            showSkyLines = !showSkyLines;
+            renderSkyDeck();
+        });
+    }
+    if (recenterBtn) {
+        recenterBtn.addEventListener('click', () => recenterSky());
+    }
+}
+
+function formatDateTimeLocal(d) {
+    const pad = (n) => String(n).padStart(2, '0');
+    const YYYY = d.getFullYear();
+    const MM = pad(d.getMonth() + 1);
+    const DD = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const mm = pad(d.getMinutes());
+    return `${YYYY}-${MM}-${DD}T${hh}:${mm}`;
+}
+
+export function stepSkyHour(delta) {
+    skyDateTime = new Date(skyDateTime.getTime() + delta * 3600 * 1000);
+    const dtInput = document.getElementById('sky-datetime-input');
+    if (dtInput) dtInput.value = formatDateTimeLocal(skyDateTime);
+    refreshSkyData();
+}
+
+export function recenterSky() {
+    skyZoom = 1.0;
+    skyPanX = 0;
+    skyPanY = 0;
+    skyHeading = 0;
+    renderSkyDeck();
+}
+
+function updateSkyCoordsHUD() {
+    const coordsEl = document.getElementById('sky-coords-display');
+    if (coordsEl) {
+        const latStr = `${Math.abs(skyLat).toFixed(2)}° ${skyLat >= 0 ? 'N' : 'S'}`;
+        const lonStr = `${Math.abs(skyLon).toFixed(2)}° ${skyLon >= 0 ? 'E' : 'W'}`;
+        coordsEl.innerText = `LAT: ${latStr} • LON: ${lonStr}`;
+    }
+}
+
+export async function refreshSkyData() {
+    try {
+        const timeIso = skyDateTime.toISOString();
+        const data = await getSkyProjection({
+            lat: skyLat,
+            lon: skyLon,
+            time: timeIso,
+            radius: skyDomeRadius
+        });
+        skyProjection = data;
+
+        const lstEl = document.getElementById('sky-lst-display');
+        if (lstEl && data.lst_deg !== undefined) {
+            const lstHours = (data.lst_deg / 15).toFixed(2);
+            lstEl.innerText = `LST: ${lstHours}h (${data.lst_deg.toFixed(1)}°)`;
+        }
+
+        const countEl = document.getElementById('sky-stars-count');
+        if (countEl && data.visible_stars) {
+            const above = data.visible_stars.filter(s => s.alt_deg >= 0).length;
+            countEl.innerText = `VISIBLE: ${above} STARS`;
+        }
+
+        renderSkyDeck();
+    } catch (err) {
+        console.error('Failed to load sky projection:', err);
+    }
+}
+
+function setupSkyEvents() {
+    if (!skyCanvas) return;
+
+    skyCanvas.addEventListener('mousedown', (e) => {
+        isSkyDragging = true;
+        skyDragStart = { x: e.clientX, y: e.clientY };
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (isSkyDragging) {
+            const dx = e.clientX - skyDragStart.x;
+            const dy = e.clientY - skyDragStart.y;
+            skyPanX += dx;
+            skyPanY += dy;
+            skyDragStart = { x: e.clientX, y: e.clientY };
+            renderSkyDeck();
+        } else {
+            handleSkyHover(e);
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        isSkyDragging = false;
+    });
+
+    skyCanvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.1 : 0.9;
+        skyZoom = Math.min(Math.max(0.5, skyZoom * factor), 4.0);
+        renderSkyDeck();
+    });
+
+    skyCanvas.addEventListener('click', (e) => {
+        if (hoveredSkyStar && onSelectSkyStarCb) {
+            const starDoc = {
+                id: `STAR-${hoveredSkyStar.name.toUpperCase().replace(/\s+/g, '-')}`,
+                doc_id: 'star-navigation-handbook',
+                name: `${hoveredSkyStar.name} (${hoveredSkyStar.constellation})`,
+                category: 'ASTRONOMY',
+                tags: ['CELESTIAL', 'NAV-STAR', hoveredSkyStar.constellation.toUpperCase()],
+                chapters: [
+                    `Celestial Navigational Star: ${hoveredSkyStar.name}\nConstellation: ${hoveredSkyStar.constellation}\nApparent Magnitude: ${hoveredSkyStar.magnitude.toFixed(2)}\nAltitude: ${hoveredSkyStar.alt_deg.toFixed(1)}°\nAzimuth: ${hoveredSkyStar.az_deg.toFixed(1)}°\n\nPart of the sovereign Star Navigation & Celestial Lore Handbook. This bright beacon provides azimuth alignment and celestial wayfinding across navigational corridors.`,
+                    `Astrometry & Equatorial Coordinates:\nRight Ascension / Declination converted via local sidereal time (LST) and terrestrial latitude.\nObserved from Lat ${skyLat.toFixed(2)}°, Lon ${skyLon.toFixed(2)}°.`
+                ],
+                provenance: {
+                    source: "Mazzaroth Astrometry Engine",
+                    publisher: "Public Domain Astronomy Collective",
+                    license: "public-domain",
+                    retrieved_date: "2026-09-30"
+                }
+            };
+            onSelectSkyStarCb(starDoc);
+        }
+    });
+}
+
+function handleSkyHover(e) {
+    if (!skyCanvas || !skyProjection) return;
+    const rect = skyCanvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    const cx = skyCanvas.width / (2 * (window.devicePixelRatio || 1));
+    const cy = skyCanvas.height / (2 * (window.devicePixelRatio || 1));
+
+    // Inverse transform mouse to world dome coordinates
+    const invX = (mx - cx - skyPanX) / skyZoom;
+    const invY = (my - cy - skyPanY) / skyZoom;
+
+    let closest = null;
+    let minDist = 18;
+
+    for (const star of skyProjection.visible_stars) {
+        if (!star.is_visible && star.alt_deg < 0) continue;
+        const dx = star.x - invX;
+        const dy = star.y - invY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < minDist) {
+            minDist = dist;
+            closest = star;
+        }
+    }
+
+    hoveredSkyStar = closest;
+    const tooltip = document.getElementById('galaxy-tooltip');
+
+    if (closest && tooltip) {
+        tooltip.classList.remove('hidden');
+        tooltip.style.left = `${e.clientX + 14}px`;
+        tooltip.style.top = `${e.clientY - 10}px`;
+        tooltip.innerHTML = `
+            <div class="font-bold">${escapeHtml(closest.name)}</div>
+            <div class="text-[9px] opacity-80">${escapeHtml(closest.constellation)} • Mag ${closest.magnitude.toFixed(2)}</div>
+            <div class="text-[8px] opacity-75">Alt: ${closest.alt_deg.toFixed(1)}° • Az: ${closest.az_deg.toFixed(1)}°</div>
+        `;
+    } else if (tooltip && !tooltip.classList.contains('hidden') && skyCanvas.offsetParent !== null) {
+        tooltip.classList.add('hidden');
+    }
+
+    renderSkyDeck();
+}
+
+export function resizeSkyDeck() {
+    if (!skyCanvas) return;
+    const rect = skyCanvas.parentElement ? skyCanvas.parentElement.getBoundingClientRect() : skyCanvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = rect.width || 800;
+    const h = rect.height || 600;
+
+    skyCanvas.width = w * dpr;
+    skyCanvas.height = h * dpr;
+    skyCanvas.style.width = `${w}px`;
+    skyCanvas.style.height = `${h}px`;
+
+    skyDomeRadius = Math.min(w, h) * 0.42;
+    renderSkyDeck();
+}
+
+export function renderSkyDeck() {
+    if (!skyCanvas || !skyCtx) return;
+    const dpr = window.devicePixelRatio || 1;
+    const w = skyCanvas.width / dpr;
+    const h = skyCanvas.height / dpr;
+
+    skyCtx.save();
+    skyCtx.scale(dpr, dpr);
+    skyCtx.clearRect(0, 0, w, h);
+
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const strokeColor = isDark ? '#ffffff' : '#000000';
+    const textMain = isDark ? '#eef2f6' : '#0b0d11';
+    const textMuted = isDark ? '#71717a' : '#8c94a2';
+    const cx = w / 2;
+    const cy = h / 2;
+
+    // Apply Viewport Transforms
+    skyCtx.translate(cx + skyPanX, cy + skyPanY);
+    skyCtx.scale(skyZoom, skyZoom);
+
+    const r = skyDomeRadius;
+
+    // 1. Sky Dome Outer Disc & Technical Gradient
+    skyCtx.beginPath();
+    skyCtx.arc(0, 0, r, 0, Math.PI * 2);
+    if (isDark) {
+        const grad = skyCtx.createRadialGradient(0, 0, 10, 0, 0, r);
+        grad.addColorStop(0, '#0a0f1d');
+        grad.addColorStop(0.7, '#070a14');
+        grad.addColorStop(1, '#020306');
+        skyCtx.fillStyle = grad;
+    } else {
+        const grad = skyCtx.createRadialGradient(0, 0, 10, 0, 0, r);
+        grad.addColorStop(0, '#f1f5f9');
+        grad.addColorStop(0.7, '#e2e8f0');
+        grad.addColorStop(1, '#cbd5e1');
+        skyCtx.fillStyle = grad;
+    }
+    skyCtx.fill();
+    skyCtx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.35)';
+    skyCtx.lineWidth = 1.5;
+    skyCtx.stroke();
+
+    // 2. Altitude Rings (30°, 60°) and Cardinal Coordinate Grid
+    skyCtx.lineWidth = 0.75;
+    skyCtx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.1)';
+
+    // 30° Alt Ring (r * 60/90)
+    skyCtx.beginPath();
+    skyCtx.arc(0, 0, r * (60 / 90), 0, Math.PI * 2);
+    skyCtx.stroke();
+
+    // 60° Alt Ring (r * 30/90)
+    skyCtx.beginPath();
+    skyCtx.arc(0, 0, r * (30 / 90), 0, Math.PI * 2);
+    skyCtx.stroke();
+
+    // Altitude Labels
+    skyCtx.font = "8px 'JetBrains Mono', monospace";
+    skyCtx.fillStyle = textMuted;
+    skyCtx.textAlign = 'left';
+    skyCtx.fillText("60°", 4, -r * (30 / 90) + 9);
+    skyCtx.fillText("30°", 4, -r * (60 / 90) + 9);
+    skyCtx.fillText("0° HORIZON", 4, -r + 11);
+
+    // Zenith Crosshair (90°)
+    skyCtx.beginPath();
+    skyCtx.moveTo(-8, 0); skyCtx.lineTo(8, 0);
+    skyCtx.moveTo(0, -8); skyCtx.lineTo(0, 8);
+    skyCtx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.4)';
+    skyCtx.stroke();
+
+    // Cardinal Axes
+    skyCtx.beginPath();
+    skyCtx.moveTo(0, -r); skyCtx.lineTo(0, r);
+    skyCtx.moveTo(-r, 0); skyCtx.lineTo(r, 0);
+    skyCtx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.07)';
+    skyCtx.stroke();
+
+    // 3. Dense Background Starfield (800+ Stars)
+    if (skyProjection && skyProjection.background_stars) {
+        for (const bgStar of skyProjection.background_stars) {
+            const distFromCenter = Math.sqrt(bgStar.x * bgStar.x + bgStar.y * bgStar.y);
+            if (distFromCenter > r) continue;
+
+            const bgRadius = Math.max(0.6, (6.5 - bgStar.magnitude) * 0.4);
+            const alpha = Math.max(0.15, (6.5 - bgStar.magnitude) / 4.0);
+
+            skyCtx.beginPath();
+            skyCtx.arc(bgStar.x, bgStar.y, bgRadius, 0, Math.PI * 2);
+            skyCtx.fillStyle = isDark 
+                ? `rgba(220, 230, 255, ${alpha.toFixed(2)})` 
+                : `rgba(20, 30, 50, ${(alpha * 0.7).toFixed(2)})`;
+            skyCtx.fill();
+        }
+    }
+
+    // 4. Constellation Vector Lines (Dashed styling matching Constellations module)
+    if (showSkyLines && skyProjection && skyProjection.lines) {
+        skyCtx.lineWidth = 1.0;
+        skyCtx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.45)';
+        skyCtx.setLineDash([3, 3]);
+
+        for (const [start, end, _cName] of skyProjection.lines) {
+            skyCtx.beginPath();
+            skyCtx.moveTo(start[0], start[1]);
+            skyCtx.lineTo(end[0], end[1]);
+            skyCtx.stroke();
+        }
+        skyCtx.setLineDash([]);
+    }
+
+    // 5. Constellation Centroid Labels
+    if (showSkyLines && skyProjection && skyProjection.constellation_labels) {
+        skyCtx.font = "bold 8.5px 'JetBrains Mono', monospace";
+        skyCtx.textAlign = 'center';
+        skyCtx.fillStyle = isDark ? 'rgba(157, 166, 181, 0.75)' : 'rgba(88, 96, 111, 0.85)';
+
+        for (const lbl of skyProjection.constellation_labels) {
+            const dist = Math.sqrt(lbl.x * lbl.x + lbl.y * lbl.y);
+            if (dist < r - 15) {
+                skyCtx.fillText(lbl.name.toUpperCase(), lbl.x, lbl.y);
+            }
+        }
+    }
+
+    // 6. Visible Primary Navigation & Asterism Stars
+    if (skyProjection && skyProjection.visible_stars) {
+        for (const star of skyProjection.visible_stars) {
+            if (!star.is_visible && star.alt_deg < 0) continue;
+            const distFromCenter = Math.sqrt(star.x * star.x + star.y * star.y);
+            if (distFromCenter > r + 4) continue;
+
+            const isHovered = hoveredSkyStar && hoveredSkyStar.name === star.name;
+            const isBright = star.magnitude <= 1.8;
+            const starRadius = Math.max(1.8, (4.5 - star.magnitude * 0.75) * (isHovered ? 1.5 : 1.0));
+
+            // Star Glow
+            const glow = skyCtx.createRadialGradient(star.x, star.y, 0, star.x, star.y, starRadius * 2.8);
+            glow.addColorStop(0, star.color || '#ffffff');
+            glow.addColorStop(1, 'transparent');
+            skyCtx.fillStyle = glow;
+            skyCtx.beginPath();
+            skyCtx.arc(star.x, star.y, starRadius * 2.8, 0, Math.PI * 2);
+            skyCtx.fill();
+
+            // Star Core
+            skyCtx.fillStyle = star.color || (isDark ? '#ffffff' : '#0b0d11');
+            skyCtx.beginPath();
+            skyCtx.arc(star.x, star.y, starRadius, 0, Math.PI * 2);
+            skyCtx.fill();
+
+            // Halo Ring around bright stars (Consistent with CONSTELLATIONS module design style)
+            if (isBright || isHovered) {
+                skyCtx.beginPath();
+                skyCtx.arc(star.x, star.y, starRadius + 3.5, 0, Math.PI * 2);
+                skyCtx.strokeStyle = isHovered 
+                    ? (isDark ? '#38bdf8' : '#0284c7') 
+                    : (isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)');
+                skyCtx.lineWidth = 0.6;
+                skyCtx.stroke();
+            }
+
+            // Hover Reticle
+            if (isHovered) {
+                skyCtx.beginPath();
+                skyCtx.strokeStyle = isDark ? '#38bdf8' : '#0284c7';
+                skyCtx.lineWidth = 1;
+                skyCtx.strokeRect(star.x - 9, star.y - 9, 18, 18);
+            }
+
+            // Star Name Labels (for prominent stars or hovered star)
+            if (star.magnitude <= 2.1 || isHovered) {
+                skyCtx.font = `${isHovered ? 'bold 9.5px' : '8.5px'} 'JetBrains Mono', monospace`;
+                skyCtx.fillStyle = isHovered 
+                    ? (isDark ? '#38bdf8' : '#0284c7') 
+                    : textMain;
+                skyCtx.textAlign = 'left';
+                skyCtx.fillText(star.name, star.x + starRadius + 4, star.y + 3);
+            }
+        }
+    }
+
+    // 7. Cardinal Compass Bearings on the Horizon Rim
+    if (skyProjection && skyProjection.cardinal_bearings) {
+        skyCtx.font = "bold 10.5px 'JetBrains Mono', monospace";
+        skyCtx.textAlign = 'center';
+        skyCtx.textBaseline = 'middle';
+
+        for (const c of skyProjection.cardinal_bearings) {
+            const rad = c.az_deg * Math.PI / 180;
+            const lx = -(r + 14) * Math.sin(rad);
+            const ly = -(r + 14) * Math.cos(rad);
+
+            skyCtx.fillStyle = c.label === 'N' 
+                ? (isDark ? '#f87171' : '#dc2626') 
+                : textMuted;
+            skyCtx.fillText(c.label, lx, ly);
+        }
+    }
+
+    skyCtx.restore();
+}
+
+

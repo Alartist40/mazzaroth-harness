@@ -1,0 +1,85 @@
+{
+  "id": "star-navigation-handbook",
+  "title": "Celestial Navigation & Star Lore Handbook",
+  "category": "astronomy",
+  "language": "en",
+  "provenance": {
+    "source": "US Naval Observatory & Stellarium Sky Culture Archives",
+    "publisher": "Sovereign Astrometry Foundation / NGA",
+    "license": "public-domain",
+    "license_url": "https://www.usa.gov/government-works",
+    "retrieved_date": "2026-09-30",
+    "notes": "Curated celestial navigation handbook incorporating maritime pointer star methods, polar alignment formulas, seasonal asterisms, and cultural star lore."
+  },
+  "structure": [
+    {
+      "id": "ch-01",
+      "title": "Chapter 1: Principles of Northern Celestial Navigation",
+      "sections": [
+        {
+          "id": "ch-01-s-01",
+          "title": "Finding True North with Polaris and the Big Dipper",
+          "text": "In the Northern Hemisphere, true geographic north is determined by locating Polaris (Alpha Ursae Minoris, the North Star), which lies within 0.7 degrees of the North Celestial Pole (NCP).\n\n1. Pointer Stars Method:\nLocate Ursa Major (the Great Bear / Big Dipper). Identify the two stars forming the outer bowl edge opposite the handle: Merak (Beta Ursae Majoris) at the lower bowl and Dubhe (Alpha Ursae Majoris) at the lip.\nDraw an imaginary line from Merak through Dubhe and extend it outward approximately 5 times the distance between them. This line terminates directly at Polaris, a second-magnitude star at the tip of the Little Dipper's handle (Ursa Minor).\n\n2. Latitude Determination:\nThe angular altitude of Polaris above the true horizon (measured in degrees using a quadrant, sextant, or hand-span rule) equals the observer's geographic latitude:\nLatitude ≈ Altitude(Polaris) ± 0.7°.\nAt the Equator (0°), Polaris sits on the horizon; at the North Pole (90°N), Polaris rests directly overhead at the zenith."
+        },
+        {
+          "id": "ch-01-s-02",
+          "title": "Using Cassiopeia as a Backup Northern Pointer",
+          "text": "When Ursa Major is obscured by terrain, clouds, or sits below the northern horizon during autumn evenings, use Cassiopeia (the Queen).\n\nCassiopeia forms a prominent 'W' or 'M' shape composed of 5 bright stars (Segin, Ruchbah, Gamma Cassiopeiae, Schedar, and Caph) directly opposite the Big Dipper across the North Celestial Pole.\nTo locate Polaris:\nBisect the wider angle of the 'W' (formed between Schedar, Gamma Cas, and Ruchbah) and project a line straight outward from the vertex. This line passes directly through Polaris at approximately 30 degrees distance."
+        }
+      ]
+    },
+    {
+      "id": "ch-02",
+      "title": "Chapter 2: Principles of Southern Celestial Navigation",
+      "sections": [
+        {
+          "id": "ch-02-s-01",
+          "title": "Finding True South with the Southern Cross (Crux)",
+          "text": "Unlike the northern sky, there is no single bright star at the South Celestial Pole (SCP). True south is calculated using the constellation Crux (the Southern Cross) in conjunction with the Southern Pointers (Alpha and Beta Centauri).\n\n1. Long Axis Projection:\nIdentify the four principal stars of Crux: Gacrux (top, red giant), Acrux (bottom, brilliant blue-white binary), Mimosa (Beta Crucis, left), and Imai (Delta Crucis, right).\nProject an imaginary line along the long axis from Gacrux through Acrux, extending it downward into the sky 4.5 times the length of the cross.\n\n2. Centauri Pointer Bisector:\nLocate the two blazing pointer stars: Hadar (Beta Centauri) and Rigil Kentaurus (Alpha Centauri). Draw a line between them and construct a perpendicular bisector.\n\n3. Intersection Point (South Celestial Pole):\nThe point where the perpendicular bisector crosses the 4.5x Crux projection line marks the South Celestial Pole (SCP). Dropping an imaginary plumb line straight down to the horizon from the SCP gives True South."
+        },
+        {
+          "id": "ch-02-s-02",
+          "title": "False Cross and Diamond Cross Hazards",
+          "text": "Navigators in southern waters must avoid confusing Crux with two deceptive asterisms:\n1. The False Cross: Formed by Delta and Kappa Velorum combined with Avior (Epsilon Carinae) and Aspidiske (Iota Carinae). The False Cross is larger, fainter, and points away from the SCP.\n2. The Diamond Cross: Formed by four stars in Carina around Miaplacidus. It lacks the distinct pointer stars Alpha and Beta Centauri that always accompany the true Southern Cross."
+        }
+      ]
+    },
+    {
+      "id": "ch-03",
+      "title": "Chapter 3: Seasonal Asterisms & Equatorial Waypoints",
+      "sections": [
+        {
+          "id": "ch-03-s-01",
+          "title": "Orion and the Equatorial Waypoint",
+          "text": "The constellation Orion (the Hunter) straddles the celestial equator, making it visible from every inhabited latitude on Earth.\n\n1. East-West Alignment:\nOrion's Belt consists of three distinctive stars: Alnitak, Alnilam, and Mintaka (Delta Orionis). Mintaka lies within a fraction of a degree of the celestial equator (Declination ≈ -0°17'). Consequently, Mintaka rises almost exactly due East (090°) and sets almost exactly due West (270°) along the horizon everywhere on the globe.\n\n2. Seasonal Markers:\nOrion dominates the northern winter and southern summer skies. Flanked by reddish supergiant Betelgeuse at the northeastern shoulder and blue-white supergiant Rigel at the southwestern foot, Orion serves as the central anchor for the Winter Hexagon asterism."
+        },
+        {
+          "id": "ch-03-s-02",
+          "title": "Summer Triangle and Northern Cross",
+          "text": "The high summer sky of the northern temperate zone is governed by the Summer Triangle:\n1. Vega (Alpha Lyrae, magnitude 0.03): A brilliant sapphire luminary in Lyra (the Harp).\n2. Deneb (Alpha Cygni, magnitude 1.25): The tail of Cygnus (the Swan / Northern Cross), immersed in the luminous dust lanes of the Milky Way.\n3. Altair (Alpha Aquilae, magnitude 0.77): The eye of Aquila (the Eagle), flanked by two attendant stars.\n\nThe axis of the Northern Cross aligns along the galactic plane, pointing south toward the rich star clouds of Sagittarius and the Galactic Center."
+        },
+        {
+          "id": "ch-03-s-03",
+          "title": "Heliacal Risings and Ancient Calendar Cycles",
+          "text": "A heliacal rising occurs when a star or constellation first becomes visible above the eastern horizon at dawn, immediately before sunrise, after having been hidden behind the Sun.\n\n- Sirius (the Dog Star / Alpha Canis Majoris): The brightest star in the night sky (magnitude -1.46). Its heliacal rising in mid-July heralded the annual inundation of the Nile River in ancient Egypt and the onset of the 'dog days' of summer.\n- The Pleiades (M45 / Seven Sisters in Taurus): The dawn rising of the Pleiades in May signaled the opening of the Mediterranean seafaring and agricultural planting season, while their dawn setting in November marked the onset of winter storms."
+        }
+      ]
+    },
+    {
+      "id": "ch-04",
+      "title": "Chapter 4: Cultural Asterisms & Constellation Lore",
+      "sections": [
+        {
+          "id": "ch-04-s-01",
+          "title": "Mazzaroth and Zodiacal Astrometry",
+          "text": "The term Mazzaroth (Job 38:32: 'Canst thou bring forth Mazzaroth in his season?') refers to the twelve classical constellations positioned along the ecliptic—the apparent annual pathway of the Sun across the celestial sphere.\n\nThe twelve Mazzaroth stations (Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio, Sagittarius, Capricorn, Aquarius, Pisces) divide the 360-degree celestial ecliptic into twelve 30-degree sectors. Ancient astronomers used these stations to track planetary wanderers (planētai), lunar nodes, solar equinoxes, and seasonal transitions."
+        },
+        {
+          "id": "ch-04-s-02",
+          "title": "Polynesian Wayfinding & Star Paths (Kāpehu Whetū)",
+          "text": "Polynesian navigators traversed thousands of nautical miles across the Pacific Ocean without magnetic compasses, charts, or chronometers using the star compass (kāpehu whetū).\n\nKey Principles:\n1. Star Paths (Tan): Stars rise and set at identical horizon azimuths throughout the year for a given latitude. Navigators memorized houses where specific stars emerge and submerge.\n2. Zenith Stars: Every geographic latitude has a star that passes directly overhead (at the 90° zenith). For example, Hokule'a (Arcturus) passes through the zenith at 19°N latitude, indicating to voyagers when they have reached the Hawaiian archipelago."
+        }
+      ]
+    }
+  ]
+}

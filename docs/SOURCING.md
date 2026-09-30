@@ -21,6 +21,7 @@ Valid license tags:
 | **Health & Medical** | MedlinePlus Health Topics, Military Medical Field Manuals | Public Domain (NLM/USG) | [medlineplus.gov](https://medlineplus.gov) |
 | **Classical Literature & Science** | Project Gutenberg Texts (Pre-1929 works: Shakespeare, Darwin, Newton, Faraday, Plato) | Public Domain | [gutenberg.org](https://www.gutenberg.org) |
 | **Scripture & Philosophy** | King James Version (KJV), World English Bible (WEB), ASV 1901, Young's Literal Translation (YLT), Brenton Septuagint | Public Domain | Verified PD Bible text sources |
+| **Astronomy & Celestial Lore** | Star Navigation & Celestial Lore Handbook (Astrometry, Polar Alignment, Sight Reduction, Constellations) | Public Domain (USNO / NOAA / Bowditch) | [thenauticalalmanac.com](https://thenauticalalmanac.com), [navcen.uscg.gov](https://www.navcen.uscg.gov) |
 | **Cartography & Maps** | OpenStreetMap regional map extractions in `.pmtiles` vector format | ODbL / Open Data | [protomaps.com](https://protomaps.com), [overturemaps.org](https://overturemaps.org) |
 
 ## 3. Copyright Caution List

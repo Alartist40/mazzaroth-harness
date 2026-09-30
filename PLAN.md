@@ -76,9 +76,20 @@ the new build from the browser) and a missing `let maplibreInstance` declaration
    62 countries, HK downloaded via UI + auto-open, chip delete → world fallback;
    server Range cmp byte-exact + Node pmtiles.js sha match proved the tile
    pipeline; GATES L5C evidence + screenshots `/tmp/opencode/pwtest/m5b-*.png`.
-4. **Reader shows real corpus** (was A2-2 P0): `loadNodeIntoReader` maps
+4. **05 SKY DECK & Category Hierarchy Explorer BUILT (2026-09-30, user request)**:
+   Added the 5th System Section `05 SKY DECK` with a live real-time celestial sphere
+   dome calculating 100% offline closed-form astrometry (Julian Day, GMST polynomial,
+   LST, and Alt/Az horizontal projection), 115+ bright navigational stars across 30+
+   constellations, 40+ vector stick figure lines, 800+ background starfield points,
+   dynamic centroid labels, and time/date/GPS HUD controls. Deep Reader overhauled with
+   a Category Hierarchy Explorer (`Theme > Language > Book > Chapter > Passage` drilldown
+   with interactive breadcrumbs and `#NEXUS-0` indexing). Public-domain Star Navigation
+   Handbook ingested into `data/mazzaroth.db` (total_docs=4, total_chunks=18). Backend
+   endpoints `GET /api/sky` and `GET /api/tree` registered, and integration test suite
+   `crates/server/tests/sky_deck_test.rs` verified (8/8 workspace test suites passing).
+5. **Reader shows real corpus** (was A2-2 P0): `loadNodeIntoReader` maps
    `doc.structure[].sections[].text` → chapters + provenance footer (C4 CHECK ✓).
-5. **Root cleanup + layout done (user order 2026-09-29, second pass)**:
+6. **Root cleanup + layout done (user order 2026-09-29, second pass)**:
    deleted `data/librarian.db` (stale duplicate — live DB is `data/mazzaroth.db`,
    CLI `--db` default `crates/cli/src/main.rs:19`, holds the 2 notes;
    `LibrarianConfig::default()` repointed from `librarian.db` → `mazzaroth.db`),
@@ -86,7 +97,7 @@ the new build from the browser) and a missing `let maplibreInstance` declaration
    `AUDIT.md` → `docs/`. Root now: 5 md + install.sh + 8 code/data dirs.
    `AGENTS.md` architecture section rewritten (old text described deleted
    `src/`, `tests/`, `main.js`, `base.css`). GATES C0/C1-R1 CHECKs updated to
-   surviving paths; `cargo check` + all 7 test suites + C0/C5/C6/R1 CHECKs +
+   surviving paths; `cargo check` + all 8 test suites + C0/C5/C6/R1/L8 CHECKs +
    browser sanity re-passed after the move.
 6. **Remaining OPENs**: A2-12 (⌘K searches chunks only, no star/node labels),
    A2-10 (fonts never load), A2-11 (duplicate theme tokens app.css vs inline),

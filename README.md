@@ -10,10 +10,12 @@ Zero Docker. Zero cloud. Works completely offline.
 
 1. **Curated & Provenance-Enforced Library**: Mandatory provenance metadata enforced at ingestion (source, publisher, license, date). Ingestion rejects any unverified or copyrighted text.
 2. **Instant BM25 Search**: SQLite FTS5 search index with highlighted snippet context.
-3. **Grounded AI Librarian**: Local LLM (Ministral 3B via Ollama / OpenAI-compatible endpoint) answers strictly from verified passages with exact citations and dates. Refuses out-of-context queries and degrades gracefully if the LLM is offline.
-4. **3D & 2D Galaxy Graph**: Interactive 3D Three.js logarithmic particle spiral and lightweight 2D Canvas fallback visualizing the knowledge vault by category, document, and field note backlinks.
-5. **Offline PMTiles Maps**: Direct HTTP Range byte-serving for single-file `.pmtiles` regional OpenStreetMap packages.
-6. **Field Notes**: Markdown note-taking with passage backlinks (`[[doc-id#section-id]]`) that link into the Reader and graph.
+3. **Intuitive Category & Hierarchy Explorer**: Visual drilldown through knowledge domains: `Theme > Language > Document/Book > Chapter > Passage` with full interactive breadcrumbs and `#NEXUS-0` central indexing.
+4. **Grounded AI Librarian**: Local LLM (Ministral 3B via Ollama / OpenAI-compatible endpoint) answers strictly from verified passages with exact citations and dates. Refuses out-of-context queries and degrades gracefully if the LLM is offline.
+5. **3D & 2D Galaxy Graph**: Interactive 3D Three.js logarithmic particle spiral and lightweight 2D Canvas fallback visualizing the knowledge vault by category, document, and field note backlinks.
+6. **Live Sky Deck & Astrometry Dome**: Real-time celestial sphere projection calculating Julian Day, LST, and Alt/Az coordinates for 115+ bright navigational stars, 40+ constellation vector lines, and an 800+ background starfield with time/date and GPS positioning.
+7. **Offline PMTiles Maps**: Direct HTTP Range byte-serving for single-file `.pmtiles` regional OpenStreetMap packages with street-level downloader.
+8. **Field Notes & Star Navigation Handbook**: Markdown note-taking and public-domain star lore handbook with backlinks (`[[doc-id#section-id]]`) into the Deep Reader.
 
 ---
 
@@ -21,7 +23,7 @@ Zero Docker. Zero cloud. Works completely offline.
 
 | Profile | Hardware | Features Active | Memory Footprint |
 |---|---|---|---|
-| `tiny` | Raspberry Pi 4 4GB, Pi Zero 2 W | Reader, FTS5 Search, 2D/3D Galaxy, Maps, Notes (No LLM) | Server < 150 MB |
+| `tiny` | Raspberry Pi 4 4GB, Pi Zero 2 W | Reader, FTS5 Search, 2D/3D Galaxy, Sky Deck, Maps, Notes (No LLM) | Server < 150 MB |
 | `standard` | Orange Pi 5 8GB, Pi 5 8GB | Everything + Ministral 3B Q4 via Ollama (2–4k context) | Server < 200 MB, LLM ~2.5 GB |
 | `full` | 16GB+ / Desktop | Everything + larger context & models | Unconstrained |
 
@@ -110,11 +112,14 @@ Data © OpenStreetMap contributors · ODbL (Protomaps builds).
 |---|---|---|
 | `GET` | `/health` | Healthcheck (`OK`) |
 | `GET` | `/api/categories` | List document categories |
+| `GET` | `/api/tree` | Full structured category $\to$ language $\to$ book $\to$ chapter hierarchy |
 | `GET` | `/api/documents` | List all document summaries |
 | `GET` | `/api/read/{doc_id}` | Retrieve full structured document with provenance |
 | `GET` | `/api/search?q={query}` | FTS5 BM25 search with highlighted snippets |
+| `GET` | `/api/sky` | Real-time astronomical celestial dome projection (Alt/Az, LST, stars, lines) |
 | `POST` | `/api/ask` | Grounded AI Librarian SSE streaming chat |
 | `GET` | `/api/galaxy` | 3D/2D knowledge graph nodes and link edges |
+| `GET` | `/api/sections/constellations` | 32 classical asterism and zodiac catalog |
 | `GET` | `/api/notes` | List field notes |
 | `POST` | `/api/notes` | Create field note |
 | `GET` | `/api/maps` | List available `.pmtiles` map regions |
@@ -122,3 +127,4 @@ Data © OpenStreetMap contributors · ODbL (Protomaps builds).
 | `POST` | `/api/maps/fetch` | Start a bbox pack fetch (`{"bbox":[w,s,e,n],"name":"…","maxzoom":14}`) |
 | `DELETE` | `/api/maps/{filename}` | Delete an installed pack (`world.pmtiles` protected) |
 | `GET` | `/maps/{filename}` | HTTP Range byte-serving for PMTiles |
+

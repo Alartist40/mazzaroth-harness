@@ -1,5 +1,5 @@
-// MAZZAROTH Shell: 4-Module Controller, Real Reader Content, Telemetry, and Modals
-import { getStatus, getDocument, search, createMemoryNode } from './api.js';
+// MAZZAROTH Shell: 5-Module Controller, Real Reader Hierarchy Explorer, Telemetry, and Modals
+import { getStatus, getDocument, search, createMemoryNode, getKnowledgeTree } from './api.js';
 import { 
     initGalaxy, 
     renderGalaxy, 
@@ -32,7 +32,12 @@ import {
     zoomMapIn,
     zoomMapOut,
     toggleDownloadPanel,
-    startSelectedDownload 
+    startSelectedDownload,
+    initSkyDeck,
+    renderSkyDeck,
+    resizeSkyDeck,
+    stepSkyHour,
+    recenterSky
 } from './sections.js';
 
 let activeView = 'galaxy';
@@ -41,6 +46,14 @@ let isWireframeActive = false;
 let currentNode = null;
 let currentChapterIndex = 0;
 let textFontSize = 12;
+let cachedKnowledgeTree = null;
+let hierarchyState = {
+    level: 'root', // 'root', 'category', 'language', 'document', 'chapter'
+    selectedCategory: null,
+    selectedLanguage: null,
+    selectedDoc: null,
+    selectedChapter: null
+};
 
 const hardwareFrame = document.getElementById('hardware-frame');
 const themeBtn = document.getElementById('theme-toggle-btn');
@@ -54,14 +67,16 @@ const viewPanels = {
     galaxy: document.getElementById('view-galaxy'),
     constellations: document.getElementById('view-constellations'),
     librarian: document.getElementById('view-librarian'),
-    map: document.getElementById('view-map')
+    map: document.getElementById('view-map'),
+    sky: document.getElementById('view-sky')
 };
 
 const toolDecks = {
     galaxy: document.getElementById('tools-galaxy'),
     constellations: document.getElementById('tools-constellations'),
     librarian: document.getElementById('tools-librarian'),
-    map: document.getElementById('tools-map')
+    map: document.getElementById('tools-map'),
+    sky: document.getElementById('tools-sky')
 };
 
 const navCards = document.querySelectorAll('.nav-deck-item');
@@ -80,11 +95,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const gCanvas = document.getElementById('galaxy-canvas');
     const cCanvas = document.getElementById('constellations-canvas');
     const mCanvas = document.getElementById('map-canvas');
+    const sCanvas = document.getElementById('sky-canvas');
 
     initGalaxy(gCanvas, (node) => loadNodeIntoReader(node));
     initConstellations(cCanvas, (node) => loadNodeIntoReader(node));
     initLibrarian();
     initMap(mCanvas, (node) => loadNodeIntoReader(node));
+    initSkyDeck(sCanvas, (node) => loadNodeIntoReader(node));
+
+    // Load initial knowledge tree
+    getKnowledgeTree().then(tree => {
+        cachedKnowledgeTree = tree;
+    }).catch(() => {});
 
     window.addEventListener('resize', handleResize);
     setTimeout(handleResize, 150);
@@ -136,7 +158,9 @@ function applyTheme(theme) {
     renderGalaxy();
     renderConstellations();
     renderMap();
+    renderSkyDeck();
 }
+
 
 function setupNavigation() {
     navCards.forEach(card => {
@@ -247,6 +271,7 @@ export function loadNodeIntoReader(node) {
     const idEl = document.getElementById('reader-id');
     const titleEl = document.getElementById('reader-title');
     const synBox = document.getElementById('reader-synapse-pills');
+    const breadcrumbs = document.getElementById('reader-breadcrumbs');
 
     if (tagEl) tagEl.innerText = (node.tags && node.tags[0]) || node.category || node.arm || 'STAR_NODE';
     if (idEl) idEl.innerText = `#${node.id || 'NEXUS-0'}`;
@@ -263,10 +288,23 @@ export function loadNodeIntoReader(node) {
             btn.style.color = 'var(--text-main)';
             btn.innerText = targetId;
             btn.addEventListener('click', () => {
-                selectGalaxyStar(targetId);
+                if (targetId === 'NEXUS-0') {
+                    showHierarchyRoot();
+                } else {
+                    selectGalaxyStar(targetId);
+                }
             });
             synBox.appendChild(btn);
         });
+    }
+
+    if (node.id === 'NEXUS-0' || node.is_nexus) {
+        showHierarchyRoot();
+        return;
+    }
+
+    if (breadcrumbs) {
+        breadcrumbs.classList.add('hidden');
     }
 
     renderChapterBody();
@@ -297,6 +335,392 @@ export function loadNodeIntoReader(node) {
     }
 }
 
+export function showHierarchyRoot() {
+    hierarchyState = {
+        level: 'root',
+        selectedCategory: null,
+        selectedLanguage: null,
+        selectedDoc: null,
+        selectedChapter: null
+    };
+
+    const tagEl = document.getElementById('reader-tag');
+    const idEl = document.getElementById('reader-id');
+    const titleEl = document.getElementById('reader-title');
+
+    if (tagEl) tagEl.innerText = 'DATABASE_INDEX';
+    if (idEl) idEl.innerText = '#NEXUS-0';
+    if (titleEl) titleEl.innerText = 'Knowledge Themes & Hierarchy';
+
+    if (!cachedKnowledgeTree) {
+        getKnowledgeTree().then(tree => {
+            cachedKnowledgeTree = tree;
+            renderHierarchyExplorer();
+        }).catch(() => {
+            renderHierarchyExplorer();
+        });
+    } else {
+        renderHierarchyExplorer();
+    }
+}
+
+function updateBreadcrumbs() {
+    const breadcrumbs = document.getElementById('reader-breadcrumbs');
+    if (!breadcrumbs) return;
+
+    breadcrumbs.classList.remove('hidden');
+    breadcrumbs.innerHTML = '';
+
+    const addCrumb = (label, onClick) => {
+        const btn = document.createElement('button');
+        btn.className = 'tree-breadcrumb-btn cursor-pointer';
+        btn.innerText = label;
+        btn.style.color = 'var(--text-secondary)';
+        btn.addEventListener('click', onClick);
+        breadcrumbs.appendChild(btn);
+    };
+
+    const addSeparator = () => {
+        const span = document.createElement('span');
+        span.innerText = '›';
+        span.style.color = 'var(--border-subtle)';
+        breadcrumbs.appendChild(span);
+    };
+
+    addCrumb('HOME (THEMES)', () => showHierarchyRoot());
+
+    if (hierarchyState.selectedCategory) {
+        addSeparator();
+        addCrumb(hierarchyState.selectedCategory.toUpperCase(), () => {
+            hierarchyState.level = 'category';
+            hierarchyState.selectedLanguage = null;
+            hierarchyState.selectedDoc = null;
+            hierarchyState.selectedChapter = null;
+            renderHierarchyExplorer();
+        });
+    }
+
+    if (hierarchyState.selectedLanguage) {
+        addSeparator();
+        addCrumb(hierarchyState.selectedLanguage.toUpperCase(), () => {
+            hierarchyState.level = 'language';
+            hierarchyState.selectedDoc = null;
+            hierarchyState.selectedChapter = null;
+            renderHierarchyExplorer();
+        });
+    }
+
+    if (hierarchyState.selectedDoc) {
+        addSeparator();
+        addCrumb(hierarchyState.selectedDoc.title, () => {
+            hierarchyState.level = 'document';
+            hierarchyState.selectedChapter = null;
+            renderHierarchyExplorer();
+        });
+    }
+}
+
+function renderHierarchyExplorer() {
+    const box = document.getElementById('reader-content-box');
+    const counter = document.getElementById('chapter-counter');
+    if (!box) return;
+
+    updateBreadcrumbs();
+    if (counter) counter.innerText = 'THEME EXPLORER';
+
+    const tree = cachedKnowledgeTree || [
+        {
+            category: 'astronomy',
+            languages: [{ language: 'en', documents: [{ id: 'star-navigation-handbook', title: 'Star Navigation & Celestial Lore Handbook', chapters: [] }] }]
+        },
+        {
+            category: 'survival',
+            languages: [{ language: 'en', documents: [{ id: 'wilderness-survival-guide', title: 'Wilderness Survival Guide', chapters: [] }] }]
+        },
+        {
+            category: 'medical',
+            languages: [{ language: 'en', documents: [{ id: 'emergency-medical-protocols', title: 'Emergency Medical Protocols', chapters: [] }] }]
+        },
+        {
+            category: 'scripture',
+            languages: [{ language: 'en', documents: [{ id: 'kjv-scriptures', title: 'Authorized King James Scripture', chapters: [] }] }]
+        }
+    ];
+
+    // Category meta info
+    const categoryIcons = {
+        astronomy: { icon: '🔭', label: 'ASTRONOMY & ASTROMETRY', desc: 'Star navigation handbook, celestial lore & coordinates' },
+        survival: { icon: '🌲', label: 'SURVIVAL & EXPEDITION', desc: 'Water purification, shelter fabrication & wilderness tactics' },
+        medical: { icon: '🏥', label: 'EMERGENCY MEDICAL', desc: 'First responder protocols, triage, & wound intervention' },
+        scripture: { icon: '📜', label: 'SCRIPTURE & SACRED TEXTS', desc: 'Multilingual canonical scriptures & classical commentaries' },
+        cognitive: { icon: '🧠', label: 'COGNITIVE MEMORY', desc: 'Sovereign neural memory stars & contextual linkages' }
+    };
+
+    // LEVEL 0: ROOT CATEGORIES
+    if (hierarchyState.level === 'root') {
+        let html = `
+            <div class="space-y-3 font-mono">
+                <div class="text-[11px] leading-relaxed" style="color: var(--text-secondary);">
+                    Select a knowledge theme to explore languages, documents, and individual chapters:
+                </div>
+                <div class="grid grid-cols-1 gap-2">
+        `;
+
+        tree.forEach(cat => {
+            const meta = categoryIcons[cat.category.toLowerCase()] || {
+                icon: '📁',
+                label: cat.category.toUpperCase(),
+                desc: 'Indexed domain knowledge and documents'
+            };
+            const totalDocs = (cat.languages || []).reduce((acc, l) => acc + (l.documents || []).length, 0);
+
+            html += `
+                <div data-cat="${escapeHtml(cat.category)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between"
+                     style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-xl p-1.5 rounded-lg border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">${meta.icon}</div>
+                        <div>
+                            <div class="font-bold text-xs" style="color: var(--text-main);">${escapeHtml(meta.label)}</div>
+                            <div class="text-[9px] mt-0.5" style="color: var(--text-secondary);">${escapeHtml(meta.desc)}</div>
+                        </div>
+                    </div>
+                    <span class="text-[9px] px-2 py-0.5 rounded border font-semibold" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
+                        ${totalDocs} ${totalDocs === 1 ? 'DOC' : 'DOCS'} ›
+                    </span>
+                </div>
+            `;
+        });
+
+        html += `
+                </div>
+            </div>
+        `;
+
+        box.innerHTML = html;
+
+        box.querySelectorAll('[data-cat]').forEach(el => {
+            el.addEventListener('click', () => {
+                const catName = el.getAttribute('data-cat');
+                hierarchyState.selectedCategory = catName;
+                hierarchyState.level = 'category';
+                renderHierarchyExplorer();
+            });
+        });
+        return;
+    }
+
+    // LEVEL 1: CATEGORY (Show Languages or Direct Documents)
+    const catData = tree.find(c => c.category === hierarchyState.selectedCategory);
+    if (!catData) {
+        showHierarchyRoot();
+        return;
+    }
+
+    if (hierarchyState.level === 'category') {
+        const langs = catData.languages || [];
+
+        let html = `
+            <div class="space-y-3 font-mono">
+                <div class="text-[11px] leading-relaxed flex items-center justify-between" style="color: var(--text-secondary);">
+                    <span>THEME: <strong style="color: var(--text-main);">${escapeHtml(hierarchyState.selectedCategory.toUpperCase())}</strong></span>
+                    <button id="btn-tree-back-root" class="text-[9px] px-2 py-0.5 rounded border hover:opacity-80"
+                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ BACK TO THEMES</button>
+                </div>
+                <div class="grid grid-cols-1 gap-2">
+        `;
+
+        langs.forEach(l => {
+            const docCount = (l.documents || []).length;
+            html += `
+                <div data-lang="${escapeHtml(l.language)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between"
+                     style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-lg border flex items-center justify-center font-bold text-xs"
+                             style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
+                            ${escapeHtml(l.language.toUpperCase())}
+                        </div>
+                        <div>
+                            <div class="font-bold text-xs" style="color: var(--text-main);">${l.language === 'en' ? 'English (en)' : l.language.toUpperCase()}</div>
+                            <div class="text-[9px]" style="color: var(--text-secondary);">${docCount} documents cataloged</div>
+                        </div>
+                    </div>
+                    <span class="text-[9px] px-2 py-0.5 rounded border font-semibold" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
+                        OPEN ›
+                    </span>
+                </div>
+            `;
+        });
+
+        html += `
+                </div>
+            </div>
+        `;
+
+        box.innerHTML = html;
+
+        const backBtn = document.getElementById('btn-tree-back-root');
+        if (backBtn) backBtn.addEventListener('click', () => showHierarchyRoot());
+
+        box.querySelectorAll('[data-lang]').forEach(el => {
+            el.addEventListener('click', () => {
+                const langName = el.getAttribute('data-lang');
+                hierarchyState.selectedLanguage = langName;
+                hierarchyState.level = 'language';
+                renderHierarchyExplorer();
+            });
+        });
+        return;
+    }
+
+    // LEVEL 2: LANGUAGE (Show Documents)
+    const langData = catData.languages.find(l => l.language === hierarchyState.selectedLanguage);
+    if (!langData) {
+        hierarchyState.level = 'category';
+        renderHierarchyExplorer();
+        return;
+    }
+
+    if (hierarchyState.level === 'language') {
+        const docs = langData.documents || [];
+
+        let html = `
+            <div class="space-y-3 font-mono">
+                <div class="text-[11px] leading-relaxed flex items-center justify-between" style="color: var(--text-secondary);">
+                    <span>DOCUMENTS [${escapeHtml(hierarchyState.selectedLanguage.toUpperCase())}]</span>
+                    <button id="btn-tree-back-cat" class="text-[9px] px-2 py-0.5 rounded border hover:opacity-80"
+                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ BACK TO LANGUAGES</button>
+                </div>
+                <div class="grid grid-cols-1 gap-2">
+        `;
+
+        docs.forEach(doc => {
+            const chCount = (doc.chapters || []).length;
+            html += `
+                <div data-doc-id="${escapeHtml(doc.id)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex flex-col gap-1.5"
+                     style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                    <div class="flex items-center justify-between">
+                        <div class="font-bold text-xs" style="color: var(--text-main);">${escapeHtml(doc.title)}</div>
+                        <span class="text-[8.5px] px-1.5 py-0.5 rounded border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-muted);">${escapeHtml(doc.license || 'public-domain')}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[9px]" style="color: var(--text-secondary);">
+                        <span>Publisher: ${escapeHtml(doc.publisher || 'Verified Archive')}</span>
+                        <span class="font-semibold" style="color: var(--text-main);">${chCount} ${chCount === 1 ? 'CHAPTER' : 'CHAPTERS'} ›</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                </div>
+            </div>
+        `;
+
+        box.innerHTML = html;
+
+        const backBtn = document.getElementById('btn-tree-back-cat');
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                hierarchyState.level = 'category';
+                renderHierarchyExplorer();
+            });
+        }
+
+        box.querySelectorAll('[data-doc-id]').forEach(el => {
+            const docId = el.getAttribute('data-doc-id');
+            el.addEventListener('click', () => {
+                const foundDoc = docs.find(d => d.id === docId);
+                if (foundDoc) {
+                    hierarchyState.selectedDoc = foundDoc;
+                    hierarchyState.level = 'document';
+                    renderHierarchyExplorer();
+                }
+            });
+        });
+        return;
+    }
+
+    // LEVEL 3: DOCUMENT (Show Chapters)
+    if (hierarchyState.level === 'document') {
+        const doc = hierarchyState.selectedDoc;
+        const chapters = doc.chapters || [];
+
+        let html = `
+            <div class="space-y-3 font-mono">
+                <div class="text-[11px] leading-relaxed flex items-center justify-between" style="color: var(--text-secondary);">
+                    <span class="truncate pr-2 font-bold" style="color: var(--text-main);">${escapeHtml(doc.title)}</span>
+                    <button id="btn-tree-back-docs" class="text-[9px] px-2 py-0.5 rounded border hover:opacity-80 shrink-0"
+                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ BACK TO BOOKS</button>
+                </div>
+                <div class="grid grid-cols-1 gap-2">
+        `;
+
+        chapters.forEach((ch, idx) => {
+            const secCount = ch.section_count || (ch.sections || []).length;
+            html += `
+                <div data-ch-idx="${idx}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between"
+                     style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                    <div>
+                        <div class="font-bold text-xs" style="color: var(--text-main);">${escapeHtml(ch.title || `Chapter ${idx + 1}`)}</div>
+                        <div class="text-[9px] mt-0.5" style="color: var(--text-secondary);">${secCount} sections / passages</div>
+                    </div>
+                    <span class="text-[9px] px-2.5 py-1 rounded border font-bold uppercase transition-all"
+                          style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
+                        READ ›
+                    </span>
+                </div>
+            `;
+        });
+
+        html += `
+                </div>
+            </div>
+        `;
+
+        box.innerHTML = html;
+
+        const backBtn = document.getElementById('btn-tree-back-docs');
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                hierarchyState.level = 'language';
+                renderHierarchyExplorer();
+            });
+        }
+
+        box.querySelectorAll('[data-ch-idx]').forEach(el => {
+            const idx = parseInt(el.getAttribute('data-ch-idx'), 10);
+            el.addEventListener('click', () => {
+                getDocument(doc.id).then(fullDoc => {
+                    currentNode = {
+                        id: doc.id,
+                        doc_id: doc.id,
+                        name: fullDoc.title,
+                        category: (fullDoc.category || '').toUpperCase(),
+                        provenance: fullDoc.provenance,
+                        chapters: fullDoc.structure.map(ch => {
+                            const header = ch.title ? `${ch.title}\n\n` : '';
+                            const body = (ch.sections || []).map(s => {
+                                const secTitle = s.title ? `${s.title}\n` : '';
+                                return secTitle + s.text;
+                            }).join('\n\n');
+                            return (header + body).trim();
+                        })
+                    };
+                    currentChapterIndex = idx;
+
+                    const titleEl = document.getElementById('reader-title');
+                    const tagEl = document.getElementById('reader-tag');
+                    const idEl = document.getElementById('reader-id');
+                    if (titleEl) titleEl.innerText = currentNode.name;
+                    if (tagEl) tagEl.innerText = currentNode.category;
+                    if (idEl) idEl.innerText = `#${doc.id}`;
+
+                    renderChapterBody();
+                });
+            });
+        });
+    }
+}
+
 function renderChapterBody() {
     const box = document.getElementById('reader-content-box');
     const counter = document.getElementById('chapter-counter');
@@ -311,6 +735,17 @@ function renderChapterBody() {
 
     const text = chapters[currentChapterIndex] || '';
     
+    // Quick button to open category index
+    const indexBar = `
+        <div class="flex items-center justify-between pb-2 mb-2 border-b font-mono text-[9px]" style="border-color: var(--border-subtle);">
+            <button id="btn-reader-open-index" class="px-2 py-0.5 rounded border hover:opacity-80 flex items-center gap-1"
+                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
+                <span>📁</span> <strong>BROWSE CATEGORY THEMES</strong>
+            </button>
+            <span style="color: var(--text-muted);">${escapeHtml(currentNode.category || 'DOCUMENT')}</span>
+        </div>
+    `;
+
     // Format real provenance footer
     const provFooter = currentNode.provenance 
         ? `<div class="mt-3 pt-2 border-t font-mono text-[9px]" style="border-color: var(--border-subtle); color: var(--text-muted);">
@@ -319,9 +754,15 @@ function renderChapterBody() {
            </div>`
         : `<div class="mt-3 pt-2 border-t font-mono text-[9px]" style="border-color: var(--border-subtle); color: var(--text-muted);">PROVENANCE: LOCAL SOVEREIGN ARCHIVE</div>`;
 
-    box.innerHTML = `<p class="text-justify font-sans leading-relaxed whitespace-pre-line">${escapeHtml(text)}</p>${provFooter}`;
+    box.innerHTML = `${indexBar}<p class="text-justify font-sans leading-relaxed whitespace-pre-line">${escapeHtml(text)}</p>${provFooter}`;
     updateReaderFontSize();
+
+    const idxBtn = document.getElementById('btn-reader-open-index');
+    if (idxBtn) {
+        idxBtn.addEventListener('click', () => showHierarchyRoot());
+    }
 }
+
 
 function updateReaderFontSize() {
     const box = document.getElementById('reader-content-box');
@@ -628,7 +1069,9 @@ function handleResize() {
     if (activeView === 'galaxy') resizeGalaxy();
     if (activeView === 'constellations') resizeConstellations();
     if (activeView === 'map') resizeMap();
+    if (activeView === 'sky') resizeSkyDeck();
 }
+
 
 export function showToast(msg) {
     const toast = document.getElementById('toast-message');

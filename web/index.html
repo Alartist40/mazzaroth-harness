@@ -420,6 +420,47 @@
                         </button>
                     </div>
 
+                    <!-- 5. SKY DECK TOOLS -->
+                    <div id="tools-sky" class="tool-deck hidden flex-col items-center gap-2.5 w-full px-1">
+                        <div class="flex flex-col items-center gap-1 w-full">
+                            <span class="text-[7.5px] font-mono uppercase font-bold" style="color: var(--text-muted);">TIME</span>
+                            <div class="flex items-center gap-1">
+                                <button id="tool-sky-prev-hour" class="px-1.5 py-1 rounded border text-[8px] font-mono hover:opacity-80"
+                                        style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);" title="-1 Hour">-1H</button>
+                                <button id="tool-sky-next-hour" class="px-1.5 py-1 rounded border text-[8px] font-mono hover:opacity-80"
+                                        style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);" title="+1 Hour">+1H</button>
+                            </div>
+                        </div>
+
+                        <button id="tool-sky-now" class="w-12 py-1 rounded-lg border text-[8px] font-mono font-bold uppercase transition-all"
+                                style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);"
+                                title="Set Sky to Real-Time Now">
+                            NOW
+                        </button>
+
+                        <button id="tool-sky-lines" class="w-9 h-9 rounded-xl border flex items-center justify-center mt-1 transition-all"
+                                style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);"
+                                title="Toggle Constellation Vector Lines">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                <polyline points="2 17 12 22 22 17"></polyline>
+                                <polyline points="2 12 12 17 22 12"></polyline>
+                            </svg>
+                        </button>
+
+                        <button id="tool-sky-recenter" class="w-9 h-9 rounded-xl border flex items-center justify-center opacity-80 hover:opacity-100"
+                                style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);"
+                                title="Recenter Celestial Zenith">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="2" x2="12" y2="6"></line>
+                                <line x1="12" y1="18" x2="12" y2="22"></line>
+                                <line x1="2" y1="12" x2="6" y2="12"></line>
+                                <line x1="18" y1="12" x2="22" y2="12"></line>
+                            </svg>
+                        </button>
+                    </div>
+
                 </div>
 
                 <!-- Bottom Action Button: Create New Memory Star -->
@@ -563,8 +604,8 @@
 
                     <div class="pt-3 border-t flex gap-2" style="border-color: var(--border-subtle);">
                         <input id="librarian-input" type="text" placeholder="Query the local knowledge graph..." 
-                               class="flex-1 px-4 py-2.5 rounded-xl border font-mono text-xs outline-none transition-all"
-                               style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
+                                class="flex-1 px-4 py-2.5 rounded-xl border font-mono text-xs outline-none transition-all"
+                                style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
                         <button id="btn-librarian-send" class="px-5 py-2.5 rounded-xl border font-mono text-xs font-bold uppercase transition-all hover:opacity-90 active:scale-95 shadow-sm"
                                 style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
                             QUERY
@@ -618,6 +659,52 @@
                     <div id="map-regions" class="absolute bottom-12 right-5 z-20 flex flex-col items-end gap-1.5 font-mono text-[10px]"></div>
                 </div>
 
+                <!-- VIEW E: SKY DECK VIEWPORT -->
+                <div id="view-sky" class="view-panel relative w-full h-full hidden">
+                    <canvas id="sky-canvas" class="w-full h-full cursor-crosshair block"></canvas>
+                    
+                    <!-- Sky Deck Controls HUD (Top-Left) -->
+                    <div class="sky-hud-panel absolute top-4 left-4 z-20 rounded-xl p-3 flex flex-col gap-2 font-mono text-[10px] pointer-events-auto">
+                        <div class="flex items-center justify-between gap-3 border-b pb-1.5" style="border-color: var(--border-subtle);">
+                            <span class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
+                                <span class="w-2 h-2 rounded-full" style="background-color: #38bdf8;"></span>
+                                CELESTIAL DOME
+                            </span>
+                            <span id="sky-lst-display" class="text-[9px]" style="color: var(--text-muted);">LST: 0.0°</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[8px] uppercase block" style="color: var(--text-muted);">LOCATION PRESET</label>
+                                <select id="sky-preset-select" class="sky-hud-input w-full rounded px-1.5 py-1 text-[9px] outline-none">
+                                    <option value="35.6762,139.6503">Tokyo (35.7°N, 139.7°E)</option>
+                                    <option value="31.7683,35.2137">Jerusalem (31.8°N, 35.2°E)</option>
+                                    <option value="31.2001,29.9187">Alexandria (31.2°N, 29.9°E)</option>
+                                    <option value="51.5074,-0.1278">London (51.5°N, 0.1°W)</option>
+                                    <option value="40.7128,-74.0060">New York (40.7°N, 74.0°W)</option>
+                                    <option value="21.3069,-157.8583">Honolulu (21.3°N, 157.9°W)</option>
+                                    <option value="-33.8688,151.2093">Sydney (33.9°S, 151.2°E)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[8px] uppercase block" style="color: var(--text-muted);">UTC DATE / TIME</label>
+                                <input id="sky-datetime-input" type="datetime-local" class="sky-hud-input w-full rounded px-1.5 py-0.5 text-[9px]">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-[9px] pt-1" style="color: var(--text-secondary);">
+                            <span id="sky-coords-display">LAT: 35.68° • LON: 139.65°</span>
+                            <span id="sky-stars-count">VISIBLE: 0 STARS</span>
+                        </div>
+                    </div>
+
+                    <!-- Sky Deck Legend (Bottom-Left) -->
+                    <div class="absolute bottom-5 left-5 z-20 pointer-events-none font-mono text-[10px] px-3 py-1.5 rounded-lg border shadow-sm"
+                         style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-secondary);">
+                        DRAG: ROTATE HORIZON • SCROLL: ZOOM • CLICK STAR TO OPEN NAVIGATION HANDBOOK
+                    </div>
+                </div>
+
             </section>
 
             <!-- ========================================================================= -->
@@ -639,10 +726,10 @@
                             </svg>
                             <h2 class="font-bold text-[11px] uppercase tracking-wider" style="color: var(--text-main);">SYSTEM SECTIONS</h2>
                         </div>
-                        <span class="font-mono text-[9px]" style="color: var(--text-muted);">4 MODULES</span>
+                        <span class="font-mono text-[9px]" style="color: var(--text-muted);">5 MODULES</span>
                     </div>
 
-                    <!-- 4 Stacked Section Cards: Galaxy, Constellations, Librarian, Map -->
+                    <!-- 5 Stacked Section Cards: Galaxy, Constellations, Librarian, Map, Sky Deck -->
                     <div class="flex-1 my-1.5 flex flex-col gap-1.5 overflow-y-auto pr-0.5">
                         
                         <!-- 1. Galaxy Card -->
@@ -712,6 +799,22 @@
                             <span class="font-mono text-[9px]" style="color: var(--text-muted);">VIEW</span>
                         </div>
 
+                        <!-- 5. Sky Deck Card -->
+                        <div data-view="sky" class="nav-deck-item cursor-pointer p-2 rounded-xl border flex items-center justify-between group"
+                             style="border-color: var(--border-subtle); background-color: var(--panel-bg);">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-6 h-6 rounded border flex items-center justify-center font-mono text-[10px] font-bold"
+                                     style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
+                                    05
+                                </div>
+                                <div>
+                                    <div class="font-bold text-xs" style="color: var(--text-main);">SKY DECK</div>
+                                    <div class="font-mono text-[8px]" style="color: var(--text-muted);">Real-Time Celestial Dome & Astrometry</div>
+                                </div>
+                            </div>
+                            <span class="font-mono text-[9px]" style="color: var(--text-muted);">VIEW</span>
+                        </div>
+
                     </div>
                 </section>
 
@@ -735,6 +838,10 @@
                             <h3 id="reader-title" class="font-bold text-sm mt-1 truncate" style="color: var(--text-main);">
                                 Prime Core Nexus
                             </h3>
+                            <!-- Hierarchy Breadcrumbs -->
+                            <div id="reader-breadcrumbs" class="flex items-center gap-1 font-mono text-[9px] mt-0.5 truncate hidden" style="color: var(--text-muted);">
+                                <!-- Dynamically populated breadcrumb trail -->
+                            </div>
                         </div>
 
                         <!-- Reader Utility Buttons: Font Scaling & Chapter Paging -->

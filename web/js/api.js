@@ -178,3 +178,23 @@ export async function createNote(title, content) {
     if (!res.ok) throw new Error(`createNote failed: ${res.status}`);
     return await res.json();
 }
+
+export async function getKnowledgeTree() {
+    const res = await fetch('/api/tree');
+    if (!res.ok) throw new Error(`getKnowledgeTree failed: ${res.status}`);
+    return await res.json();
+}
+
+export async function getSkyProjection(params = {}) {
+    const searchParams = new URLSearchParams();
+    if (params.lat !== undefined) searchParams.set('lat', params.lat);
+    if (params.lon !== undefined) searchParams.set('lon', params.lon);
+    if (params.time !== undefined) searchParams.set('time', params.time);
+    if (params.radius !== undefined) searchParams.set('radius', params.radius);
+    
+    const qs = searchParams.toString();
+    const res = await fetch(`/api/sky${qs ? '?' + qs : ''}`);
+    if (!res.ok) throw new Error(`getSkyProjection failed: ${res.status}`);
+    return await res.json();
+}
+
