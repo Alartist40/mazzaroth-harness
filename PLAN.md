@@ -76,17 +76,18 @@ the new build from the browser) and a missing `let maplibreInstance` declaration
    62 countries, HK downloaded via UI + auto-open, chip delete → world fallback;
    server Range cmp byte-exact + Node pmtiles.js sha match proved the tile
    pipeline; GATES L5C evidence + screenshots `/tmp/opencode/pwtest/m5b-*.png`.
-4. **05 SKY DECK & Category Hierarchy Explorer BUILT (2026-09-30, user request)**:
-   Added the 5th System Section `05 SKY DECK` with a live real-time celestial sphere
-   dome calculating 100% offline closed-form astrometry (Julian Day, GMST polynomial,
-   LST, and Alt/Az horizontal projection), 115+ bright navigational stars across 30+
-   constellations, 40+ vector stick figure lines, 800+ background starfield points,
-   dynamic centroid labels, and time/date/GPS HUD controls. Deep Reader overhauled with
-   a Category Hierarchy Explorer (`Theme > Language > Book > Chapter > Passage` drilldown
-   with interactive breadcrumbs and `#NEXUS-0` indexing). Public-domain Star Navigation
-   Handbook ingested into `data/mazzaroth.db` (total_docs=4, total_chunks=18). Backend
-   endpoints `GET /api/sky` and `GET /api/tree` registered, and integration test suite
-   `crates/server/tests/sky_deck_test.rs` verified (8/8 workspace test suites passing).
+4. **Constellations & Celestial Dome Unified (2026-09-30, user request)**:
+   Unified Sky Deck and Constellations into a single cohesive section `02 CONSTELLATIONS`
+   preserving the 4-module layout (`01 GALAXY`, `02 CONSTELLATIONS`, `03 LIBRARIAN`, `04 MAP`).
+   Defaults to Live Celestial Dome with local Julian Day, LST, and Alt/Az projection, 115+
+   navigational stars, 40+ constellation lines, 800+ starfield points, time simulator (-1H, +1H, NOW),
+   and GPS presets. Main workspace includes HUD dropdown to switch seamlessly between
+   `01 // CELESTIAL DOME (LIVE)`, `02 // SPHERE DOME (3D)`, and `03 // POSTER CATALOG (GRID)`.
+   Yellow tool rail unified with mode cycling, season cycling, region cycling, vector lines toggle,
+   zoom in/out, and recenter. Deep Reader equipped with Category Hierarchy Explorer
+   (`Theme > Language > Book > Chapter > Passage` drilldown with interactive breadcrumbs and `#NEXUS-0` indexing).
+   Public-domain Star Navigation Handbook ingested into `data/mazzaroth.db` (total_docs=4, total_chunks=18).
+   Backend endpoints `GET /api/sky` and `GET /api/tree` registered, with 8/8 workspace test suites passing.
 5. **Reader shows real corpus** (was A2-2 P0): `loadNodeIntoReader` maps
    `doc.structure[].sections[].text` → chapters + provenance footer (C4 CHECK ✓).
 6. **Root cleanup + layout done (user order 2026-09-29, second pass)**:

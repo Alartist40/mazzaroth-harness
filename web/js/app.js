@@ -1,4 +1,4 @@
-// MAZZAROTH Shell: 5-Module Controller, Real Reader Hierarchy Explorer, Telemetry, and Modals
+// MAZZAROTH Shell: 4-Module Controller, Real Reader Hierarchy Explorer, Telemetry, and Modals
 import { getStatus, getDocument, search, createMemoryNode, getKnowledgeTree } from './api.js';
 import { 
     initGalaxy, 
@@ -18,11 +18,15 @@ import {
     renderConstellations, 
     resizeConstellations, 
     setConstMode, 
+    cycleConstMode,
     cycleConstSeason, 
     cycleConstPosition, 
     toggleConstLines, 
     recenterConstellations,
     resetConstFilter,
+    zoomConstIn,
+    zoomConstOut,
+    stepSkyHour,
     initLibrarian,
     initMap, 
     renderMap, 
@@ -32,12 +36,7 @@ import {
     zoomMapIn,
     zoomMapOut,
     toggleDownloadPanel,
-    startSelectedDownload,
-    initSkyDeck,
-    renderSkyDeck,
-    resizeSkyDeck,
-    stepSkyHour,
-    recenterSky
+    startSelectedDownload
 } from './sections.js';
 
 let activeView = 'galaxy';
@@ -67,16 +66,14 @@ const viewPanels = {
     galaxy: document.getElementById('view-galaxy'),
     constellations: document.getElementById('view-constellations'),
     librarian: document.getElementById('view-librarian'),
-    map: document.getElementById('view-map'),
-    sky: document.getElementById('view-sky')
+    map: document.getElementById('view-map')
 };
 
 const toolDecks = {
     galaxy: document.getElementById('tools-galaxy'),
     constellations: document.getElementById('tools-constellations'),
     librarian: document.getElementById('tools-librarian'),
-    map: document.getElementById('tools-map'),
-    sky: document.getElementById('tools-sky')
+    map: document.getElementById('tools-map')
 };
 
 const navCards = document.querySelectorAll('.nav-deck-item');
@@ -95,13 +92,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const gCanvas = document.getElementById('galaxy-canvas');
     const cCanvas = document.getElementById('constellations-canvas');
     const mCanvas = document.getElementById('map-canvas');
-    const sCanvas = document.getElementById('sky-canvas');
 
     initGalaxy(gCanvas, (node) => loadNodeIntoReader(node));
     initConstellations(cCanvas, (node) => loadNodeIntoReader(node));
     initLibrarian();
     initMap(mCanvas, (node) => loadNodeIntoReader(node));
-    initSkyDeck(sCanvas, (node) => loadNodeIntoReader(node));
 
     // Load initial knowledge tree
     getKnowledgeTree().then(tree => {
@@ -158,7 +153,6 @@ function applyTheme(theme) {
     renderGalaxy();
     renderConstellations();
     renderMap();
-    renderSkyDeck();
 }
 
 
@@ -1069,7 +1063,6 @@ function handleResize() {
     if (activeView === 'galaxy') resizeGalaxy();
     if (activeView === 'constellations') resizeConstellations();
     if (activeView === 'map') resizeMap();
-    if (activeView === 'sky') resizeSkyDeck();
 }
 
 

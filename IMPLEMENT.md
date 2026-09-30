@@ -64,3 +64,18 @@
   - Added 5th System Section `05 SKY DECK` in Zone 3 nav deck and `#view-sky` canvas in Zone 2.
   - Implemented exact visual design parity with Constellations module: `[3, 3]` dashed vector lines, concentric double-circle halos (`r=6px, lineWidth=0.6`) on bright navigational stars, alt/az coordinate rings, and dark/light token compatibility.
   - Added Time/Date and GPS Lat/Lon HUD controls with live recalculation and star click-to-reader integration.
+
+## [2026-09-30] Constellations & Sky Deck Unification into 4-Module Layout
+- **Single Cohesive Section (`02 CONSTELLATIONS`)**:
+  - Merged Sky Deck and Constellations into a single section, returning to a clean 4-module system (`01 GALAXY`, `02 CONSTELLATIONS`, `03 LIBRARIAN`, `04 MAP`).
+  - Added a top HUD dropdown `#const-mode-select` in the main workspace allowing instant switching between:
+    1. `01 // CELESTIAL DOME (LIVE)` (Live astrometry projection with GPS presets and UTC time/date simulation)
+    2. `02 // SPHERE DOME (3D)` (3D celestial sphere projection)
+    3. `03 // POSTER CATALOG (GRID)` (20+ poster grid catalog with selection reticles)
+- **Tool Rail Consolidation (`web/index.html`, `web/js/sections.js`)**:
+  - Unified `#tools-constellations` with layout mode switcher, time controls (-1H, +1H, NOW), season cycling, region cycling, vector lines toggle, zoom in/out, and recenter.
+  - Time controls and GPS dropdown automatically display in `DOME` mode and gracefully collapse in `POSTER` or `SPHERE` mode.
+- **Engine Unification (`web/js/sections.js`, `web/js/app.js`)**:
+  - Unified `initConstellations()` to render all three visualization modes onto `constellations-canvas`.
+  - Removed redundant `#view-sky` and `#tools-sky` markup and standalone loop blocks.
+  - Verified with `node --check` and `cargo test --workspace` (8/8 test suites passing).

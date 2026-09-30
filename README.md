@@ -13,7 +13,7 @@ Zero Docker. Zero cloud. Works completely offline.
 3. **Intuitive Category & Hierarchy Explorer**: Visual drilldown through knowledge domains: `Theme > Language > Document/Book > Chapter > Passage` with full interactive breadcrumbs and `#NEXUS-0` central indexing.
 4. **Grounded AI Librarian**: Local LLM (Ministral 3B via Ollama / OpenAI-compatible endpoint) answers strictly from verified passages with exact citations and dates. Refuses out-of-context queries and degrades gracefully if the LLM is offline.
 5. **3D & 2D Galaxy Graph**: Interactive 3D Three.js logarithmic particle spiral and lightweight 2D Canvas fallback visualizing the knowledge vault by category, document, and field note backlinks.
-6. **Live Sky Deck & Astrometry Dome**: Real-time celestial sphere projection calculating Julian Day, LST, and Alt/Az coordinates for 115+ bright navigational stars, 40+ constellation vector lines, and an 800+ background starfield with time/date and GPS positioning.
+6. **Constellations & Celestial Dome**: Real-time celestial sphere projection and live alt/az astrometry dome (Julian Day, LST, 115+ navigational stars, 40+ constellation vector lines, 800+ background starfield, time/date & GPS HUD), plus 3D celestial sphere and 20+ poster grid catalog.
 7. **Offline PMTiles Maps**: Direct HTTP Range byte-serving for single-file `.pmtiles` regional OpenStreetMap packages with street-level downloader.
 8. **Field Notes & Star Navigation Handbook**: Markdown note-taking and public-domain star lore handbook with backlinks (`[[doc-id#section-id]]`) into the Deep Reader.
 
@@ -23,7 +23,7 @@ Zero Docker. Zero cloud. Works completely offline.
 
 | Profile | Hardware | Features Active | Memory Footprint |
 |---|---|---|---|
-| `tiny` | Raspberry Pi 4 4GB, Pi Zero 2 W | Reader, FTS5 Search, 2D/3D Galaxy, Sky Deck, Maps, Notes (No LLM) | Server < 150 MB |
+| `tiny` | Raspberry Pi 4 4GB, Pi Zero 2 W | Reader, FTS5 Search, 2D/3D Galaxy, Constellations & Dome, Maps, Notes (No LLM) | Server < 150 MB |
 | `standard` | Orange Pi 5 8GB, Pi 5 8GB | Everything + Ministral 3B Q4 via Ollama (2–4k context) | Server < 200 MB, LLM ~2.5 GB |
 | `full` | 16GB+ / Desktop | Everything + larger context & models | Unconstrained |
 
