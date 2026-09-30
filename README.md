@@ -19,6 +19,43 @@ Zero Docker. Zero cloud. Works completely offline.
 
 ---
 
+## System Architecture & 4 Workspaces
+
+Mazzaroth operates as a unified 5-zone sovereign desktop web interface partitioned into 4 primary modules:
+
+### 1. `01 GALAXY` (Database Vault Particle Spiral)
+- **3D Interactive Orbit & Particle Core**: Renders 1,100+ database memory nodes and notes as luminous particle sprites along 5 logarithmic galactic arms.
+- **Radial Clustering & Screen-Space Click**: Heavy concentration at the nucleus nexus (`#NEXUS-0`). Clicking anywhere selects the nearest data star and opens its provenance inspector.
+- **Domain Filter Rail**: Filter between `BIBLE`, `ASTRONOMY`, `MEDICAL`, `SURVIVAL`, `LITERATURE`, and `COGNITIVE` domains.
+
+### 2. `02 CONSTELLATIONS` (Celestial Astrometry Dome, 3D Sphere & Catalog)
+- **Live Celestial Dome (Default)**: 100% offline closed-form astrometry engine computes real-time horizontal coordinates ($Alt/Az$) from local Julian Day, Greenwich Mean Sidereal Time (GMST), and Local Sidereal Time (LST).
+- **Interactive Simulation Controls**: UTC time simulation (`-1H`, `+1H`, `NOW`), GPS city presets (Tokyo, Jerusalem, Alexandria, London, New York, Honolulu, Sydney, Cape Town, Cairo), and manual coordinate overrides.
+- **View Modes**: Switch seamlessly via the top workspace HUD dropdown between **Live Dome**, **3D Sphere Dome**, and **Poster Catalog Grid**.
+
+### 3. `03 LIBRARIAN` (Deep Reading Deck & Knowledge Hierarchy)
+- **Category Hierarchy Explorer**: Structured knowledge tree drilldown: `Theme > Language > Book/Document > Chapter > Section/Passage` with interactive breadcrumbs and direct chapter pagination.
+- **Grounded AI Assistant**: Real-time token streaming chat grounded strictly in verified passages. Returns exact citation pills and refuses ungrounded/out-of-domain queries.
+- **Spotlight Search (⌘K)**: Global FTS5 BM25 search across all indexed chunks with highlighted context snippets.
+
+### 4. `04 MAP` (Offline Vector Cartography)
+- **MapLibre GL & PMTiles**: Zero-cloud HTTP Range byte-serving for single-file `.pmtiles` vector archives.
+- **Schema-Aware Styling**: Automatically switches between Natural Earth world overview and Protomaps-v4 street-level vector layers (roads, buildings, waterways, boundaries, places).
+- **In-App Downloader**: Curated 62-country downloader running as an atomic asynchronous background job on the server (`POST /api/maps/fetch`) with live progress logs.
+
+---
+
+## Technology Stack
+
+- **Backend Daemon**: Rust 2021 edition (`crates/core`, `crates/server`, `crates/cli`).
+- **Web API Layer**: Axum 0.8 with tower middleware, SSE (Server-Sent Events), and custom HTTP `206 Partial Content` Range streamer.
+- **Embedded Database**: SQLite 3 with FTS5 BM25 full-text indexing, WAL journaling, and SHA-256 idempotency logs.
+- **Astrometry Engine**: Pure Rust closed-form astronomical algorithms (Howard Hinnant civil calendar, GMST polynomial, spherical trigonometry).
+- **Frontend Engine**: Vanilla JavaScript (ES modules) + Three.js 3D WebGL + MapLibre GL 3.6.2 + PMTiles protocol adapter.
+- **Typography & Assets**: Complete 256-range Klokantech Noto Sans CJK glyph PBFs (30.4 MB) served offline with strict sub-service routing.
+
+---
+
 ## Hardware Profiles
 
 | Profile | Hardware | Features Active | Memory Footprint |

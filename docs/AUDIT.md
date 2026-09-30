@@ -505,3 +505,24 @@ pass; assets served 200 (`maplibre-gl.js`, `pmtiles.js`, `maplibre-gl.css`,
 `css/app.css` geocache styles); served `sections.js` contains `bootMapLibre`.
 Remaining manual evidence: browser screenshot of Map tab (both themes) + C1/C2/C7
 8-shot parity grid.
+
+---
+
+## AUDIT-3 RESOLUTION (2026-09-30 — Full Feature & Unification Pass)
+
+All major architectural, data-layer, cartographic, and UX requests fully shipped and verified:
+
+| Milestone / Feature | Status | Implementation Details |
+|---|---|---|
+| **Street-Level Map Packs (M5)** | **SHIPPED & VERIFIED** | `mazzaroth maps fetch <bbox>` extracts bbox packages via official `pmtiles` binary directly from Protomaps planet build. Schema-aware styling detects vector layers for both overview and street-level packs. |
+| **Map Downloader & CJK Glyphs (M5b)** | **SHIPPED & VERIFIED** | In-app 62-country dropdown downloader via background job (`POST /api/maps/fetch`), zoom buttons, chip deletion. 256-range Klokantech Noto Sans CJK glyph PBFs installed with strict sub-service routing (clean 404 on missing glyph, fixing `Unimplemented type: 4`). |
+| **Offline Astrometry Engine (M8)** | **SHIPPED & VERIFIED** | 100% offline closed-form astronomical solver (`crates/core/src/sky.rs`) with Julian Day, GMST, LST, and Alt/Az coordinates for 115+ stars, 40+ constellation lines, and 800+ background stars. |
+| **Knowledge Hierarchy Explorer** | **SHIPPED & VERIFIED** | Deep Reader overhauled with hierarchical drilldown (`Theme > Language > Book > Chapter > Passage`) and breadcrumb navigation (`#reader-breadcrumbs`, `#NEXUS-0` root). `GET /api/tree` endpoint registered. |
+| **Star Navigation Handbook** | **SHIPPED & INGESTED** | 4 comprehensive chapters authored and ingested into `data/mazzaroth.db` (`total_docs=4, total_chunks=18`). |
+| **Constellations & Dome Unification** | **SHIPPED & VERIFIED** | Unified Sky Deck and Constellations into `02 CONSTELLATIONS` across 4 primary system modules (`01 GALAXY`, `02 CONSTELLATIONS`, `03 LIBRARIAN`, `04 MAP`). Added workspace HUD dropdown for Live Dome, 3D Sphere, and Poster Grid modes. Unified tool rail with time simulation and coordinate filters. |
+
+**Current Verification Status:**
+- `cargo check --workspace` $\to$ Clean (0 errors, 0 warnings).
+- `cargo test --workspace` $\to$ 8/8 test suites passing (`doctor_test`, `ingest_test`, `notes_test`, `galaxy_test`, `librarian_test`, `maps_test`, `search_reader_test`, `sky_deck_test`).
+- `node --check` $\to$ Clean on all frontend JavaScript modules.
+
