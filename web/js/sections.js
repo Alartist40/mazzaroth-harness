@@ -1,5 +1,5 @@
 // MAZZAROTH Sections: Constellations, Sovereign Vector Cartography Map, and Librarian AI
-import { askStream, getStatus, getMaps } from './api.js';
+import { askStream, getStatus, getMaps, startMapFetch, getMapFetchStatus, deleteMapRegion } from './api.js';
 
 /* ========================================================================= */
 /* 1. AUTHORITATIVE CONSTELLATIONS DATASET (Copy-Exact from Reference)       */
@@ -1128,6 +1128,9 @@ function renderRegionList() {
 
     mapRegionList.forEach((r) => {
         const active = activeRegion && activeRegion.filename === r.filename;
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-1';
+
         const btn = document.createElement('button');
         btn.className = 'text-left px-2.5 py-1 rounded border transition-all';
         btn.style.cssText = active
@@ -1136,14 +1139,48 @@ function renderRegionList() {
         btn.innerHTML = `<span style="font-weight:600">${r.name}</span> <span style="color:var(--text-muted)">${formatRegionSize(r.size_bytes)}</span>`;
         btn.title = `Switch map to ${r.filename}`;
         btn.addEventListener('click', () => switchMapRegion(r.filename));
-        host.appendChild(btn);
+        row.appendChild(btn);
+
+        if (r.name !== 'world') {
+            const del = document.createElement('button');
+            del.className = 'px-1.5 py-1 rounded border transition-all opacity-70 hover:opacity-100';
+            del.style.cssText = 'background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-muted);';
+            del.textContent = '✕';
+            del.title = `Delete the ${r.name} region pack`;
+            del.addEventListener('click', () => deleteRegionPack(r.filename));
+            row.appendChild(del);
+        }
+        host.appendChild(row);
     });
 
     const hint = document.createElement('div');
     hint.className = 'pointer-events-none font-mono text-[9px] px-2 py-0.5 rounded border';
     hint.style.cssText = 'background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-muted);';
-    hint.textContent = '+ mazzaroth maps fetch <bbox>';
+    hint.textContent = '↓ TOOL → DOWNLOAD MORE REGIONS';
     host.appendChild(hint);
+}
+
+async function deleteRegionPack(filename) {
+    const label = filename.replace(/\.pmtiles$/, '');
+    if (!window.confirm(`Delete the "${label}" region pack?`)) return;
+    try {
+        await deleteMapRegion(filename);
+    } catch (e) {
+        setMapStatus(`DELETE: ${e.message}`, true);
+        return;
+    }
+    const wasActive = activeRegion && activeRegion.filename === filename;
+    try { mapRegionList = (await getMaps()) || []; } catch (e) { mapRegionList = []; }
+    renderRegionList();
+    if (wasActive) {
+        const fallback = mapRegionList.find((r) => r.name === 'world') || mapRegionList[0];
+        if (fallback) {
+            try { localStorage.setItem('mazzaroth:mapRegion', fallback.filename); } catch (e) {}
+            await mountMapLibre(fallback.filename);
+        } else {
+            teardownMapLibre();
+        }
+    }
 }
 
 async function switchMapRegion(file) {
@@ -1154,6 +1191,204 @@ async function switchMapRegion(file) {
     teardownMapLibre();
     try { localStorage.setItem('mazzaroth:mapRegion', file); } catch (e) {}
     await mountMapLibre(file);
+}
+
+// ---------------------------------------------------------------------------
+// Browser downloader: curated country packs + live fetch status (no-code UX)
+// ---------------------------------------------------------------------------
+
+const COUNTRY_PACKS = [
+    // Asia
+    { n: 'Japan', b: [122.9, 24.0, 145.9, 45.6], z: 14 },
+    { n: 'South Korea', b: [126.0, 33.1, 131.9, 38.7], z: 14 },
+    { n: 'North Korea', b: [124.3, 37.6, 130.7, 43.1], z: 12 },
+    { n: 'China', b: [73.4, 18.0, 135.1, 53.6], z: 10 },
+    { n: 'Taiwan', b: [119.9, 21.8, 122.1, 25.4], z: 14 },
+    { n: 'Hong Kong', b: [113.8, 22.1, 114.5, 22.6], z: 15 },
+    { n: 'Singapore', b: [103.6, 1.15, 104.1, 1.48], z: 15 },
+    { n: 'Philippines', b: [116.9, 4.6, 126.6, 21.2], z: 12 },
+    { n: 'Vietnam', b: [102.1, 8.4, 109.6, 23.4], z: 12 },
+    { n: 'Thailand', b: [97.2, 5.6, 105.7, 20.5], z: 13 },
+    { n: 'Malaysia', b: [99.6, 0.7, 119.5, 7.4], z: 13 },
+    { n: 'Indonesia', b: [95.0, -11.1, 141.1, 6.0], z: 11 },
+    { n: 'Myanmar', b: [92.2, 9.8, 101.2, 28.6], z: 12 },
+    { n: 'India', b: [68.1, 6.7, 97.4, 35.5], z: 11 },
+    { n: 'Nepal', b: [80.0, 26.3, 88.3, 30.5], z: 13 },
+    { n: 'Sri Lanka', b: [79.7, 5.9, 81.9, 9.9], z: 14 },
+    { n: 'Bangladesh', b: [88.0, 20.6, 92.7, 26.6], z: 13 },
+    { n: 'Pakistan', b: [60.8, 23.7, 77.0, 36.9], z: 11 },
+    { n: 'Mongolia', b: [87.7, 41.6, 119.9, 52.2], z: 11 },
+    // Oceania
+    { n: 'Australia', b: [112.9, -43.7, 153.7, -10.0], z: 11 },
+    { n: 'New Zealand', b: [166.4, -47.3, 178.7, -34.4], z: 13 },
+    { n: 'Fiji', b: [173.5, -20.7, 180.0, -12.4], z: 14 },
+    // Americas
+    { n: 'United States', b: [-125.0, 24.4, -66.9, 49.4], z: 10 },
+    { n: 'Canada', b: [-141.0, 41.7, -52.6, 83.1], z: 10 },
+    { n: 'Mexico', b: [-118.5, 14.5, -86.7, 32.7], z: 12 },
+    { n: 'Guatemala', b: [-92.3, 13.7, -88.2, 17.9], z: 13 },
+    { n: 'Cuba', b: [-85.0, 19.8, -74.1, 23.3], z: 13 },
+    { n: 'Brazil', b: [-74.0, -33.8, -34.7, 5.3], z: 10 },
+    { n: 'Argentina', b: [-73.6, -55.1, -53.6, -21.8], z: 11 },
+    { n: 'Chile', b: [-75.7, -56.0, -66.4, -17.5], z: 11 },
+    { n: 'Peru', b: [-81.4, -18.4, -68.6, -0.0], z: 11 },
+    { n: 'Colombia', b: [-79.1, -4.3, -66.9, 13.4], z: 11 },
+    // Europe
+    { n: 'United Kingdom', b: [-8.8, 49.9, 1.8, 60.9], z: 13 },
+    { n: 'Ireland', b: [-10.6, 51.4, -5.9, 55.4], z: 14 },
+    { n: 'France', b: [-5.5, 41.3, 9.7, 51.2], z: 12 },
+    { n: 'Spain', b: [-9.5, 36.0, 3.4, 43.9], z: 13 },
+    { n: 'Portugal', b: [-9.6, 36.9, -6.1, 42.2], z: 13 },
+    { n: 'Germany', b: [5.8, 47.2, 15.1, 55.1], z: 12 },
+    { n: 'Italy', b: [6.6, 36.6, 18.6, 47.1], z: 13 },
+    { n: 'Netherlands', b: [3.3, 50.7, 7.3, 53.6], z: 14 },
+    { n: 'Belgium', b: [2.5, 49.5, 6.4, 51.6], z: 14 },
+    { n: 'Switzerland', b: [5.9, 45.8, 10.5, 47.9], z: 14 },
+    { n: 'Austria', b: [9.5, 46.3, 17.2, 49.1], z: 13 },
+    { n: 'Denmark', b: [8.0, 54.5, 15.2, 57.8], z: 14 },
+    { n: 'Norway', b: [4.6, 58.0, 31.1, 71.2], z: 12 },
+    { n: 'Sweden', b: [10.9, 55.3, 24.2, 69.1], z: 12 },
+    { n: 'Finland', b: [19.4, 59.7, 31.6, 70.2], z: 12 },
+    { n: 'Poland', b: [14.1, 49.0, 24.2, 54.9], z: 12 },
+    { n: 'Czechia', b: [12.0, 48.5, 18.9, 51.1], z: 13 },
+    { n: 'Greece', b: [19.3, 34.7, 29.7, 41.8], z: 13 },
+    { n: 'Turkey', b: [25.6, 35.8, 44.9, 42.2], z: 11 },
+    { n: 'Ukraine', b: [22.1, 44.3, 40.3, 52.4], z: 11 },
+    { n: 'Russia', b: [19.2, 41.1, 180.0, 77.7], z: 9 },
+    // Africa & Middle East
+    { n: 'Egypt', b: [24.7, 22.0, 36.9, 31.7], z: 11 },
+    { n: 'Morocco', b: [-13.2, 27.7, -1.0, 35.9], z: 12 },
+    { n: 'Nigeria', b: [2.6, 4.2, 14.7, 13.9], z: 11 },
+    { n: 'Kenya', b: [33.9, -4.7, 41.9, 5.1], z: 12 },
+    { n: 'Ethiopia', b: [33.0, 3.4, 48.0, 14.9], z: 11 },
+    { n: 'South Africa', b: [16.4, -34.9, 32.9, -22.1], z: 11 },
+    { n: 'Saudi Arabia', b: [34.5, 16.3, 55.7, 32.2], z: 11 },
+    { n: 'United Arab Emirates', b: [51.5, 22.6, 56.5, 26.1], z: 13 },
+    { n: 'Israel', b: [34.2, 29.4, 35.9, 33.3], z: 14 }
+];
+
+let fetchPollTimer = null;
+let lastFetchState = null;
+let downloadPanelReady = false;
+
+function slugifyRegion(name) {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function setDownloadUi(state, text) {
+    const status = document.getElementById('map-download-status');
+    const go = document.getElementById('map-download-go');
+    if (status) {
+        status.textContent = text || '';
+        status.dataset.state = state || 'idle';
+        status.style.color = state === 'error' ? 'var(--text-main)' : 'var(--text-secondary)';
+    }
+    if (go) go.disabled = (state === 'running');
+    if (go) go.style.opacity = (state === 'running') ? '0.5' : '1';
+}
+
+export function toggleDownloadPanel() {
+    const panel = document.getElementById('map-download-panel');
+    if (!panel) return;
+    if (panel.classList.contains('hidden')) {
+        openDownloadPanel();
+    } else {
+        panel.classList.add('hidden');
+        stopFetchPoll();
+    }
+}
+
+function openDownloadPanel() {
+    const panel = document.getElementById('map-download-panel');
+    const sel = document.getElementById('map-download-country');
+    if (!panel || !sel) return;
+    if (!downloadPanelReady || sel.options.length === 0) {
+        sel.innerHTML = '';
+        COUNTRY_PACKS.forEach((c) => {
+            const opt = document.createElement('option');
+            opt.value = c.n;
+            opt.textContent = `${c.n} · z${c.z}`;
+            sel.appendChild(opt);
+        });
+        sel.value = 'Japan';
+        downloadPanelReady = true;
+    }
+    panel.classList.remove('hidden');
+    // resume a download that may be running (started earlier / survives reload)
+    startFetchPoll();
+    pollFetchStatus();
+}
+
+function startFetchPoll() {
+    if (fetchPollTimer) return;
+    fetchPollTimer = setInterval(pollFetchStatus, 1500);
+}
+
+function stopFetchPoll() {
+    if (fetchPollTimer) {
+        clearInterval(fetchPollTimer);
+        fetchPollTimer = null;
+    }
+}
+
+async function pollFetchStatus() {
+    let st;
+    try {
+        st = await getMapFetchStatus();
+    } catch (e) {
+        return;
+    }
+    if (!st) return;
+    const last = (st.log && st.log.length) ? st.log[st.log.length - 1] : '';
+    if (st.state === 'running') {
+        lastFetchState = 'running';
+        setDownloadUi('running', `● DOWNLOADING ${st.region} — ${last}`);
+        return;
+    }
+    if (st.state === 'done') {
+        const wasRunning = lastFetchState === 'running';
+        lastFetchState = 'done';
+        setDownloadUi('done', `✓ ${st.region} ready`);
+        stopFetchPoll();
+        if (wasRunning) await openFetchedRegion(st.region);
+        return;
+    }
+    if (st.state === 'error') {
+        lastFetchState = 'error';
+        setDownloadUi('error', `✗ ${st.message || 'download failed'}`);
+        stopFetchPoll();
+        return;
+    }
+    // idle
+    if (lastFetchState !== 'done') setDownloadUi('idle', 'PICK A COUNTRY BELOW');
+    lastFetchState = 'idle';
+}
+
+async function openFetchedRegion(region) {
+    try { mapRegionList = (await getMaps()) || []; } catch (e) { mapRegionList = []; }
+    renderRegionList();
+    const file = `${region}.pmtiles`;
+    if (mapRegionList.some((r) => r.filename === file)) {
+        setDownloadUi('done', `✓ ${region} ready — opening it now`);
+        await switchMapRegion(file);
+    }
+}
+
+export async function startSelectedDownload() {
+    const sel = document.getElementById('map-download-country');
+    if (!sel) return;
+    const pack = COUNTRY_PACKS.find((c) => c.n === sel.value);
+    if (!pack) return;
+    const name = slugifyRegion(pack.n);
+    setDownloadUi('running', `● REQUESTING ${pack.n} (z${pack.z})…`);
+    try {
+        await startMapFetch(pack.b, name, pack.z);
+    } catch (e) {
+        setDownloadUi('error', `✗ ${e.message}`);
+        return;
+    }
+    lastFetchState = 'running';
+    startFetchPoll();
 }
 
 function teardownMapLibre() {
@@ -1427,6 +1662,26 @@ export function recenterMap() {
     mapPanX = mCanvas.width / 2;
     mapPanY = mCanvas.height / 2;
     mapZoom = 1.0;
+    renderMap();
+}
+
+export function zoomMapIn() {
+    if (maplibreActive && maplibreInstance) {
+        try { maplibreInstance.zoomIn({ duration: 220 }); } catch (e) {}
+        return;
+    }
+    if (!mCanvas) return;
+    mapZoom = Math.max(0.4, Math.min(4.5, mapZoom * 1.35));
+    renderMap();
+}
+
+export function zoomMapOut() {
+    if (maplibreActive && maplibreInstance) {
+        try { maplibreInstance.zoomOut({ duration: 220 }); } catch (e) {}
+        return;
+    }
+    if (!mCanvas) return;
+    mapZoom = Math.max(0.4, Math.min(4.5, mapZoom / 1.35));
     renderMap();
 }
 

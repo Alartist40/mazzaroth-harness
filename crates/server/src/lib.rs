@@ -1,3 +1,4 @@
+pub mod fetch;
 pub mod routes;
 pub mod state;
 
@@ -17,6 +18,12 @@ pub fn create_app(state: ServerState) -> Router {
     });
 
     let index_file = dev_ui.join("index.html");
+
+    // Fonts get their own service WITHOUT the SPA fallback: a missing glyph
+    // range must be a clean 404 (MapLibre just skips that label) — falling
+    // back to index.html makes MapLibre parse HTML as a glyph PBF and throw
+    // "Unimplemented type: 4" garbage errors.
+    let fonts_dir = dev_ui.join("fonts");
 
     Router::new()
         .route("/health", get(|| async { "OK" }))
@@ -42,7 +49,13 @@ pub fn create_app(state: ServerState) -> Router {
         .route("/api/notes/{id}", put(routes::notes::handle_update_note))
         .route("/api/notes/{id}", delete(routes::notes::handle_delete_note))
         .route("/api/maps", get(routes::maps::handle_list_maps))
+        .route(
+            "/api/maps/fetch",
+            get(routes::maps::handle_fetch_status).post(routes::maps::handle_fetch_start),
+        )
+        .route("/api/maps/{filename}", delete(routes::maps::handle_delete_map))
         .route("/maps/{filename}", get(routes::maps::handle_serve_pmtiles))
+        .nest_service("/fonts", ServeDir::new(fonts_dir))
         .fallback_service(ServeDir::new(&dev_ui).fallback(ServeFile::new(index_file)))
         .layer(SetResponseHeaderLayer::overriding(
             header::CACHE_CONTROL,

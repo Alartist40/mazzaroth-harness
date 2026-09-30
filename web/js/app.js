@@ -28,7 +28,11 @@ import {
     renderMap, 
     resizeMap, 
     toggleGraticule, 
-    recenterMap 
+    recenterMap,
+    zoomMapIn,
+    zoomMapOut,
+    toggleDownloadPanel,
+    startSelectedDownload 
 } from './sections.js';
 
 let activeView = 'galaxy';
@@ -435,6 +439,31 @@ function setupToolbars() {
             recenterMap();
             showToast('Map Recentered');
         });
+    }
+
+    const mapZoomInBtn = document.getElementById('tool-map-zoom-in');
+    if (mapZoomInBtn) {
+        mapZoomInBtn.addEventListener('click', () => zoomMapIn());
+    }
+
+    const mapZoomOutBtn = document.getElementById('tool-map-zoom-out');
+    if (mapZoomOutBtn) {
+        mapZoomOutBtn.addEventListener('click', () => zoomMapOut());
+    }
+
+    const mapDlBtn = document.getElementById('tool-map-download');
+    if (mapDlBtn) {
+        mapDlBtn.addEventListener('click', () => toggleDownloadPanel());
+    }
+
+    const mapDlClose = document.getElementById('map-download-close');
+    if (mapDlClose) {
+        mapDlClose.addEventListener('click', () => toggleDownloadPanel());
+    }
+
+    const mapDlGo = document.getElementById('map-download-go');
+    if (mapDlGo) {
+        mapDlGo.addEventListener('click', () => startSelectedDownload());
     }
 }
 

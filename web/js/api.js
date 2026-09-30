@@ -133,6 +133,36 @@ export async function getMaps() {
     return await res.json();
 }
 
+export async function startMapFetch(bbox, name, maxzoom) {
+    const res = await fetch('/api/maps/fetch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bbox, name, maxzoom })
+    });
+    if (!res.ok) {
+        let msg = '';
+        try { msg = (await res.text()).trim(); } catch (e) {}
+        throw new Error(msg || `fetch start failed: ${res.status}`);
+    }
+    return await res.json();
+}
+
+export async function getMapFetchStatus() {
+    const res = await fetch('/api/maps/fetch');
+    if (!res.ok) throw new Error(`fetch status failed: ${res.status}`);
+    return await res.json();
+}
+
+export async function deleteMapRegion(filename) {
+    const res = await fetch(`/api/maps/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+    if (!res.ok) {
+        let msg = '';
+        try { msg = (await res.text()).trim(); } catch (e) {}
+        throw new Error(msg || `delete failed: ${res.status}`);
+    }
+    return true;
+}
+
 export async function getNotes() {
     const res = await fetch('/api/notes');
     if (!res.ok) throw new Error(`getNotes failed: ${res.status}`);

@@ -1,3 +1,4 @@
+use crate::fetch::{self, FetchRequest, FetchStatus};
 use crate::state::ServerState;
 use axum::body::Body;
 use axum::extract::{Path, State};
@@ -113,4 +114,63 @@ pub async fn handle_serve_pmtiles(
         .header(CONTENT_LENGTH, total_len.to_string())
         .body(Body::from(buffer))
         .unwrap())
+}
+
+// ---------------------------------------------------------------------------
+// Browser downloader (M5): one background pack at a time + status + delete
+// ---------------------------------------------------------------------------
+
+pub async fn handle_fetch_start(
+    State(state): State<ServerState>,
+    axum::Json(req): axum::Json<FetchRequest>,
+) -> Result<Json<FetchStatus>, (StatusCode, String)> {
+    let bbox = fetch::validate_bbox(&req.bbox).map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+    let maxzoom = req.maxzoom.unwrap_or(13);
+    if maxzoom > 15 {
+        return Err((StatusCode::BAD_REQUEST, "maxzoom must be 15 or lower".into()));
+    }
+    let region = fetch::sanitize_region_name(
+        req.name.unwrap_or_else(|| fetch::derive_region_name(&bbox)),
+    );
+    fetch::begin(&region).map_err(|m| (StatusCode::CONFLICT, m))?;
+
+    let maps_dir = state.config.maps_dir.clone();
+    tokio::spawn(async move {
+        let sink = fetch::log_sink();
+        let result = fetch::run_fetch(&maps_dir, bbox, Some(region), maxzoom, req.source, sink).await;
+        fetch::finish(result.map_err(|e| e.to_string()));
+    });
+
+    Ok(Json(fetch::fetch_status()))
+}
+
+pub async fn handle_fetch_status() -> Json<FetchStatus> {
+    Json(fetch::fetch_status())
+}
+
+pub async fn handle_delete_map(
+    State(state): State<ServerState>,
+    Path(filename): Path<String>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    if filename.contains('/') || filename.contains('\\') || filename.contains("..") {
+        return Err((StatusCode::BAD_REQUEST, "invalid filename".into()));
+    }
+    if filename == fetch::BASE_REGION {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "the built-in world overview is protected and cannot be deleted".into(),
+        ));
+    }
+    if !filename.ends_with(".pmtiles") {
+        return Err((StatusCode::BAD_REQUEST, "not a .pmtiles region".into()));
+    }
+    if fetch::fetch_status().state == "running" {
+        return Err((StatusCode::CONFLICT, "a download is running — wait for it to finish".into()));
+    }
+    let path = state.config.maps_dir.join(&filename);
+    if !path.exists() {
+        return Err((StatusCode::NOT_FOUND, "region not found".into()));
+    }
+    std::fs::remove_file(&path).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
 }

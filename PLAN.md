@@ -55,9 +55,30 @@ the new build from the browser) and a missing `let maplibreInstance` declaration
    (GATES L5B evidence; screenshots /tmp/opencode/pwtest/m5-{1..6}-*.png).
    `maps/*.pmtiles` + `data/bin/` gitignored (regenerable: gen-map-tiles.py /
    maps fetch).
-3. **Reader shows real corpus** (was A2-2 P0): `loadNodeIntoReader` maps
+3. **Map toolkit + Japan street pack + glyph repair BUILT (2026-09-30, user request)**:
+   three asks, all shipped: (a) zoom in/out buttons on the map tool rail
+   (`zoomMapIn/Out` — MapLibre zoomIn/Out, canvas fallback ×1.35); (b) the
+   entire street view of **Japan** (fetch engine hoisted into
+   `crates/server/src/fetch.rs`, shared by CLI + a new browser downloader:
+   `POST/GET /api/maps/fetch` background job with live log tail,
+   `DELETE /api/maps/{filename}` with `world.pmtiles` protected, atomic
+   `.tmp` → rename installs; **japan.pmtiles = 1.59 GB z14 fetched in 2.6 min**,
+   Tokyo z13 = 2666 rendered features with Japanese labels); (c) a zero-code
+   **DOWNLOAD tool** opening a 62-country dropdown (curated bbox + maxzoom),
+   live progress, auto-open on completion, and ✕ delete on every non-world
+   region chip (confirm → fallback to world). En-route root-cause fix: missing
+   glyph ranges fell through the SPA fallback to `index.html` (200 text/html) —
+   MapLibre parsed HTML as a glyph PBF → `Unimplemented type: 4` garbage errors
+   poisoning label/render paths (only 2 Latin ranges existed!); now `/fonts` is
+   a strict sub-service (miss → clean 404) and the set is the complete
+   256-range Klokantech Noto Sans CJK pack (30.4 MB: kana + kanji + Latin).
+   Verified: Playwright E2E (m5b) zero errors — zoom 1.02→3.02→2.02, panel
+   62 countries, HK downloaded via UI + auto-open, chip delete → world fallback;
+   server Range cmp byte-exact + Node pmtiles.js sha match proved the tile
+   pipeline; GATES L5C evidence + screenshots `/tmp/opencode/pwtest/m5b-*.png`.
+4. **Reader shows real corpus** (was A2-2 P0): `loadNodeIntoReader` maps
    `doc.structure[].sections[].text` → chapters + provenance footer (C4 CHECK ✓).
-4. **Root cleanup + layout done (user order 2026-09-29, second pass)**:
+5. **Root cleanup + layout done (user order 2026-09-29, second pass)**:
    deleted `data/librarian.db` (stale duplicate — live DB is `data/mazzaroth.db`,
    CLI `--db` default `crates/cli/src/main.rs:19`, holds the 2 notes;
    `LibrarianConfig::default()` repointed from `librarian.db` → `mazzaroth.db`),
@@ -67,7 +88,7 @@ the new build from the browser) and a missing `let maplibreInstance` declaration
    `src/`, `tests/`, `main.js`, `base.css`). GATES C0/C1-R1 CHECKs updated to
    surviving paths; `cargo check` + all 7 test suites + C0/C5/C6/R1 CHECKs +
    browser sanity re-passed after the move.
-5. **Remaining OPENs**: A2-12 (⌘K searches chunks only, no star/node labels),
+6. **Remaining OPENs**: A2-12 (⌘K searches chunks only, no star/node labels),
    A2-10 (fonts never load), A2-11 (duplicate theme tokens app.css vs inline),
    A2-6 (galaxy uses synthetic spiral coords, ignores stored x/y/z),
    A2-9 (domain filter colors — owner call), A2-5 (corpus = 3 docs/9 chunks,

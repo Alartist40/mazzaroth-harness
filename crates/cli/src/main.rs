@@ -245,10 +245,8 @@ pub async fn run_doctor(db_path: &PathBuf, llm_endpoint: &str) -> anyhow::Result
 
 // ---------------------------------------------------------------------------
 // M5: offline map region packs (mazzaroth maps fetch <bbox>)
+// Engine lives in librarian_server::fetch — shared with the browser downloader.
 // ---------------------------------------------------------------------------
-
-const PMTILES_MANIFEST: &str = "https://build-metadata.protomaps.dev/builds.json";
-const PMTILES_BUILD_BASE: &str = "https://build.protomaps.com";
 
 async fn run_maps_fetch(
     maps_dir: &PathBuf,
@@ -257,75 +255,37 @@ async fn run_maps_fetch(
     maxzoom: u8,
     source: Option<String>,
 ) -> anyhow::Result<()> {
-    let parts: Vec<f64> = bbox
-        .split(',')
-        .map(|s| s.trim().parse::<f64>().map_err(|_| {
-            anyhow::anyhow!("invalid bbox `{bbox}` — expected MIN_LON,MIN_LAT,MAX_LON,MAX_LAT (e.g. 18.34,-33.96,18.49,-33.86)")
-        }))
-        .collect::<anyhow::Result<_>>()?;
-    if parts.len() != 4 {
-        anyhow::bail!("bbox must have 4 comma-separated numbers, got {} — usage: mazzaroth maps fetch MIN_LON,MIN_LAT,MAX_LON,MAX_LAT", parts.len());
-    }
-    let (minlon, minlat, maxlon, maxlat) = (parts[0], parts[1], parts[2], parts[3]);
-    if !(minlon >= -180.0 && maxlon <= 180.0 && minlat >= -90.0 && maxlat <= 90.0)
-        || minlon >= maxlon
-        || minlat >= maxlat
-    {
-        anyhow::bail!("bbox out of range or inverted: {minlon},{minlat},{maxlon},{maxlat}");
-    }
-    if maxzoom > 15 {
-        anyhow::bail!("maxzoom {maxzoom} > 15 (PMTiles limit)");
-    }
+    let bbox = librarian_server::fetch::parse_bbox(bbox)?;
 
-    let region_name = sanitize_region_name(name.unwrap_or_else(|| {
-        let clat = (minlat + maxlat) / 2.0;
-        let clon = (minlon + maxlon) / 2.0;
-        format!(
-            "region-{:.2}{}-{:.2}{}",
-            clat.abs(),
-            if clat < 0.0 { 'S' } else { 'N' },
-            clon.abs(),
-            if clon < 0.0 { 'W' } else { 'E' }
-        )
-    }));
-
-    let source = match source {
-        Some(s) => s,
-        None => {
-            println!("→ resolving latest Protomaps planet build ({PMTILES_MANIFEST})...");
-            resolve_latest_build().await?
+    // live terminal progress: progress bars overwrite in place, log lines print
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+    let bar_active = Arc::new(AtomicBool::new(false));
+    let sink_flag = bar_active.clone();
+    let progress: librarian_server::fetch::Progress = Arc::new(move |line: String| {
+        if line.contains("fetching chunks") || line.contains("requesting") {
+            print!("\r{line}");
+            use std::io::Write;
+            let _ = std::io::stdout().flush();
+            sink_flag.store(true, Ordering::Relaxed);
+        } else {
+            if sink_flag.swap(false, Ordering::Relaxed) {
+                println!();
+            }
+            println!("{line}");
         }
-    };
-    let bin = ensure_pmtiles_bin().await?;
+    });
 
-    std::fs::create_dir_all(maps_dir)?;
-    let out_path = maps_dir.join(format!("{region_name}.pmtiles"));
-    let out_str = out_path.to_string_lossy().to_string();
-    let bbox_arg = format!("--bbox={minlon},{minlat},{maxlon},{maxlat}");
-
-    println!("→ extracting [{minlon},{minlat},{maxlon},{maxlat}] z0–{maxzoom} → {}", out_path.display());
-    println!("  (source: {source})");
-    let status = std::process::Command::new(&bin)
-        .args([
-            "extract",
-            &source,
-            &out_str,
-            &bbox_arg,
-            &format!("--maxzoom={maxzoom}"),
-            "--download-threads=8",
-        ])
-        .status()?;
-    if !status.success() {
-        anyhow::bail!("pmtiles extract failed (exit {status})");
-    }
-
-    let size = std::fs::metadata(&out_path)?.len();
-    println!(
-        "✓ region `{region_name}` ready — {} ({})",
-        human_size(size),
-        out_path.display()
-    );
-    println!("  • listed at GET /api/maps  • served at /maps/{region_name}.pmtiles");
+    let region = librarian_server::fetch::run_fetch(
+        maps_dir,
+        bbox,
+        name,
+        maxzoom,
+        source,
+        progress,
+    )
+    .await?;
+    println!("  • listed at GET /api/maps  • served at /maps/{region}.pmtiles");
     println!("  • refresh the Map view in the UI to switch regions");
     Ok(())
 }
@@ -349,157 +309,7 @@ fn run_maps_list(maps_dir: &PathBuf) -> anyhow::Result<()> {
     }
     println!("installed map regions ({}):", regions.len());
     for (filename, size) in regions {
-        println!("  {:<32} {:>10}", filename, human_size(size));
+        println!("  {:<32} {:>10}", filename, librarian_server::fetch::human_size(size));
     }
     Ok(())
-}
-
-async fn resolve_latest_build() -> anyhow::Result<String> {
-    let client = reqwest::Client::builder()
-        .user_agent("mazzaroth-maps")
-        .build()?;
-    let builds: serde_json::Value =
-        client.get(PMTILES_MANIFEST).send().await?.error_for_status()?.json().await?;
-    let key = builds
-        .as_array()
-        .and_then(|list| list.last())
-        .and_then(|b| b.get("key"))
-        .and_then(|k| k.as_str())
-        .ok_or_else(|| anyhow::anyhow!("unexpected {PMTILES_MANIFEST} format"))?
-        .to_string();
-    Ok(format!("{PMTILES_BUILD_BASE}/{key}"))
-}
-
-async fn ensure_pmtiles_bin() -> anyhow::Result<PathBuf> {
-    // 1. repo-local binary (data/bin/pmtiles)
-    let local = PathBuf::from("data/bin/pmtiles");
-    if local.exists() {
-        return Ok(local);
-    }
-    // 2. on PATH
-    if std::process::Command::new("pmtiles")
-        .arg("version")
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .status()
-        .is_ok()
-    {
-        return Ok(PathBuf::from("pmtiles"));
-    }
-    // 3. download official static binary from GitHub releases
-    println!("→ pmtiles binary not found — downloading official release...");
-    download_pmtiles_bin().await
-}
-
-async fn download_pmtiles_bin() -> anyhow::Result<PathBuf> {
-    let client = reqwest::Client::builder()
-        .user_agent("mazzaroth-maps")
-        .build()?;
-    let release: serde_json::Value = client
-        .get("https://api.github.com/repos/protomaps/go-pmtiles/releases/latest")
-        .send()
-        .await?
-        .error_for_status()?
-        .json()
-        .await?;
-    let tag = release
-        .get("tag_name")
-        .and_then(|v| v.as_str())
-        .unwrap_or("v1.31.2")
-        .to_string();
-    let ver = tag.trim_start_matches('v');
-
-    let os = match std::env::consts::OS {
-        "linux" => "Linux",
-        "macos" => "Darwin",
-        other => anyhow::bail!(
-            "unsupported OS `{other}` for auto-download — install pmtiles manually: https://github.com/protomaps/go-pmtiles/releases ({tag})"
-        ),
-    };
-    let arch = match std::env::consts::ARCH {
-        "x86_64" => "x86_64",
-        "aarch64" => "arm64",
-        other => anyhow::bail!(
-            "unsupported architecture `{other}` for auto-download — install pmtiles manually: https://github.com/protomaps/go-pmtiles/releases ({tag})"
-        ),
-    };
-    let ext = if os == "Darwin" { "zip" } else { "tar.gz" };
-    let asset = format!("go-pmtiles_{ver}_{os}_{arch}.{ext}");
-    let url = format!("https://github.com/protomaps/go-pmtiles/releases/download/{tag}/{asset}");
-
-    let bin_dir = PathBuf::from("data/bin");
-    std::fs::create_dir_all(&bin_dir)?;
-    println!("  ↓ {url}");
-    let bytes = client.get(&url).send().await?.error_for_status()?.bytes().await?;
-    let archive = bin_dir.join(&asset);
-    std::fs::write(&archive, &bytes)?;
-
-    if ext == "zip" {
-        let tmpdir = bin_dir.join("pmtiles-extract");
-        std::fs::create_dir_all(&tmpdir)?;
-        let st = std::process::Command::new("unzip")
-            .args(["-o", "-q"])
-            .arg(&archive)
-            .arg("-d")
-            .arg(&tmpdir)
-            .status()?;
-        if !st.success() {
-            anyhow::bail!("failed to unpack {asset} (unzip) — install pmtiles manually: {url}");
-        }
-        let extracted = tmpdir.join("pmtiles");
-        let dest = bin_dir.join("pmtiles");
-        std::fs::rename(&extracted, &dest)?;
-        let _ = std::fs::remove_dir_all(&tmpdir);
-    } else {
-        let st = std::process::Command::new("tar")
-            .arg("-xzf")
-            .arg(&archive)
-            .arg("-C")
-            .arg(&bin_dir)
-            .arg("pmtiles")
-            .status()?;
-        if !st.success() {
-            anyhow::bail!("failed to unpack {asset} (tar) — install pmtiles manually: {url}");
-        }
-    }
-    let _ = std::fs::remove_file(&archive);
-
-    let dest = bin_dir.join("pmtiles");
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&dest, std::fs::Permissions::from_mode(0o755))?;
-    }
-    println!("  ✓ installed {}", dest.display());
-    Ok(dest)
-}
-
-fn sanitize_region_name(raw: String) -> String {
-    let cleaned: String = raw
-        .trim()
-        .trim_end_matches(".pmtiles")
-        .chars()
-        .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_' || *c == '.')
-        .collect();
-    if cleaned.is_empty() {
-        "region".to_string()
-    } else {
-        cleaned
-    }
-}
-
-fn human_size(bytes: u64) -> String {
-    const KB: f64 = 1024.0;
-    const MB: f64 = KB * 1024.0;
-    const GB: f64 = MB * 1024.0;
-    let b = bytes as f64;
-    if b >= GB {
-        format!("{:.2} GB", b / GB)
-    } else if b >= MB {
-        format!("{:.1} MB", b / MB)
-    } else if b >= KB {
-        format!("{:.1} KB", b / KB)
-    } else {
-        format!("{bytes} B")
-    }
 }

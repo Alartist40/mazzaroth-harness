@@ -93,6 +93,13 @@ Packs land in `maps/*.pmtiles`, appear instantly in `/api/maps`, and show up in 
 Map view's **INSTALLED REGIONS** panel — click a chip to switch (schema-aware:
 overview `countries`/`labels` vs street `roads`/`buildings`/`places`). The official
 `pmtiles` extract binary auto-downloads to `data/bin/` on first fetch.
+
+**In the UI (no CLI needed):** the map tool rail has **↓ DOWNLOAD** (pick one of
+62 countries → *FETCH & INSTALL* → live progress → the pack auto-opens when
+done) and **＋ / − zoom** buttons. Every non-world chip has a **✕** to delete its
+pack (confirm dialog; `world.pmtiles` is protected). Fetches run as one
+background job on the server — reload/close the page freely, status streams via
+`GET /api/maps/fetch`.
 Data © OpenStreetMap contributors · ODbL (Protomaps builds).
 
 ---
@@ -111,4 +118,7 @@ Data © OpenStreetMap contributors · ODbL (Protomaps builds).
 | `GET` | `/api/notes` | List field notes |
 | `POST` | `/api/notes` | Create field note |
 | `GET` | `/api/maps` | List available `.pmtiles` map regions |
+| `GET` | `/api/maps/fetch` | Current background fetch job status + log tail |
+| `POST` | `/api/maps/fetch` | Start a bbox pack fetch (`{"bbox":[w,s,e,n],"name":"…","maxzoom":14}`) |
+| `DELETE` | `/api/maps/{filename}` | Delete an installed pack (`world.pmtiles` protected) |
 | `GET` | `/maps/{filename}` | HTTP Range byte-serving for PMTiles |
