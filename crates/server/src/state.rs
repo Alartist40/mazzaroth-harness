@@ -11,12 +11,7 @@ pub struct ServerState {
 
 impl ServerState {
     pub fn new(db: LibrarianDb, config: LibrarianConfig, dev_ui_dir: Option<PathBuf>) -> Self {
-        let bibles_dir = PathBuf::from("galaxy/data/bibles");
-        let scripture = ScriptureReader::new(if bibles_dir.exists() {
-            bibles_dir
-        } else {
-            PathBuf::from("bibles")
-        });
+        let scripture = ScriptureReader::new(&config.bibles_dir);
 
         Self {
             db,

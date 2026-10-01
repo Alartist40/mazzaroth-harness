@@ -31,6 +31,12 @@ struct Cli {
     #[arg(long, global = true, default_value = "maps")]
     maps_dir: PathBuf,
 
+    #[arg(long, global = true, default_value = "galaxy/data/bibles")]
+    bibles_dir: PathBuf,
+
+    #[arg(long, global = true, default_value = "constellation/data")]
+    constellations_dir: PathBuf,
+
     #[arg(long, global = true, default_value = "http://127.0.0.1:11434")]
     llm_endpoint: String,
 
@@ -129,6 +135,8 @@ async fn main() -> anyhow::Result<()> {
                 cli.dev_ui,
                 cli.content_dir,
                 cli.maps_dir,
+                cli.bibles_dir,
+                cli.constellations_dir,
                 cli.llm_endpoint,
                 cli.llm_model,
             )
@@ -146,6 +154,8 @@ async fn run_server(
     dev_ui: Option<PathBuf>,
     content_dir: PathBuf,
     maps_dir: PathBuf,
+    bibles_dir: PathBuf,
+    constellations_dir: PathBuf,
     llm_endpoint: String,
     llm_model: String,
 ) -> anyhow::Result<()> {
@@ -162,6 +172,9 @@ async fn run_server(
         db_path: db,
         content_dir,
         maps_dir,
+        bibles_dir,
+        constellations_dir,
+        dev_ui_dir: dev_ui.clone(),
         llm_endpoint,
         llm_model,
         bind_addr: bind.clone(),

@@ -96,12 +96,13 @@ impl LibrarianDb {
     pub fn init_schema(&self) -> Result<()> {
         let conn = self.conn.lock().unwrap();
 
-        // Enable WAL mode & foreign keys for high-concurrency embedded operation
+        // Enable WAL mode, busy timeout & foreign keys for high-concurrency embedded operation
         conn.execute_batch(
             r#"
             PRAGMA journal_mode = WAL;
             PRAGMA synchronous = NORMAL;
             PRAGMA foreign_keys = ON;
+            PRAGMA busy_timeout = 5000;
 
             CREATE TABLE IF NOT EXISTS documents (
                 id TEXT PRIMARY KEY,
@@ -365,7 +366,7 @@ impl LibrarianDb {
     pub fn search(&self, query: &str, limit: usize) -> Result<Vec<SearchHit>> {
         let conn = self.conn.lock().unwrap();
 
-        let sanitized: Vec<String> = query
+        let terms: Vec<String> = query
             .split_whitespace()
             .filter(|w| {
                 let lower = w.to_lowercase();
@@ -378,19 +379,31 @@ impl LibrarianDb {
             .filter(|w| !w.is_empty())
             .collect();
 
-        let fts_query = if sanitized.is_empty() {
-            let fallback: Vec<String> = query
+        if terms.is_empty() {
+            let fallback_terms: Vec<String> = query
                 .split_whitespace()
                 .map(|w| format!("\"{}\"*", w.replace('"', "")))
+                .filter(|w| w != "\"\"*")
                 .collect();
-            if fallback.is_empty() {
+            if fallback_terms.is_empty() {
                 return Ok(Vec::new());
             }
-            fallback.join(" OR ")
-        } else {
-            sanitized.join(" OR ")
-        };
+            return Self::execute_fts_query(&conn, &fallback_terms.join(" OR "), limit);
+        }
 
+        // Try strict AND query first for highest relevance
+        let and_query = terms.join(" AND ");
+        let and_hits = Self::execute_fts_query(&conn, &and_query, limit)?;
+        if !and_hits.is_empty() || terms.len() <= 1 {
+            return Ok(and_hits);
+        }
+
+        // Fallback to OR query if AND returns no results
+        let or_query = terms.join(" OR ");
+        Self::execute_fts_query(&conn, &or_query, limit)
+    }
+
+    fn execute_fts_query(conn: &Connection, fts_query: &str, limit: usize) -> Result<Vec<SearchHit>> {
         let mut stmt = conn.prepare(
             r#"
             SELECT 

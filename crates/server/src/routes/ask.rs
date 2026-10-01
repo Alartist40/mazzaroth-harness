@@ -75,10 +75,12 @@ pub async fn handle_ask(
             return;
         }
 
-        // Assemble grounded RAG context
+        // Assemble grounded RAG context with budget constraints
+        let max_ctx = state.config.profile.max_context_tokens().max(512);
+        let max_chars = max_ctx * 3; // Approx 3 chars per token budget for prompt context
         let mut context_text = String::new();
         for (i, h) in hits.iter().enumerate() {
-            context_text.push_str(&format!(
+            let passage = format!(
                 "[{}] ({}, Date: {}, License: {}) {}:\n\"{}\"\n\n",
                 i + 1,
                 h.doc_title,
@@ -86,15 +88,19 @@ pub async fn handle_ask(
                 h.license,
                 h.title_path,
                 h.text
-            ));
+            );
+            if context_text.len() + passage.len() > max_chars && !context_text.is_empty() {
+                break;
+            }
+            context_text.push_str(&passage);
         }
 
         let system_prompt = "You are the Librarian of an offline collection of books. Answer ONLY from the provided passages. If the passages do not contain the answer, say \"I don't have that in the library.\" Quote precisely. Never invent procedures or dosages.";
         let user_prompt = format!("Question: {}\n\nContext Passages:\n{}", q, context_text);
 
-        // Try Ollama /api/generate streaming endpoint with 15s timeout
+        // Client with connection timeout (10s), without global response stream cutoff
         let client = reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(15))
+            .connect_timeout(std::time::Duration::from_secs(10))
             .build()
             .unwrap_or_default();
             
@@ -105,7 +111,7 @@ pub async fn handle_ask(
             "stream": true,
             "options": {
                 "temperature": 0.2,
-                "num_ctx": 2048
+                "num_ctx": max_ctx
             }
         });
 
@@ -113,7 +119,9 @@ pub async fn handle_ask(
             Ok(resp) if resp.status().is_success() => {
                 let mut byte_stream = resp.bytes_stream();
                 let mut buffer = String::new();
-                while let Some(item) = byte_stream.next().await {
+                
+                // Allow slow CPU / SBC inference with a generous 45s idle chunk timeout
+                while let Ok(Some(item)) = tokio::time::timeout(std::time::Duration::from_secs(45), byte_stream.next()).await {
                     if let Ok(bytes) = item {
                         if let Ok(text) = std::str::from_utf8(&bytes) {
                             buffer.push_str(text);

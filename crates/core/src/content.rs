@@ -91,20 +91,59 @@ impl ContentDocument {
         }
 
         // Validate license against known permissive/public-domain standards
-        let l = p.license.to_lowercase();
-        let valid_license = l.contains("public domain")
-            || l.contains("public-domain")
-            || l.contains("cc0")
-            || l.contains("cc-by")
-            || l.contains("mit")
-            || l.contains("apache")
-            || l.contains("us government work")
-            || l.contains("open source")
-            || p.personal_use_only;
-
-        if !valid_license {
+        let l = p.license.trim().to_lowercase().replace('_', "-");
+        
+        // Explicitly reject non-commercial, no-derivatives, and proprietary restrictions
+        if l.contains("-nc")
+            || l.contains("non-commercial")
+            || l.contains("noncommercial")
+            || l.contains("-nd")
+            || l.contains("no-derivatives")
+            || l.contains("noderivatives")
+            || l.contains("all rights reserved")
+            || l.contains("proprietary")
+            || l.contains("unlicensed")
+            || l.contains("unknown")
+        {
             bail!(
-                "License '{}' is not recognized as public domain or permissive. If personal, set personal_use_only: true",
+                "License '{}' contains restrictive terms (-nc, -nd, proprietary) and cannot be ingested as open sovereign corpus. For personal use, set personal_use_only: true and license: 'personal-use-only'",
+                p.license
+            );
+        }
+
+        let is_permissive_or_pd = matches!(
+            l.as_str(),
+            "public-domain"
+                | "public domain"
+                | "cc0"
+                | "cc0-1.0"
+                | "cc-by"
+                | "cc-by-1.0"
+                | "cc-by-2.0"
+                | "cc-by-2.5"
+                | "cc-by-3.0"
+                | "cc-by-4.0"
+                | "cc-by-sa"
+                | "cc-by-sa-1.0"
+                | "cc-by-sa-2.0"
+                | "cc-by-sa-2.5"
+                | "cc-by-sa-3.0"
+                | "cc-by-sa-4.0"
+                | "mit"
+                | "apache-2.0"
+                | "apache 2.0"
+                | "bsd-2-clause"
+                | "bsd-3-clause"
+                | "us-government-work"
+                | "us government work"
+                | "gutenberg"
+        );
+
+        let is_valid_personal = p.personal_use_only && (l == "personal-use-only" || l == "personal");
+
+        if !is_permissive_or_pd && !is_valid_personal {
+            bail!(
+                "License '{}' is not recognized as verified public domain or permissive open source. If personal, set personal_use_only: true and license: 'personal-use-only'",
                 p.license
             );
         }

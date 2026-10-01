@@ -1,0 +1,1456 @@
+{
+  "stars": [
+    {
+      "name": "Polaris",
+      "bayer": "Alpha UMi",
+      "constellation": "Ursa Minor",
+      "ra_deg": 37.95,
+      "dec_deg": 89.26,
+      "magnitude": 1.98,
+      "color": "#fef3c7"
+    },
+    {
+      "name": "Kochab",
+      "bayer": "Beta UMi",
+      "constellation": "Ursa Minor",
+      "ra_deg": 222.68,
+      "dec_deg": 74.16,
+      "magnitude": 2.08,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Pherkad",
+      "bayer": "Gamma UMi",
+      "constellation": "Ursa Minor",
+      "ra_deg": 230.18,
+      "dec_deg": 71.83,
+      "magnitude": 3.05,
+      "color": "#fef3c7"
+    },
+    {
+      "name": "Yildun",
+      "bayer": "Delta UMi",
+      "constellation": "Ursa Minor",
+      "ra_deg": 262.7,
+      "dec_deg": 86.59,
+      "magnitude": 4.35,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Urodelus",
+      "bayer": "Epsilon UMi",
+      "constellation": "Ursa Minor",
+      "ra_deg": 254.44,
+      "dec_deg": 82.04,
+      "magnitude": 4.21,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Ahfa al Farkadain",
+      "bayer": "Zeta UMi",
+      "constellation": "Ursa Minor",
+      "ra_deg": 237.28,
+      "dec_deg": 77.79,
+      "magnitude": 4.29,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Anwar al Farkadain",
+      "bayer": "Eta UMi",
+      "constellation": "Ursa Minor",
+      "ra_deg": 244.6,
+      "dec_deg": 75.76,
+      "magnitude": 4.95,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Dubhe",
+      "bayer": "Alpha UMa",
+      "constellation": "Ursa Major",
+      "ra_deg": 165.93,
+      "dec_deg": 61.75,
+      "magnitude": 1.79,
+      "color": "#fdba74"
+    },
+    {
+      "name": "Merak",
+      "bayer": "Beta UMa",
+      "constellation": "Ursa Major",
+      "ra_deg": 165.46,
+      "dec_deg": 56.38,
+      "magnitude": 2.37,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Phecda",
+      "bayer": "Gamma UMa",
+      "constellation": "Ursa Major",
+      "ra_deg": 178.46,
+      "dec_deg": 53.69,
+      "magnitude": 2.44,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Megrez",
+      "bayer": "Delta UMa",
+      "constellation": "Ursa Major",
+      "ra_deg": 183.86,
+      "dec_deg": 57.03,
+      "magnitude": 3.31,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Alioth",
+      "bayer": "Epsilon UMa",
+      "constellation": "Ursa Major",
+      "ra_deg": 193.51,
+      "dec_deg": 55.96,
+      "magnitude": 1.77,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Mizar",
+      "bayer": "Zeta UMa",
+      "constellation": "Ursa Major",
+      "ra_deg": 200.98,
+      "dec_deg": 54.92,
+      "magnitude": 2.23,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Alcor",
+      "bayer": "80 UMa",
+      "constellation": "Ursa Major",
+      "ra_deg": 201.3,
+      "dec_deg": 54.99,
+      "magnitude": 3.99,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Alkaid",
+      "bayer": "Eta UMa",
+      "constellation": "Ursa Major",
+      "ra_deg": 206.89,
+      "dec_deg": 49.31,
+      "magnitude": 1.86,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Talitha",
+      "bayer": "Iota UMa",
+      "constellation": "Ursa Major",
+      "ra_deg": 134.79,
+      "dec_deg": 48.04,
+      "magnitude": 3.12,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Tania Australis",
+      "bayer": "Mu UMa",
+      "constellation": "Ursa Major",
+      "ra_deg": 154.57,
+      "dec_deg": 41.5,
+      "magnitude": 3.06,
+      "color": "#f87171"
+    },
+    {
+      "name": "Betelgeuse",
+      "bayer": "Alpha Ori",
+      "constellation": "Orion",
+      "ra_deg": 88.79,
+      "dec_deg": 7.41,
+      "magnitude": 0.5,
+      "color": "#f87171"
+    },
+    {
+      "name": "Rigel",
+      "bayer": "Beta Ori",
+      "constellation": "Orion",
+      "ra_deg": 78.63,
+      "dec_deg": -8.2,
+      "magnitude": 0.13,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Bellatrix",
+      "bayer": "Gamma Ori",
+      "constellation": "Orion",
+      "ra_deg": 81.28,
+      "dec_deg": 6.35,
+      "magnitude": 1.64,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Saiph",
+      "bayer": "Kappa Ori",
+      "constellation": "Orion",
+      "ra_deg": 86.94,
+      "dec_deg": -9.67,
+      "magnitude": 2.07,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Alnitak",
+      "bayer": "Zeta Ori",
+      "constellation": "Orion",
+      "ra_deg": 85.19,
+      "dec_deg": -1.94,
+      "magnitude": 1.77,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Alnilam",
+      "bayer": "Epsilon Ori",
+      "constellation": "Orion",
+      "ra_deg": 84.05,
+      "dec_deg": -1.2,
+      "magnitude": 1.69,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Mintaka",
+      "bayer": "Delta Ori",
+      "constellation": "Orion",
+      "ra_deg": 83.0,
+      "dec_deg": -0.3,
+      "magnitude": 2.23,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Meissa",
+      "bayer": "Lambda Ori",
+      "constellation": "Orion",
+      "ra_deg": 83.78,
+      "dec_deg": 9.93,
+      "magnitude": 3.39,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Schedar",
+      "bayer": "Alpha Cas",
+      "constellation": "Cassiopeia",
+      "ra_deg": 10.13,
+      "dec_deg": 56.54,
+      "magnitude": 2.24,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Caph",
+      "bayer": "Beta Cas",
+      "constellation": "Cassiopeia",
+      "ra_deg": 2.29,
+      "dec_deg": 59.15,
+      "magnitude": 2.28,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Gamma Cas",
+      "bayer": "Gamma Cas",
+      "constellation": "Cassiopeia",
+      "ra_deg": 14.18,
+      "dec_deg": 60.72,
+      "magnitude": 2.47,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Ruchbah",
+      "bayer": "Delta Cas",
+      "constellation": "Cassiopeia",
+      "ra_deg": 21.45,
+      "dec_deg": 60.23,
+      "magnitude": 2.68,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Segin",
+      "bayer": "Epsilon Cas",
+      "constellation": "Cassiopeia",
+      "ra_deg": 26.1,
+      "dec_deg": 63.67,
+      "magnitude": 3.35,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Achird",
+      "bayer": "Eta Cas",
+      "constellation": "Cassiopeia",
+      "ra_deg": 12.27,
+      "dec_deg": 57.82,
+      "magnitude": 3.44,
+      "color": "#fef08a"
+    },
+    {
+      "name": "Acrux",
+      "bayer": "Alpha Cru",
+      "constellation": "Crux",
+      "ra_deg": 186.65,
+      "dec_deg": -63.1,
+      "magnitude": 0.77,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Gacrux",
+      "bayer": "Gamma Cru",
+      "constellation": "Crux",
+      "ra_deg": 187.79,
+      "dec_deg": -57.11,
+      "magnitude": 1.64,
+      "color": "#f87171"
+    },
+    {
+      "name": "Mimosa",
+      "bayer": "Beta Cru",
+      "constellation": "Crux",
+      "ra_deg": 191.93,
+      "dec_deg": -59.69,
+      "magnitude": 1.25,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Imai",
+      "bayer": "Delta Cru",
+      "constellation": "Crux",
+      "ra_deg": 183.79,
+      "dec_deg": -58.75,
+      "magnitude": 2.78,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Alpha Centauri",
+      "bayer": "Alpha Cen",
+      "constellation": "Centaurus",
+      "ra_deg": 219.9,
+      "dec_deg": -60.83,
+      "magnitude": -0.01,
+      "color": "#fef08a"
+    },
+    {
+      "name": "Hadar",
+      "bayer": "Beta Cen",
+      "constellation": "Centaurus",
+      "ra_deg": 210.96,
+      "dec_deg": -60.37,
+      "magnitude": 0.61,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Menkent",
+      "bayer": "Theta Cen",
+      "constellation": "Centaurus",
+      "ra_deg": 211.6,
+      "dec_deg": -36.37,
+      "magnitude": 2.06,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Sirius",
+      "bayer": "Alpha CMa",
+      "constellation": "Canis Major",
+      "ra_deg": 101.29,
+      "dec_deg": -16.72,
+      "magnitude": -1.46,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Adhara",
+      "bayer": "Epsilon CMa",
+      "constellation": "Canis Major",
+      "ra_deg": 104.66,
+      "dec_deg": -28.97,
+      "magnitude": 1.5,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Wezen",
+      "bayer": "Delta CMa",
+      "constellation": "Canis Major",
+      "ra_deg": 107.1,
+      "dec_deg": -26.39,
+      "magnitude": 1.83,
+      "color": "#fef08a"
+    },
+    {
+      "name": "Mirzam",
+      "bayer": "Beta CMa",
+      "constellation": "Canis Major",
+      "ra_deg": 95.68,
+      "dec_deg": -17.96,
+      "magnitude": 1.98,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Aludra",
+      "bayer": "Eta CMa",
+      "constellation": "Canis Major",
+      "ra_deg": 111.02,
+      "dec_deg": -29.3,
+      "magnitude": 2.45,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Procyon",
+      "bayer": "Alpha CMi",
+      "constellation": "Canis Minor",
+      "ra_deg": 114.83,
+      "dec_deg": 5.22,
+      "magnitude": 0.38,
+      "color": "#fef3c7"
+    },
+    {
+      "name": "Gomeisa",
+      "bayer": "Beta CMi",
+      "constellation": "Canis Minor",
+      "ra_deg": 111.79,
+      "dec_deg": 8.29,
+      "magnitude": 2.89,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Vega",
+      "bayer": "Alpha Lyr",
+      "constellation": "Lyra",
+      "ra_deg": 279.23,
+      "dec_deg": 38.78,
+      "magnitude": 0.03,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Sheliak",
+      "bayer": "Beta Lyr",
+      "constellation": "Lyra",
+      "ra_deg": 282.52,
+      "dec_deg": 33.36,
+      "magnitude": 3.52,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Sulafat",
+      "bayer": "Gamma Lyr",
+      "constellation": "Lyra",
+      "ra_deg": 283.6,
+      "dec_deg": 32.69,
+      "magnitude": 3.25,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Deneb",
+      "bayer": "Alpha Cyg",
+      "constellation": "Cygnus",
+      "ra_deg": 310.36,
+      "dec_deg": 45.28,
+      "magnitude": 1.25,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Sadr",
+      "bayer": "Gamma Cyg",
+      "constellation": "Cygnus",
+      "ra_deg": 305.56,
+      "dec_deg": 40.26,
+      "magnitude": 2.23,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Gienah Cyg",
+      "bayer": "Epsilon Cyg",
+      "constellation": "Cygnus",
+      "ra_deg": 311.55,
+      "dec_deg": 33.97,
+      "magnitude": 2.48,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Albireo",
+      "bayer": "Beta Cyg",
+      "constellation": "Cygnus",
+      "ra_deg": 292.68,
+      "dec_deg": 27.96,
+      "magnitude": 3.05,
+      "color": "#fde047"
+    },
+    {
+      "name": "Delta Cyg",
+      "bayer": "Delta Cyg",
+      "constellation": "Cygnus",
+      "ra_deg": 296.24,
+      "dec_deg": 45.13,
+      "magnitude": 2.87,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Altair",
+      "bayer": "Alpha Aql",
+      "constellation": "Aquila",
+      "ra_deg": 297.7,
+      "dec_deg": 8.87,
+      "magnitude": 0.77,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Tarazed",
+      "bayer": "Gamma Aql",
+      "constellation": "Aquila",
+      "ra_deg": 296.54,
+      "dec_deg": 10.61,
+      "magnitude": 2.72,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Alshain",
+      "bayer": "Beta Aql",
+      "constellation": "Aquila",
+      "ra_deg": 298.83,
+      "dec_deg": 6.41,
+      "magnitude": 3.71,
+      "color": "#fef08a"
+    },
+    {
+      "name": "Aldebaran",
+      "bayer": "Alpha Tau",
+      "constellation": "Taurus",
+      "ra_deg": 68.98,
+      "dec_deg": 16.51,
+      "magnitude": 0.85,
+      "color": "#f97316"
+    },
+    {
+      "name": "Elnath",
+      "bayer": "Beta Tau",
+      "constellation": "Taurus",
+      "ra_deg": 81.57,
+      "dec_deg": 28.61,
+      "magnitude": 1.65,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Alcyone",
+      "bayer": "Eta Tau",
+      "constellation": "Taurus",
+      "ra_deg": 56.87,
+      "dec_deg": 24.11,
+      "magnitude": 2.87,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Capella",
+      "bayer": "Alpha Aur",
+      "constellation": "Auriga",
+      "ra_deg": 79.17,
+      "dec_deg": 46.0,
+      "magnitude": 0.08,
+      "color": "#fef08a"
+    },
+    {
+      "name": "Menkalinan",
+      "bayer": "Beta Aur",
+      "constellation": "Auriga",
+      "ra_deg": 89.88,
+      "dec_deg": 44.95,
+      "magnitude": 1.9,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Arcturus",
+      "bayer": "Alpha Boo",
+      "constellation": "Bootes",
+      "ra_deg": 213.92,
+      "dec_deg": 19.18,
+      "magnitude": -0.05,
+      "color": "#fdba74"
+    },
+    {
+      "name": "Izar",
+      "bayer": "Epsilon Boo",
+      "constellation": "Bootes",
+      "ra_deg": 221.25,
+      "dec_deg": 27.07,
+      "magnitude": 2.37,
+      "color": "#f97316"
+    },
+    {
+      "name": "Muphrid",
+      "bayer": "Eta Boo",
+      "constellation": "Bootes",
+      "ra_deg": 208.74,
+      "dec_deg": 18.39,
+      "magnitude": 2.68,
+      "color": "#fef08a"
+    },
+    {
+      "name": "Alphecca",
+      "bayer": "Alpha CrB",
+      "constellation": "Corona Borealis",
+      "ra_deg": 233.67,
+      "dec_deg": 26.71,
+      "magnitude": 2.22,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Antares",
+      "bayer": "Alpha Sco",
+      "constellation": "Scorpio",
+      "ra_deg": 247.35,
+      "dec_deg": -26.43,
+      "magnitude": 1.06,
+      "color": "#ef4444"
+    },
+    {
+      "name": "Shaula",
+      "bayer": "Lambda Sco",
+      "constellation": "Scorpio",
+      "ra_deg": 263.4,
+      "dec_deg": -37.1,
+      "magnitude": 1.62,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Sargas",
+      "bayer": "Theta Sco",
+      "constellation": "Scorpio",
+      "ra_deg": 264.33,
+      "dec_deg": -42.99,
+      "magnitude": 1.86,
+      "color": "#fde047"
+    },
+    {
+      "name": "Dschubba",
+      "bayer": "Delta Sco",
+      "constellation": "Scorpio",
+      "ra_deg": 240.08,
+      "dec_deg": -22.62,
+      "magnitude": 2.29,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Graffias",
+      "bayer": "Beta Sco",
+      "constellation": "Scorpio",
+      "ra_deg": 241.36,
+      "dec_deg": -19.81,
+      "magnitude": 2.56,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Lesath",
+      "bayer": "Upsilon Sco",
+      "constellation": "Scorpio",
+      "ra_deg": 262.69,
+      "dec_deg": -37.29,
+      "magnitude": 2.7,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Kaus Australis",
+      "bayer": "Epsilon Sgr",
+      "constellation": "Sagittarius",
+      "ra_deg": 276.04,
+      "dec_deg": -34.38,
+      "magnitude": 1.79,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Nunki",
+      "bayer": "Sigma Sgr",
+      "constellation": "Sagittarius",
+      "ra_deg": 283.82,
+      "dec_deg": -26.3,
+      "magnitude": 2.05,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Ascella",
+      "bayer": "Zeta Sgr",
+      "constellation": "Sagittarius",
+      "ra_deg": 285.42,
+      "dec_deg": -29.88,
+      "magnitude": 2.6,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Kaus Media",
+      "bayer": "Delta Sgr",
+      "constellation": "Sagittarius",
+      "ra_deg": 275.24,
+      "dec_deg": -29.83,
+      "magnitude": 2.72,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Kaus Borealis",
+      "bayer": "Lambda Sgr",
+      "constellation": "Sagittarius",
+      "ra_deg": 276.99,
+      "dec_deg": -25.42,
+      "magnitude": 2.82,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Alnasl",
+      "bayer": "Gamma Sgr",
+      "constellation": "Sagittarius",
+      "ra_deg": 271.45,
+      "dec_deg": -30.42,
+      "magnitude": 2.98,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Regulus",
+      "bayer": "Alpha Leo",
+      "constellation": "Leo",
+      "ra_deg": 152.09,
+      "dec_deg": 11.97,
+      "magnitude": 1.36,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Denebola",
+      "bayer": "Beta Leo",
+      "constellation": "Leo",
+      "ra_deg": 177.26,
+      "dec_deg": 14.57,
+      "magnitude": 2.14,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Algieba",
+      "bayer": "Gamma Leo",
+      "constellation": "Leo",
+      "ra_deg": 154.99,
+      "dec_deg": 19.84,
+      "magnitude": 2.01,
+      "color": "#fde047"
+    },
+    {
+      "name": "Zosma",
+      "bayer": "Delta Leo",
+      "constellation": "Leo",
+      "ra_deg": 168.53,
+      "dec_deg": 20.52,
+      "magnitude": 2.56,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Spica",
+      "bayer": "Alpha Vir",
+      "constellation": "Virgo",
+      "ra_deg": 201.3,
+      "dec_deg": -11.16,
+      "magnitude": 0.98,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Vindemiatrix",
+      "bayer": "Epsilon Vir",
+      "constellation": "Virgo",
+      "ra_deg": 195.54,
+      "dec_deg": 10.96,
+      "magnitude": 2.85,
+      "color": "#fef08a"
+    },
+    {
+      "name": "Porrima",
+      "bayer": "Gamma Vir",
+      "constellation": "Virgo",
+      "ra_deg": 190.43,
+      "dec_deg": -1.45,
+      "magnitude": 2.74,
+      "color": "#fef3c7"
+    },
+    {
+      "name": "Zubeneschamali",
+      "bayer": "Beta Lib",
+      "constellation": "Libra",
+      "ra_deg": 229.25,
+      "dec_deg": -9.38,
+      "magnitude": 2.61,
+      "color": "#86efac"
+    },
+    {
+      "name": "Zubenelgenubi",
+      "bayer": "Alpha Lib",
+      "constellation": "Libra",
+      "ra_deg": 222.72,
+      "dec_deg": -16.04,
+      "magnitude": 2.75,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Pollux",
+      "bayer": "Beta Gem",
+      "constellation": "Gemini",
+      "ra_deg": 116.17,
+      "dec_deg": 28.03,
+      "magnitude": 1.15,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Castor",
+      "bayer": "Alpha Gem",
+      "constellation": "Gemini",
+      "ra_deg": 113.65,
+      "dec_deg": 31.89,
+      "magnitude": 1.58,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Alhena",
+      "bayer": "Gamma Gem",
+      "constellation": "Gemini",
+      "ra_deg": 99.43,
+      "dec_deg": 16.4,
+      "magnitude": 1.93,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Acubens",
+      "bayer": "Alpha Cnc",
+      "constellation": "Cancer",
+      "ra_deg": 134.58,
+      "dec_deg": 11.86,
+      "magnitude": 4.26,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Altarf",
+      "bayer": "Beta Cnc",
+      "constellation": "Cancer",
+      "ra_deg": 124.13,
+      "dec_deg": 9.19,
+      "magnitude": 3.53,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Deneb Algedi",
+      "bayer": "Delta Cap",
+      "constellation": "Capricorn",
+      "ra_deg": 326.76,
+      "dec_deg": -16.13,
+      "magnitude": 2.85,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Dabih",
+      "bayer": "Beta Cap",
+      "constellation": "Capricorn",
+      "ra_deg": 305.25,
+      "dec_deg": -14.78,
+      "magnitude": 3.05,
+      "color": "#fef08a"
+    },
+    {
+      "name": "Sadalsuud",
+      "bayer": "Beta Aqr",
+      "constellation": "Aquarius",
+      "ra_deg": 322.89,
+      "dec_deg": -5.57,
+      "magnitude": 2.9,
+      "color": "#fef08a"
+    },
+    {
+      "name": "Sadalmelik",
+      "bayer": "Alpha Aqr",
+      "constellation": "Aquarius",
+      "ra_deg": 331.45,
+      "dec_deg": -0.32,
+      "magnitude": 2.95,
+      "color": "#fef08a"
+    },
+    {
+      "name": "Skat",
+      "bayer": "Delta Aqr",
+      "constellation": "Aquarius",
+      "ra_deg": 343.66,
+      "dec_deg": -15.82,
+      "magnitude": 3.27,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Alrescha",
+      "bayer": "Alpha Psc",
+      "constellation": "Pisces",
+      "ra_deg": 30.51,
+      "dec_deg": 2.76,
+      "magnitude": 3.82,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Hamal",
+      "bayer": "Alpha Ari",
+      "constellation": "Aries",
+      "ra_deg": 31.79,
+      "dec_deg": 23.46,
+      "magnitude": 2.01,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Sheratan",
+      "bayer": "Beta Ari",
+      "constellation": "Aries",
+      "ra_deg": 28.66,
+      "dec_deg": 20.81,
+      "magnitude": 2.64,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Markab",
+      "bayer": "Alpha Peg",
+      "constellation": "Pegasus",
+      "ra_deg": 346.19,
+      "dec_deg": 15.21,
+      "magnitude": 2.49,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Scheat",
+      "bayer": "Beta Peg",
+      "constellation": "Pegasus",
+      "ra_deg": 345.94,
+      "dec_deg": 28.08,
+      "magnitude": 2.44,
+      "color": "#fca5a5"
+    },
+    {
+      "name": "Alpheratz",
+      "bayer": "Alpha And",
+      "constellation": "Andromeda",
+      "ra_deg": 2.1,
+      "dec_deg": 29.09,
+      "magnitude": 2.07,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Algenib",
+      "bayer": "Gamma Peg",
+      "constellation": "Pegasus",
+      "ra_deg": 3.31,
+      "dec_deg": 15.18,
+      "magnitude": 2.84,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Enif",
+      "bayer": "Epsilon Peg",
+      "constellation": "Pegasus",
+      "ra_deg": 326.05,
+      "dec_deg": 9.87,
+      "magnitude": 2.38,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Mirach",
+      "bayer": "Beta And",
+      "constellation": "Andromeda",
+      "ra_deg": 17.43,
+      "dec_deg": 35.62,
+      "magnitude": 2.07,
+      "color": "#f87171"
+    },
+    {
+      "name": "Almach",
+      "bayer": "Gamma And",
+      "constellation": "Andromeda",
+      "ra_deg": 30.97,
+      "dec_deg": 42.33,
+      "magnitude": 2.1,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Canopus",
+      "bayer": "Alpha Car",
+      "constellation": "Carina",
+      "ra_deg": 95.99,
+      "dec_deg": -52.7,
+      "magnitude": -0.74,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Miaplacidus",
+      "bayer": "Beta Car",
+      "constellation": "Carina",
+      "ra_deg": 138.3,
+      "dec_deg": -69.72,
+      "magnitude": 1.67,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Avior",
+      "bayer": "Epsilon Car",
+      "constellation": "Carina",
+      "ra_deg": 125.63,
+      "dec_deg": -59.51,
+      "magnitude": 1.86,
+      "color": "#fed7aa"
+    },
+    {
+      "name": "Aspidiske",
+      "bayer": "Iota Car",
+      "constellation": "Carina",
+      "ra_deg": 139.27,
+      "dec_deg": -59.28,
+      "magnitude": 2.21,
+      "color": "#ffffff"
+    },
+    {
+      "name": "Achernar",
+      "bayer": "Alpha Eri",
+      "constellation": "Eridanus",
+      "ra_deg": 24.43,
+      "dec_deg": -57.24,
+      "magnitude": 0.45,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Fomalhaut",
+      "bayer": "Alpha PsA",
+      "constellation": "Piscis Austrinus",
+      "ra_deg": 344.41,
+      "dec_deg": -29.62,
+      "magnitude": 1.17,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Alnair",
+      "bayer": "Alpha Gru",
+      "constellation": "Grus",
+      "ra_deg": 332.06,
+      "dec_deg": -46.96,
+      "magnitude": 1.73,
+      "color": "#bae6fd"
+    },
+    {
+      "name": "Peacock",
+      "bayer": "Alpha Pav",
+      "constellation": "Pavo",
+      "ra_deg": 306.41,
+      "dec_deg": -56.74,
+      "magnitude": 1.94,
+      "color": "#93c5fd"
+    },
+    {
+      "name": "Ankaa",
+      "bayer": "Alpha Phe",
+      "constellation": "Phoenix",
+      "ra_deg": 6.57,
+      "dec_deg": -42.31,
+      "magnitude": 2.4,
+      "color": "#fed7aa"
+    }
+  ],
+  "lines": [
+    {
+      "constellation": "Ursa Minor",
+      "star_a": "Polaris",
+      "star_b": "Yildun"
+    },
+    {
+      "constellation": "Ursa Minor",
+      "star_a": "Yildun",
+      "star_b": "Urodelus"
+    },
+    {
+      "constellation": "Ursa Minor",
+      "star_a": "Urodelus",
+      "star_b": "Ahfa al Farkadain"
+    },
+    {
+      "constellation": "Ursa Minor",
+      "star_a": "Ahfa al Farkadain",
+      "star_b": "Kochab"
+    },
+    {
+      "constellation": "Ursa Minor",
+      "star_a": "Kochab",
+      "star_b": "Pherkad"
+    },
+    {
+      "constellation": "Ursa Minor",
+      "star_a": "Pherkad",
+      "star_b": "Anwar al Farkadain"
+    },
+    {
+      "constellation": "Ursa Minor",
+      "star_a": "Anwar al Farkadain",
+      "star_b": "Ahfa al Farkadain"
+    },
+    {
+      "constellation": "Ursa Major",
+      "star_a": "Dubhe",
+      "star_b": "Merak"
+    },
+    {
+      "constellation": "Ursa Major",
+      "star_a": "Merak",
+      "star_b": "Phecda"
+    },
+    {
+      "constellation": "Ursa Major",
+      "star_a": "Phecda",
+      "star_b": "Megrez"
+    },
+    {
+      "constellation": "Ursa Major",
+      "star_a": "Megrez",
+      "star_b": "Dubhe"
+    },
+    {
+      "constellation": "Ursa Major",
+      "star_a": "Megrez",
+      "star_b": "Alioth"
+    },
+    {
+      "constellation": "Ursa Major",
+      "star_a": "Alioth",
+      "star_b": "Mizar"
+    },
+    {
+      "constellation": "Ursa Major",
+      "star_a": "Mizar",
+      "star_b": "Alkaid"
+    },
+    {
+      "constellation": "Orion",
+      "star_a": "Betelgeuse",
+      "star_b": "Bellatrix"
+    },
+    {
+      "constellation": "Orion",
+      "star_a": "Betelgeuse",
+      "star_b": "Alnitak"
+    },
+    {
+      "constellation": "Orion",
+      "star_a": "Bellatrix",
+      "star_b": "Mintaka"
+    },
+    {
+      "constellation": "Orion",
+      "star_a": "Alnitak",
+      "star_b": "Alnilam"
+    },
+    {
+      "constellation": "Orion",
+      "star_a": "Alnilam",
+      "star_b": "Mintaka"
+    },
+    {
+      "constellation": "Orion",
+      "star_a": "Alnitak",
+      "star_b": "Saiph"
+    },
+    {
+      "constellation": "Orion",
+      "star_a": "Mintaka",
+      "star_b": "Rigel"
+    },
+    {
+      "constellation": "Orion",
+      "star_a": "Saiph",
+      "star_b": "Rigel"
+    },
+    {
+      "constellation": "Orion",
+      "star_a": "Betelgeuse",
+      "star_b": "Meissa"
+    },
+    {
+      "constellation": "Orion",
+      "star_a": "Bellatrix",
+      "star_b": "Meissa"
+    },
+    {
+      "constellation": "Cassiopeia",
+      "star_a": "Caph",
+      "star_b": "Schedar"
+    },
+    {
+      "constellation": "Cassiopeia",
+      "star_a": "Schedar",
+      "star_b": "Gamma Cas"
+    },
+    {
+      "constellation": "Cassiopeia",
+      "star_a": "Gamma Cas",
+      "star_b": "Ruchbah"
+    },
+    {
+      "constellation": "Cassiopeia",
+      "star_a": "Ruchbah",
+      "star_b": "Segin"
+    },
+    {
+      "constellation": "Crux",
+      "star_a": "Gacrux",
+      "star_b": "Acrux"
+    },
+    {
+      "constellation": "Crux",
+      "star_a": "Mimosa",
+      "star_b": "Imai"
+    },
+    {
+      "constellation": "Centaurus",
+      "star_a": "Alpha Centauri",
+      "star_b": "Hadar"
+    },
+    {
+      "constellation": "Canis Major",
+      "star_a": "Sirius",
+      "star_b": "Mirzam"
+    },
+    {
+      "constellation": "Canis Major",
+      "star_a": "Sirius",
+      "star_b": "Wezen"
+    },
+    {
+      "constellation": "Canis Major",
+      "star_a": "Wezen",
+      "star_b": "Adhara"
+    },
+    {
+      "constellation": "Canis Major",
+      "star_a": "Wezen",
+      "star_b": "Aludra"
+    },
+    {
+      "constellation": "Canis Minor",
+      "star_a": "Procyon",
+      "star_b": "Gomeisa"
+    },
+    {
+      "constellation": "Lyra",
+      "star_a": "Vega",
+      "star_b": "Sheliak"
+    },
+    {
+      "constellation": "Lyra",
+      "star_a": "Sheliak",
+      "star_b": "Sulafat"
+    },
+    {
+      "constellation": "Lyra",
+      "star_a": "Sulafat",
+      "star_b": "Vega"
+    },
+    {
+      "constellation": "Cygnus",
+      "star_a": "Deneb",
+      "star_b": "Sadr"
+    },
+    {
+      "constellation": "Cygnus",
+      "star_a": "Sadr",
+      "star_b": "Albireo"
+    },
+    {
+      "constellation": "Cygnus",
+      "star_a": "Delta Cyg",
+      "star_b": "Sadr"
+    },
+    {
+      "constellation": "Cygnus",
+      "star_a": "Sadr",
+      "star_b": "Gienah Cyg"
+    },
+    {
+      "constellation": "Aquila",
+      "star_a": "Tarazed",
+      "star_b": "Altair"
+    },
+    {
+      "constellation": "Aquila",
+      "star_a": "Altair",
+      "star_b": "Alshain"
+    },
+    {
+      "constellation": "Taurus",
+      "star_a": "Aldebaran",
+      "star_b": "Elnath"
+    },
+    {
+      "constellation": "Taurus",
+      "star_a": "Aldebaran",
+      "star_b": "Alcyone"
+    },
+    {
+      "constellation": "Auriga",
+      "star_a": "Capella",
+      "star_b": "Menkalinan"
+    },
+    {
+      "constellation": "Auriga",
+      "star_a": "Menkalinan",
+      "star_b": "Elnath"
+    },
+    {
+      "constellation": "Bootes",
+      "star_a": "Arcturus",
+      "star_b": "Muphrid"
+    },
+    {
+      "constellation": "Bootes",
+      "star_a": "Arcturus",
+      "star_b": "Izar"
+    },
+    {
+      "constellation": "Scorpio",
+      "star_a": "Graffias",
+      "star_b": "Dschubba"
+    },
+    {
+      "constellation": "Scorpio",
+      "star_a": "Dschubba",
+      "star_b": "Antares"
+    },
+    {
+      "constellation": "Scorpio",
+      "star_a": "Antares",
+      "star_b": "Sargas"
+    },
+    {
+      "constellation": "Scorpio",
+      "star_a": "Sargas",
+      "star_b": "Shaula"
+    },
+    {
+      "constellation": "Scorpio",
+      "star_a": "Shaula",
+      "star_b": "Lesath"
+    },
+    {
+      "constellation": "Sagittarius",
+      "star_a": "Alnasl",
+      "star_b": "Kaus Media"
+    },
+    {
+      "constellation": "Sagittarius",
+      "star_a": "Kaus Media",
+      "star_b": "Kaus Australis"
+    },
+    {
+      "constellation": "Sagittarius",
+      "star_a": "Kaus Australis",
+      "star_b": "Ascella"
+    },
+    {
+      "constellation": "Sagittarius",
+      "star_a": "Ascella",
+      "star_b": "Nunki"
+    },
+    {
+      "constellation": "Sagittarius",
+      "star_a": "Nunki",
+      "star_b": "Kaus Borealis"
+    },
+    {
+      "constellation": "Sagittarius",
+      "star_a": "Kaus Borealis",
+      "star_b": "Kaus Media"
+    },
+    {
+      "constellation": "Leo",
+      "star_a": "Regulus",
+      "star_b": "Algieba"
+    },
+    {
+      "constellation": "Leo",
+      "star_a": "Algieba",
+      "star_b": "Zosma"
+    },
+    {
+      "constellation": "Leo",
+      "star_a": "Zosma",
+      "star_b": "Denebola"
+    },
+    {
+      "constellation": "Virgo",
+      "star_a": "Spica",
+      "star_b": "Porrima"
+    },
+    {
+      "constellation": "Virgo",
+      "star_a": "Porrima",
+      "star_b": "Vindemiatrix"
+    },
+    {
+      "constellation": "Libra",
+      "star_a": "Zubenelgenubi",
+      "star_b": "Zubeneschamali"
+    },
+    {
+      "constellation": "Gemini",
+      "star_a": "Castor",
+      "star_b": "Pollux"
+    },
+    {
+      "constellation": "Gemini",
+      "star_a": "Pollux",
+      "star_b": "Alhena"
+    },
+    {
+      "constellation": "Pegasus",
+      "star_a": "Markab",
+      "star_b": "Scheat"
+    },
+    {
+      "constellation": "Pegasus",
+      "star_a": "Scheat",
+      "star_b": "Alpheratz"
+    },
+    {
+      "constellation": "Pegasus",
+      "star_a": "Alpheratz",
+      "star_b": "Algenib"
+    },
+    {
+      "constellation": "Pegasus",
+      "star_a": "Algenib",
+      "star_b": "Markab"
+    },
+    {
+      "constellation": "Pegasus",
+      "star_a": "Markab",
+      "star_b": "Enif"
+    },
+    {
+      "constellation": "Andromeda",
+      "star_a": "Alpheratz",
+      "star_b": "Mirach"
+    },
+    {
+      "constellation": "Andromeda",
+      "star_a": "Mirach",
+      "star_b": "Almach"
+    },
+    {
+      "constellation": "Aries",
+      "star_a": "Hamal",
+      "star_b": "Sheratan"
+    },
+    {
+      "constellation": "Aquarius",
+      "star_a": "Sadalsuud",
+      "star_b": "Sadalmelik"
+    },
+    {
+      "constellation": "Aquarius",
+      "star_a": "Sadalmelik",
+      "star_b": "Skat"
+    },
+    {
+      "constellation": "Carina",
+      "star_a": "Canopus",
+      "star_b": "Miaplacidus"
+    },
+    {
+      "constellation": "Carina",
+      "star_a": "Miaplacidus",
+      "star_b": "Avior"
+    },
+    {
+      "constellation": "Carina",
+      "star_a": "Avior",
+      "star_b": "Aspidiske"
+    }
+  ]
+}

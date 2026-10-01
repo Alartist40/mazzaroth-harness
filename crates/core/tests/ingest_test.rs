@@ -83,7 +83,7 @@ fn test_provenance_validation_and_idempotent_ingest() {
     let bad_res = db.ingest_file(&bad_file);
     assert!(bad_res.is_err(), "Must reject document with empty provenance source");
 
-    // 5. Invalid license rejection
+    // 5. Invalid license rejection (all-rights-reserved)
     let bad_license_json = r#"{
         "id": "bad-lic",
         "title": "Bad License",
@@ -103,4 +103,29 @@ fn test_provenance_validation_and_idempotent_ingest() {
     std::fs::write(&bad_lic_file, bad_license_json).unwrap();
     let lic_res = db.ingest_file(&bad_lic_file);
     assert!(lic_res.is_err(), "Must reject document with unapproved license");
+
+    // 6. Restrictive license rejection (CC-BY-NC-4.0 and CC-BY-ND)
+    let nc_json = r#"{
+        "id": "bad-nc",
+        "title": "Non Commercial Doc",
+        "category": "test",
+        "language": "en",
+        "provenance": {
+            "source": "Web",
+            "publisher": "Someone",
+            "license": "CC-BY-NC-4.0",
+            "retrieved_date": "2026-09-28"
+        },
+        "structure": [
+            { "id": "ch1", "title": "Ch 1", "sections": [{ "id": "s1", "title": "S1", "text": "Hi" }] }
+        ]
+    }"#;
+    let nc_file = dir.path().join("nc.json");
+    std::fs::write(&nc_file, nc_json).unwrap();
+    assert!(db.ingest_file(&nc_file).is_err(), "Must reject CC-BY-NC");
+
+    // 7. Progressive search (AND match prioritized)
+    let search_and = db.search("survival situation", 5).unwrap();
+    assert_eq!(search_and.len(), 1);
+    assert_eq!(search_and[0].section_id, "ch-01-s-01");
 }
