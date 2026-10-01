@@ -248,6 +248,87 @@ pub async fn handle_galaxy(
         }
     }
 
+    // 5. Multilingual Scripture Language & Translation Stars along the Scripture Spiral Arm
+    let scripture_langs = state.scripture.get_languages_detailed();
+    let scripture_base_angle = cat_angle_map.get("scripture").copied().unwrap_or(0.0);
+
+    for (l_idx, lang_info) in scripture_langs.iter().enumerate() {
+        let lang_node_id = format!("lang:{}", lang_info.code);
+        let lr = 220.0 + (l_idx as f32 * 12.0);
+        let l_twist = lr * 0.003 + (l_idx as f32 * 0.06);
+        let lang_angle = scripture_base_angle + l_twist;
+
+        let lx = lang_angle.cos() * lr;
+        let ly = ((l_idx as f32 * 0.4).sin()) * 18.0;
+        let lz = lang_angle.sin() * lr;
+
+        if !existing_node_ids.contains(&lang_node_id) {
+            nodes.push(GalaxyNode {
+                id: lang_node_id.clone(),
+                label: format!("{} ({})", lang_info.name, lang_info.code.to_uppercase()),
+                category: "scripture".to_string(),
+                kind: "language".to_string(),
+                tier: "semantic".to_string(),
+                x: lx,
+                y: ly,
+                z: lz,
+                radius: 8.5,
+                color: "#ffffff".to_string(),
+                description: format!("Scripture in {} ({})", lang_info.name, lang_info.code.to_uppercase()),
+                content: format!("Scripture catalog for {}. Contains {} translation editions.", lang_info.name, lang_info.version_count),
+                doc_id: Some(lang_node_id.clone()),
+                section_id: None,
+                tags: vec!["scripture".to_string(), "language".to_string(), lang_info.code.clone()],
+            });
+            existing_node_ids.insert(lang_node_id.clone());
+
+            links.push(GalaxyLink {
+                source_id: "category:scripture".to_string(),
+                target_id: lang_node_id.clone(),
+                relationship: "contains_language".to_string(),
+                weight: 0.7,
+            });
+
+            // Translation edition stars
+            for (v_idx, ver) in lang_info.versions.iter().enumerate() {
+                let ver_node_id = format!("scripture:{}:{}", lang_info.code, ver);
+                let vr = lr + 28.0 + (v_idx as f32 * 16.0);
+                let ver_angle = lang_angle + (v_idx as f32 * 0.1);
+                let vx = ver_angle.cos() * vr;
+                let vy = ly + (v_idx as f32 * 4.0 - 6.0);
+                let vz = ver_angle.sin() * vr;
+
+                if !existing_node_ids.contains(&ver_node_id) {
+                    nodes.push(GalaxyNode {
+                        id: ver_node_id.clone(),
+                        label: format!("Holy Bible ({}, {})", ver.to_uppercase(), lang_info.name),
+                        category: "scripture".to_string(),
+                        kind: "translation".to_string(),
+                        tier: "episodic".to_string(),
+                        x: vx,
+                        y: vy,
+                        z: vz,
+                        radius: 6.5,
+                        color: "#f4f5f7".to_string(),
+                        description: format!("Holy Bible ({}) - Canonical Scripture Translation", ver.to_uppercase()),
+                        content: format!("Canonical translation {} in {}.", ver.to_uppercase(), lang_info.name),
+                        doc_id: Some(ver_node_id.clone()),
+                        section_id: None,
+                        tags: vec!["scripture".to_string(), "translation".to_string(), ver.clone()],
+                    });
+                    existing_node_ids.insert(ver_node_id.clone());
+
+                    links.push(GalaxyLink {
+                        source_id: lang_node_id.clone(),
+                        target_id: ver_node_id,
+                        relationship: "contains_version".to_string(),
+                        weight: 0.5,
+                    });
+                }
+            }
+        }
+    }
+
     let total = nodes.len();
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)

@@ -198,3 +198,28 @@ export async function getSkyProjection(params = {}) {
     return await res.json();
 }
 
+export async function getScriptureLanguagesDetailed() {
+    const res = await fetch('/api/scripture/languages/detailed');
+    if (!res.ok) throw new Error(`getScriptureLanguagesDetailed failed: ${res.status}`);
+    return await res.json();
+}
+
+export async function getScriptureVersions(lang = 'eng') {
+    const res = await fetch(`/api/scripture/versions?lang=${encodeURIComponent(lang)}`);
+    if (!res.ok) throw new Error(`getScriptureVersions failed: ${res.status}`);
+    return await res.json();
+}
+
+export async function getScriptureMeta(lang = 'eng', version = 'kjv') {
+    const res = await fetch(`/api/scripture/meta?lang=${encodeURIComponent(lang)}&version=${encodeURIComponent(version)}`);
+    if (!res.ok) throw new Error(`getScriptureMeta failed: ${res.status}`);
+    return await res.json();
+}
+
+export async function getScriptureChapter(lang = 'eng', version = 'kjv', book = 'Genesis', chapter = 1) {
+    const res = await fetch(`/api/scripture/chapter?lang=${encodeURIComponent(lang)}&version=${encodeURIComponent(version)}&book=${encodeURIComponent(book)}&chapter=${encodeURIComponent(chapter)}`);
+    if (!res.ok) throw new Error(`getScriptureChapter failed: ${res.status}`);
+    return await res.json();
+}
+
+

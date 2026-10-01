@@ -44,6 +44,7 @@ pub fn create_app(state: ServerState) -> Router {
         .route("/api/scripture", get(routes::scripture::handle_scripture_chapter))
         .route("/api/scripture/chapter", get(routes::scripture::handle_scripture_chapter))
         .route("/api/scripture/languages", get(routes::scripture::handle_scripture_languages))
+        .route("/api/scripture/languages/detailed", get(routes::scripture::handle_scripture_languages_detailed))
         .route("/api/scripture/versions", get(routes::scripture::handle_scripture_versions))
         .route("/api/notes", get(routes::notes::handle_list_notes))
         .route("/api/notes", post(routes::notes::handle_create_note))

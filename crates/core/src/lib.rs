@@ -15,6 +15,6 @@ pub use content::{
 pub use db::{DocumentSummary, LibrarianDb, MemoryLink, MemoryNode, SearchHit};
 pub use notes::{extract_backlinks, Note};
 pub use pmtiles::PmTilesHeader;
-pub use scripture::{BookMeta, ScriptureBook, ScriptureMetaResponse, ScriptureReader};
+pub use scripture::{BookMeta, ScriptureBook, ScriptureLanguageInfo, ScriptureMetaResponse, ScriptureReader};
 pub use sky::{project_sky, CardinalPoint, ConstellationLine, ProjectedStar, SkyProjection, SkyStar};
 

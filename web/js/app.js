@@ -1,5 +1,14 @@
 // MAZZAROTH Shell: 4-Module Controller, Real Reader Hierarchy Explorer, Telemetry, and Modals
-import { getStatus, getDocument, search, createMemoryNode, getKnowledgeTree } from './api.js';
+import { 
+    getStatus, 
+    getDocument, 
+    search, 
+    createMemoryNode, 
+    getKnowledgeTree, 
+    getScriptureLanguagesDetailed, 
+    getScriptureMeta, 
+    getScriptureChapter 
+} from './api.js';
 import { 
     initGalaxy, 
     renderGalaxy, 
@@ -46,12 +55,16 @@ let currentNode = null;
 let currentChapterIndex = 0;
 let textFontSize = 12;
 let cachedKnowledgeTree = null;
+let cachedScriptureLangs = null;
+let cachedScriptureMetaMap = {};
 let hierarchyState = {
-    level: 'root', // 'root', 'category', 'language', 'document', 'chapter'
+    level: 'root', // 'root', 'category', 'language', 'document', 'book'
     selectedCategory: null,
     selectedLanguage: null,
     selectedDoc: null,
-    selectedChapter: null
+    selectedBook: null,
+    selectedChapter: null,
+    filterText: ''
 };
 
 const hardwareFrame = document.getElementById('hardware-frame');
@@ -201,6 +214,38 @@ function setupReaderDeck() {
     const prevBtn = document.getElementById('btn-chapter-prev');
     const nextBtn = document.getElementById('btn-chapter-next');
     const lockBtn = document.getElementById('btn-target-lock');
+    const expandBtn = document.getElementById('btn-reader-expand');
+    const toggleSynBtn = document.getElementById('btn-toggle-synapses');
+
+    let isReaderFullscreen = false;
+    let isSynapsesExpanded = true;
+
+    if (expandBtn) {
+        expandBtn.addEventListener('click', () => {
+            isReaderFullscreen = !isReaderFullscreen;
+            const zoneGreen = document.getElementById('zone-green');
+            const zonePurple = document.getElementById('zone-purple');
+            const icon = document.getElementById('icon-reader-expand');
+            if (zoneGreen) zoneGreen.classList.toggle('hidden', isReaderFullscreen);
+            if (zonePurple) zonePurple.classList.toggle('hidden', isReaderFullscreen);
+            if (icon) {
+                icon.innerHTML = isReaderFullscreen 
+                    ? '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/>' 
+                    : '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>';
+            }
+            showToast(isReaderFullscreen ? 'Reader View Maximized' : 'Reader View Restored');
+        });
+    }
+
+    if (toggleSynBtn) {
+        toggleSynBtn.addEventListener('click', () => {
+            isSynapsesExpanded = !isSynapsesExpanded;
+            const synPills = document.getElementById('reader-synapse-pills');
+            const arrow = document.getElementById('synapse-toggle-arrow');
+            if (synPills) synPills.classList.toggle('hidden', !isSynapsesExpanded);
+            if (arrow) arrow.innerText = isSynapsesExpanded ? '▾' : '▸';
+        });
+    }
 
     if (decBtn) {
         decBtn.addEventListener('click', () => {
@@ -258,6 +303,66 @@ function setupReaderDeck() {
 
 export function loadNodeIntoReader(node) {
     if (!node) return;
+
+    // Check for Central Core or Root
+    if (node.id === 'NEXUS-0' || node.id === 'core:librarian' || node.isCore || node.is_nexus) {
+        showHierarchyRoot();
+        return;
+    }
+
+    // Check for Category stars
+    if (node.id.startsWith('category:')) {
+        const catName = node.id.replace('category:', '');
+        hierarchyState.selectedCategory = catName;
+        hierarchyState.level = 'category';
+        hierarchyState.filterText = '';
+        showHierarchyRoot();
+        return;
+    }
+
+    // Check for Scripture Language stars
+    if (node.id.startsWith('lang:')) {
+        const langCode = node.id.replace('lang:', '');
+        hierarchyState.selectedCategory = 'scripture';
+        const langObj = (cachedScriptureLangs || []).find(l => l.code === langCode) || { code: langCode, name: langCode, versions: [] };
+        hierarchyState.selectedLanguage = langObj;
+        hierarchyState.level = 'language';
+        hierarchyState.filterText = '';
+        renderHierarchyExplorer();
+        return;
+    }
+
+    // Check for Scripture Translation stars
+    if (node.id.startsWith('scripture:')) {
+        const parts = node.id.split(':');
+        if (parts.length === 3) {
+            const langCode = parts[1];
+            const ver = parts[2];
+            hierarchyState.selectedCategory = 'scripture';
+            hierarchyState.selectedLanguage = { code: langCode, name: langCode, versions: [ver] };
+            hierarchyState.selectedDoc = {
+                id: node.id,
+                lang: langCode,
+                version: ver,
+                title: node.name || `Holy Bible (${ver.toUpperCase()})`
+            };
+            hierarchyState.level = 'document';
+            hierarchyState.filterText = '';
+            renderHierarchyExplorer();
+            return;
+        } else if (parts.length >= 4) {
+            const langCode = parts[1];
+            const ver = parts[2];
+            const bookName = parts[3].replace(/_/g, ' ');
+            hierarchyState.selectedCategory = 'scripture';
+            hierarchyState.selectedLanguage = { code: langCode, name: langCode, versions: [ver] };
+            hierarchyState.selectedDoc = { id: `scripture:${langCode}:${ver}`, lang: langCode, version: ver, title: `Holy Bible (${ver.toUpperCase()})` };
+            hierarchyState.selectedBook = { name: bookName };
+            loadScriptureBookIntoReader(langCode, ver, bookName, 0);
+            return;
+        }
+    }
+
     currentNode = node;
     currentChapterIndex = 0;
 
@@ -265,24 +370,33 @@ export function loadNodeIntoReader(node) {
     const idEl = document.getElementById('reader-id');
     const titleEl = document.getElementById('reader-title');
     const synBox = document.getElementById('reader-synapse-pills');
+    const synContainer = document.getElementById('reader-synapses-container');
+    const synBadge = document.getElementById('synapse-count-badge');
     const breadcrumbs = document.getElementById('reader-breadcrumbs');
 
     if (tagEl) tagEl.innerText = (node.tags && node.tags[0]) || node.category || node.arm || 'STAR_NODE';
     if (idEl) idEl.innerText = `#${node.id || 'NEXUS-0'}`;
     if (titleEl) titleEl.innerText = node.name || node.label || 'Prime Core Nexus';
 
+    const conns = node.connections || ["NEXUS-0"];
+    if (synContainer) {
+        synContainer.classList.remove('hidden');
+    }
+    if (synBadge) {
+        synBadge.innerText = `(${conns.length})`;
+    }
+
     if (synBox) {
         synBox.innerHTML = '';
-        const conns = node.connections || ["NEXUS-0"];
         conns.forEach(targetId => {
             const btn = document.createElement('button');
-            btn.className = 'px-1.5 py-0.5 rounded border text-[8px] font-mono hover:opacity-80 transition-opacity';
+            btn.className = 'px-1.5 py-0.5 rounded border text-[8px] font-mono hover:opacity-80 transition-opacity truncate max-w-[140px]';
             btn.style.backgroundColor = 'var(--panel-bg-subtle)';
             btn.style.borderColor = 'var(--border-subtle)';
             btn.style.color = 'var(--text-main)';
             btn.innerText = targetId;
             btn.addEventListener('click', () => {
-                if (targetId === 'NEXUS-0') {
+                if (targetId === 'NEXUS-0' || targetId === 'core:librarian') {
                     showHierarchyRoot();
                 } else {
                     selectGalaxyStar(targetId);
@@ -290,11 +404,6 @@ export function loadNodeIntoReader(node) {
             });
             synBox.appendChild(btn);
         });
-    }
-
-    if (node.id === 'NEXUS-0' || node.is_nexus) {
-        showHierarchyRoot();
-        return;
     }
 
     if (breadcrumbs) {
@@ -305,7 +414,7 @@ export function loadNodeIntoReader(node) {
 
     // Map real backend document structure (/api/read/{doc_id})
     const docLookupId = node.doc_id || node.id;
-    if (docLookupId && docLookupId !== 'NEXUS-0') {
+    if (docLookupId && docLookupId !== 'NEXUS-0' && docLookupId !== 'core:librarian') {
         getDocument(docLookupId).then(doc => {
             if (doc && doc.structure && Array.isArray(doc.structure) && doc.structure.length > 0) {
                 currentNode.name = doc.title || currentNode.name;
@@ -331,12 +440,19 @@ export function loadNodeIntoReader(node) {
 
 export function showHierarchyRoot() {
     hierarchyState = {
-        level: 'root',
-        selectedCategory: null,
-        selectedLanguage: null,
-        selectedDoc: null,
-        selectedChapter: null
+        level: hierarchyState.selectedCategory ? hierarchyState.level : 'root',
+        selectedCategory: hierarchyState.selectedCategory,
+        selectedLanguage: hierarchyState.selectedLanguage,
+        selectedDoc: hierarchyState.selectedDoc,
+        selectedBook: hierarchyState.selectedBook,
+        selectedChapter: null,
+        filterText: ''
     };
+
+    const synContainer = document.getElementById('reader-synapses-container');
+    if (synContainer) {
+        synContainer.classList.add('hidden');
+    }
 
     const tagEl = document.getElementById('reader-tag');
     const idEl = document.getElementById('reader-id');
@@ -346,11 +462,13 @@ export function showHierarchyRoot() {
     if (idEl) idEl.innerText = '#NEXUS-0';
     if (titleEl) titleEl.innerText = 'Knowledge Themes & Hierarchy';
 
-    if (!cachedKnowledgeTree) {
-        getKnowledgeTree().then(tree => {
-            cachedKnowledgeTree = tree;
-            renderHierarchyExplorer();
-        }).catch(() => {
+    if (!cachedKnowledgeTree || !cachedScriptureLangs) {
+        Promise.all([
+            cachedKnowledgeTree ? Promise.resolve(cachedKnowledgeTree) : getKnowledgeTree().catch(() => null),
+            cachedScriptureLangs ? Promise.resolve(cachedScriptureLangs) : getScriptureLanguagesDetailed().catch(() => null)
+        ]).then(([tree, langs]) => {
+            if (tree) cachedKnowledgeTree = tree;
+            if (langs) cachedScriptureLangs = langs;
             renderHierarchyExplorer();
         });
     } else {
@@ -367,7 +485,7 @@ function updateBreadcrumbs() {
 
     const addCrumb = (label, onClick) => {
         const btn = document.createElement('button');
-        btn.className = 'tree-breadcrumb-btn cursor-pointer';
+        btn.className = 'tree-breadcrumb-btn cursor-pointer font-mono text-[9px] hover:underline';
         btn.innerText = label;
         btn.style.color = 'var(--text-secondary)';
         btn.addEventListener('click', onClick);
@@ -376,6 +494,7 @@ function updateBreadcrumbs() {
 
     const addSeparator = () => {
         const span = document.createElement('span');
+        span.className = 'text-[9px] px-0.5';
         span.innerText = '›';
         span.style.color = 'var(--border-subtle)';
         breadcrumbs.appendChild(span);
@@ -389,28 +508,133 @@ function updateBreadcrumbs() {
             hierarchyState.level = 'category';
             hierarchyState.selectedLanguage = null;
             hierarchyState.selectedDoc = null;
+            hierarchyState.selectedBook = null;
             hierarchyState.selectedChapter = null;
+            hierarchyState.filterText = '';
             renderHierarchyExplorer();
         });
     }
 
     if (hierarchyState.selectedLanguage) {
         addSeparator();
-        addCrumb(hierarchyState.selectedLanguage.toUpperCase(), () => {
+        const lName = typeof hierarchyState.selectedLanguage === 'object' 
+            ? (hierarchyState.selectedLanguage.name || hierarchyState.selectedLanguage.code)
+            : hierarchyState.selectedLanguage;
+        addCrumb(lName.toUpperCase(), () => {
             hierarchyState.level = 'language';
             hierarchyState.selectedDoc = null;
+            hierarchyState.selectedBook = null;
             hierarchyState.selectedChapter = null;
+            hierarchyState.filterText = '';
             renderHierarchyExplorer();
         });
     }
 
     if (hierarchyState.selectedDoc) {
         addSeparator();
-        addCrumb(hierarchyState.selectedDoc.title, () => {
+        const dTitle = hierarchyState.selectedDoc.title || hierarchyState.selectedDoc.id;
+        addCrumb(dTitle.length > 20 ? dTitle.slice(0, 18) + '…' : dTitle, () => {
             hierarchyState.level = 'document';
+            hierarchyState.selectedBook = null;
             hierarchyState.selectedChapter = null;
+            hierarchyState.filterText = '';
             renderHierarchyExplorer();
         });
+    }
+
+    if (hierarchyState.selectedBook) {
+        addSeparator();
+        addCrumb(hierarchyState.selectedBook.name.toUpperCase(), () => {
+            hierarchyState.level = 'book';
+            hierarchyState.selectedChapter = null;
+            hierarchyState.filterText = '';
+            renderHierarchyExplorer();
+        });
+    }
+}
+
+async function loadScriptureBookIntoReader(langCode, versionCode, bookName, chapterIndex = 0) {
+    const docId = `scripture:${langCode}:${versionCode}:${bookName}`;
+    const box = document.getElementById('reader-content-box');
+    if (box) {
+        box.innerHTML = `<div class="p-6 text-center font-mono text-xs" style="color: var(--text-muted);">Loading ${escapeHtml(bookName)}...</div>`;
+    }
+    
+    try {
+        const fullDoc = await getDocument(docId);
+        currentNode = {
+            id: docId,
+            doc_id: docId,
+            name: `${fullDoc.title || bookName}`,
+            category: 'SCRIPTURE',
+            provenance: fullDoc.provenance,
+            chapters: fullDoc.structure.map(ch => {
+                const header = ch.title ? `${ch.title}\n\n` : '';
+                const body = (ch.sections || []).map(s => {
+                    const secTitle = s.title ? `${s.title}\n` : '';
+                    return secTitle + s.text;
+                }).join('\n\n');
+                return (header + body).trim();
+            })
+        };
+        currentChapterIndex = chapterIndex;
+
+        const titleEl = document.getElementById('reader-title');
+        const tagEl = document.getElementById('reader-tag');
+        const idEl = document.getElementById('reader-id');
+        if (titleEl) titleEl.innerText = currentNode.name;
+        if (tagEl) tagEl.innerText = currentNode.category;
+        if (idEl) idEl.innerText = `#${docId}`;
+
+        hierarchyState.selectedChapter = chapterIndex + 1;
+        updateBreadcrumbs();
+        renderChapterBody();
+    } catch (e) {
+        if (box) {
+            box.innerHTML = `<div class="p-6 text-center font-mono text-xs text-red-500">Failed to load scripture: ${escapeHtml(e.message)}</div>`;
+        }
+    }
+}
+
+async function loadDocumentIntoReader(docId, chapterIndex = 0) {
+    const box = document.getElementById('reader-content-box');
+    if (box) {
+        box.innerHTML = `<div class="p-6 text-center font-mono text-xs" style="color: var(--text-muted);">Loading document...</div>`;
+    }
+    
+    try {
+        const fullDoc = await getDocument(docId);
+        currentNode = {
+            id: docId,
+            doc_id: docId,
+            name: fullDoc.title,
+            category: (fullDoc.category || '').toUpperCase(),
+            provenance: fullDoc.provenance,
+            chapters: fullDoc.structure.map(ch => {
+                const header = ch.title ? `${ch.title}\n\n` : '';
+                const body = (ch.sections || []).map(s => {
+                    const secTitle = s.title ? `${s.title}\n` : '';
+                    return secTitle + s.text;
+                }).join('\n\n');
+                return (header + body).trim();
+            })
+        };
+        currentChapterIndex = chapterIndex;
+
+        const titleEl = document.getElementById('reader-title');
+        const tagEl = document.getElementById('reader-tag');
+        const idEl = document.getElementById('reader-id');
+        if (titleEl) titleEl.innerText = currentNode.name;
+        if (tagEl) tagEl.innerText = currentNode.category;
+        if (idEl) idEl.innerText = `#${docId}`;
+
+        hierarchyState.selectedChapter = chapterIndex + 1;
+        updateBreadcrumbs();
+        renderChapterBody();
+    } catch (e) {
+        if (box) {
+            box.innerHTML = `<div class="p-6 text-center font-mono text-xs text-red-500">Failed to load document: ${escapeHtml(e.message)}</div>`;
+        }
     }
 }
 
@@ -424,6 +648,10 @@ function renderHierarchyExplorer() {
 
     const tree = cachedKnowledgeTree || [
         {
+            category: 'scripture',
+            languages: [{ language: 'eng', documents: [{ id: 'scripture:eng:kjv', title: 'Holy Bible (KJV, English)', chapters: [] }] }]
+        },
+        {
             category: 'astronomy',
             languages: [{ language: 'en', documents: [{ id: 'star-navigation-handbook', title: 'Star Navigation & Celestial Lore Handbook', chapters: [] }] }]
         },
@@ -436,18 +664,38 @@ function renderHierarchyExplorer() {
             languages: [{ language: 'en', documents: [{ id: 'emergency-medical-protocols', title: 'Emergency Medical Protocols', chapters: [] }] }]
         },
         {
-            category: 'scripture',
-            languages: [{ language: 'en', documents: [{ id: 'kjv-scriptures', title: 'Authorized King James Scripture', chapters: [] }] }]
+            category: 'cognitive',
+            languages: [{ language: 'en', documents: [{ id: 'cognitive-memory-index', title: 'Cognitive Memory Vault', chapters: [] }] }]
         }
     ];
 
     // Category meta info
     const categoryIcons = {
-        astronomy: { icon: '🔭', label: 'ASTRONOMY & ASTROMETRY', desc: 'Star navigation handbook, celestial lore & coordinates' },
-        survival: { icon: '🌲', label: 'SURVIVAL & EXPEDITION', desc: 'Water purification, shelter fabrication & wilderness tactics' },
-        medical: { icon: '🏥', label: 'EMERGENCY MEDICAL', desc: 'First responder protocols, triage, & wound intervention' },
-        scripture: { icon: '📜', label: 'SCRIPTURE & SACRED TEXTS', desc: 'Multilingual canonical scriptures & classical commentaries' },
-        cognitive: { icon: '🧠', label: 'COGNITIVE MEMORY', desc: 'Sovereign neural memory stars & contextual linkages' }
+        scripture: { 
+            icon: '📜', 
+            label: 'SCRIPTURE & SACRED TEXTS', 
+            desc: '66 Languages, 226 Translations & Thousands of Canonical Books' 
+        },
+        astronomy: { 
+            icon: '🔭', 
+            label: 'ASTRONOMY & ASTROMETRY', 
+            desc: 'Star navigation handbook, celestial lore & ephemeris data' 
+        },
+        survival: { 
+            icon: '🌲', 
+            label: 'SURVIVAL & EXPEDITION', 
+            desc: 'Field manual, water purification, shelter & wilderness tactics' 
+        },
+        medical: { 
+            icon: '🏥', 
+            label: 'EMERGENCY MEDICAL', 
+            desc: 'First responder protocols, triage & wound intervention' 
+        },
+        cognitive: { 
+            icon: '🧠', 
+            label: 'COGNITIVE MEMORY', 
+            desc: 'Sovereign neural memory stars & contextual linkages' 
+        }
     };
 
     // LEVEL 0: ROOT CATEGORIES
@@ -455,34 +703,57 @@ function renderHierarchyExplorer() {
         let html = `
             <div class="space-y-3 font-mono">
                 <div class="text-[11px] leading-relaxed" style="color: var(--text-secondary);">
-                    Select a knowledge theme to explore languages, documents, and individual chapters:
+                    Select a knowledge theme to explore languages, translations, books, and chapters:
                 </div>
-                <div class="grid grid-cols-1 gap-2">
+                <div class="grid grid-cols-1 gap-2.5">
         `;
 
-        tree.forEach(cat => {
-            const meta = categoryIcons[cat.category.toLowerCase()] || {
+        // Ensure scripture is first
+        const orderedCategories = ['scripture', 'astronomy', 'survival', 'medical', 'cognitive'];
+        const renderedSet = new Set();
+
+        const renderCatCard = (catName) => {
+            const cat = tree.find(c => c.category.toLowerCase() === catName) || { category: catName, languages: [] };
+            const meta = categoryIcons[catName] || {
                 icon: '📁',
-                label: cat.category.toUpperCase(),
+                label: catName.toUpperCase(),
                 desc: 'Indexed domain knowledge and documents'
             };
-            const totalDocs = (cat.languages || []).reduce((acc, l) => acc + (l.documents || []).length, 0);
+
+            let countLabel = '';
+            if (catName === 'scripture') {
+                const langCount = cachedScriptureLangs ? cachedScriptureLangs.length : 66;
+                countLabel = `${langCount} LANGS / 226 VERSIONS ›`;
+            } else {
+                const totalDocs = (cat.languages || []).reduce((acc, l) => acc + (l.documents || []).length, 0);
+                countLabel = `${totalDocs} ${totalDocs === 1 ? 'DOC' : 'DOCS'} ›`;
+            }
 
             html += `
-                <div data-cat="${escapeHtml(cat.category)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between"
+                <div data-cat="${escapeHtml(cat.category)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between transition-all hover:scale-[1.01]"
                      style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
                     <div class="flex items-center space-x-3">
-                        <div class="text-xl p-1.5 rounded-lg border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">${meta.icon}</div>
+                        <div class="text-xl p-2 rounded-lg border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">${meta.icon}</div>
                         <div>
                             <div class="font-bold text-xs" style="color: var(--text-main);">${escapeHtml(meta.label)}</div>
                             <div class="text-[9px] mt-0.5" style="color: var(--text-secondary);">${escapeHtml(meta.desc)}</div>
                         </div>
                     </div>
-                    <span class="text-[9px] px-2 py-0.5 rounded border font-semibold" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
-                        ${totalDocs} ${totalDocs === 1 ? 'DOC' : 'DOCS'} ›
+                    <span class="text-[8.5px] px-2.5 py-1 rounded border font-semibold shrink-0" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
+                        ${countLabel}
                     </span>
                 </div>
             `;
+            renderedSet.add(catName);
+        };
+
+        orderedCategories.forEach(catName => renderCatCard(catName));
+
+        tree.forEach(cat => {
+            const low = cat.category.toLowerCase();
+            if (!renderedSet.has(low)) {
+                renderCatCard(low);
+            }
         });
 
         html += `
@@ -497,20 +768,116 @@ function renderHierarchyExplorer() {
                 const catName = el.getAttribute('data-cat');
                 hierarchyState.selectedCategory = catName;
                 hierarchyState.level = 'category';
+                hierarchyState.filterText = '';
                 renderHierarchyExplorer();
             });
         });
         return;
     }
 
-    // LEVEL 1: CATEGORY (Show Languages or Direct Documents)
-    const catData = tree.find(c => c.category === hierarchyState.selectedCategory);
-    if (!catData) {
-        showHierarchyRoot();
-        return;
-    }
-
+    // LEVEL 1: CATEGORY (Show Languages)
     if (hierarchyState.level === 'category') {
+        const catName = hierarchyState.selectedCategory.toLowerCase();
+
+        if (catName === 'scripture') {
+            const allLangs = cachedScriptureLangs || [];
+            const filter = (hierarchyState.filterText || '').trim().toLowerCase();
+            const filteredLangs = allLangs.filter(l => {
+                if (!filter) return true;
+                return (l.code && l.code.toLowerCase().includes(filter)) ||
+                       (l.name && l.name.toLowerCase().includes(filter)) ||
+                       (l.native_name && l.native_name.toLowerCase().includes(filter));
+            });
+
+            let html = `
+                <div class="space-y-3 font-mono">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold" style="color: var(--text-main);">
+                            SCRIPTURE: 66 LANGUAGES (${filteredLangs.length} MATCHED)
+                        </span>
+                        <button id="btn-tree-back-root" class="text-[9px] px-2 py-0.5 rounded border hover:opacity-80"
+                                style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ THEMES</button>
+                    </div>
+
+                    <div class="relative">
+                        <input id="input-lang-filter" type="text" placeholder="Filter 66 languages... (e.g. English, 日本語, Deutsch, Hebrew, Greek)"
+                               value="${escapeHtml(hierarchyState.filterText || '')}"
+                               class="w-full text-xs font-mono px-3 py-1.5 rounded-lg border outline-none transition-all"
+                               style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);" />
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[580px] overflow-y-auto reader-scroll pr-1">
+            `;
+
+            if (filteredLangs.length === 0) {
+                html += `
+                    <div class="col-span-2 p-6 text-center text-xs" style="color: var(--text-muted);">
+                        No languages found matching "${escapeHtml(filter)}".
+                    </div>
+                `;
+            } else {
+                filteredLangs.forEach(l => {
+                    const vCount = (l.versions || []).length;
+                    html += `
+                        <div data-lang-code="${escapeHtml(l.code)}" class="tree-node-card cursor-pointer p-2.5 rounded-xl border flex items-center justify-between transition-all hover:scale-[1.01]"
+                             style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                            <div class="flex items-center space-x-2.5 min-w-0">
+                                <span class="w-9 h-7 rounded border font-bold text-[10px] flex items-center justify-center shrink-0 uppercase"
+                                      style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
+                                    ${escapeHtml(l.code)}
+                                </span>
+                                <div class="min-w-0">
+                                    <div class="font-bold text-xs truncate" style="color: var(--text-main);">${escapeHtml(l.name)}</div>
+                                    <div class="text-[9px] truncate" style="color: var(--text-secondary);">${escapeHtml(l.native_name || l.name)}</div>
+                                </div>
+                            </div>
+                            <span class="text-[8px] px-1.5 py-0.5 rounded border font-semibold shrink-0 ml-1"
+                                  style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-muted);">
+                                ${vCount} ${vCount === 1 ? 'VER' : 'VERS'} ›
+                            </span>
+                        </div>
+                    `;
+                });
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            box.innerHTML = html;
+
+            const backBtn = document.getElementById('btn-tree-back-root');
+            if (backBtn) backBtn.addEventListener('click', () => showHierarchyRoot());
+
+            const filterInput = document.getElementById('input-lang-filter');
+            if (filterInput) {
+                filterInput.addEventListener('input', (e) => {
+                    hierarchyState.filterText = e.target.value;
+                    renderHierarchyExplorer();
+                    const newInp = document.getElementById('input-lang-filter');
+                    if (newInp) {
+                        newInp.focus();
+                        newInp.selectionStart = newInp.selectionEnd = newInp.value.length;
+                    }
+                });
+            }
+
+            box.querySelectorAll('[data-lang-code]').forEach(el => {
+                el.addEventListener('click', () => {
+                    const code = el.getAttribute('data-lang-code');
+                    const langObj = (cachedScriptureLangs || []).find(l => l.code === code) || { code, name: code, versions: [] };
+                    hierarchyState.selectedLanguage = langObj;
+                    hierarchyState.level = 'language';
+                    hierarchyState.filterText = '';
+                    renderHierarchyExplorer();
+                });
+            });
+            return;
+        }
+
+        // Standard non-scripture category
+        const catData = tree.find(c => c.category.toLowerCase() === catName) || { category: catName, languages: [] };
         const langs = catData.languages || [];
 
         let html = `
@@ -518,7 +885,7 @@ function renderHierarchyExplorer() {
                 <div class="text-[11px] leading-relaxed flex items-center justify-between" style="color: var(--text-secondary);">
                     <span>THEME: <strong style="color: var(--text-main);">${escapeHtml(hierarchyState.selectedCategory.toUpperCase())}</strong></span>
                     <button id="btn-tree-back-root" class="text-[9px] px-2 py-0.5 rounded border hover:opacity-80"
-                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ BACK TO THEMES</button>
+                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ THEMES</button>
                 </div>
                 <div class="grid grid-cols-1 gap-2">
         `;
@@ -566,23 +933,112 @@ function renderHierarchyExplorer() {
         return;
     }
 
-    // LEVEL 2: LANGUAGE (Show Documents)
-    const langData = catData.languages.find(l => l.language === hierarchyState.selectedLanguage);
-    if (!langData) {
-        hierarchyState.level = 'category';
-        renderHierarchyExplorer();
-        return;
-    }
-
+    // LEVEL 2: LANGUAGE (Show Versions or Documents)
     if (hierarchyState.level === 'language') {
+        const catName = (hierarchyState.selectedCategory || '').toLowerCase();
+
+        if (catName === 'scripture') {
+            const langObj = typeof hierarchyState.selectedLanguage === 'object'
+                ? hierarchyState.selectedLanguage
+                : (cachedScriptureLangs || []).find(l => l.code === hierarchyState.selectedLanguage) || { code: hierarchyState.selectedLanguage, name: hierarchyState.selectedLanguage, versions: [] };
+            
+            const versions = langObj.versions || [];
+
+            let html = `
+                <div class="space-y-3 font-mono">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold" style="color: var(--text-main);">${escapeHtml(langObj.name)}</span>
+                            <span class="text-[10px] ml-1" style="color: var(--text-secondary);">(${escapeHtml(langObj.native_name || langObj.code)})</span>
+                        </div>
+                        <button id="btn-tree-back-langs" class="text-[9px] px-2 py-0.5 rounded border hover:opacity-80"
+                                style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ ALL LANGUAGES</button>
+                    </div>
+
+                    <div class="text-[10px]" style="color: var(--text-muted);">
+                        Available Bible Translations (${versions.length}):
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-2.5">
+            `;
+
+            versions.forEach(ver => {
+                html += `
+                    <div data-ver="${escapeHtml(ver)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between transition-all hover:scale-[1.01]"
+                         style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-12 h-8 rounded border font-bold text-xs flex items-center justify-center shrink-0 uppercase font-mono"
+                                  style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
+                                ${escapeHtml(ver.toUpperCase())}
+                            </span>
+                            <div>
+                                <div class="font-bold text-xs" style="color: var(--text-main);">Holy Bible (${escapeHtml(ver.toUpperCase())})</div>
+                                <div class="text-[9px] mt-0.5" style="color: var(--text-secondary);">Canonical Scripture Translation • Sovereign Archive</div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] px-2.5 py-1 rounded border font-semibold uppercase"
+                              style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
+                            BOOKS ›
+                        </span>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            box.innerHTML = html;
+
+            const backBtn = document.getElementById('btn-tree-back-langs');
+            if (backBtn) {
+                backBtn.addEventListener('click', () => {
+                    hierarchyState.level = 'category';
+                    hierarchyState.selectedLanguage = null;
+                    hierarchyState.filterText = '';
+                    renderHierarchyExplorer();
+                });
+            }
+
+            box.querySelectorAll('[data-ver]').forEach(el => {
+                el.addEventListener('click', async () => {
+                    const ver = el.getAttribute('data-ver');
+                    const langCode = langObj.code;
+                    hierarchyState.selectedDoc = {
+                        id: `scripture:${langCode}:${ver}`,
+                        lang: langCode,
+                        version: ver,
+                        title: `Holy Bible (${ver.toUpperCase()}, ${langObj.name})`
+                    };
+                    hierarchyState.level = 'document';
+                    hierarchyState.filterText = '';
+
+                    // Pre-fetch metadata for books list
+                    const metaKey = `${langCode}:${ver}`;
+                    if (!cachedScriptureMetaMap[metaKey]) {
+                        try {
+                            cachedScriptureMetaMap[metaKey] = await getScriptureMeta(langCode, ver);
+                        } catch (e) {}
+                    }
+                    renderHierarchyExplorer();
+                });
+            });
+            return;
+        }
+
+        // Standard non-scripture category
+        const catData = tree.find(c => c.category.toLowerCase() === catName) || { category: catName, languages: [] };
+        const langCode = typeof hierarchyState.selectedLanguage === 'object' ? hierarchyState.selectedLanguage.language : hierarchyState.selectedLanguage;
+        const langData = (catData.languages || []).find(l => l.language === langCode) || { language: langCode, documents: [] };
         const docs = langData.documents || [];
 
         let html = `
             <div class="space-y-3 font-mono">
                 <div class="text-[11px] leading-relaxed flex items-center justify-between" style="color: var(--text-secondary);">
-                    <span>DOCUMENTS [${escapeHtml(hierarchyState.selectedLanguage.toUpperCase())}]</span>
+                    <span>DOCUMENTS [${escapeHtml(langCode.toUpperCase())}]</span>
                     <button id="btn-tree-back-cat" class="text-[9px] px-2 py-0.5 rounded border hover:opacity-80"
-                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ BACK TO LANGUAGES</button>
+                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ LANGUAGES</button>
                 </div>
                 <div class="grid grid-cols-1 gap-2">
         `;
@@ -633,8 +1089,132 @@ function renderHierarchyExplorer() {
         return;
     }
 
-    // LEVEL 3: DOCUMENT (Show Chapters)
+    // LEVEL 3: DOCUMENT (Show Books for Scripture, Chapters for Docs)
     if (hierarchyState.level === 'document') {
+        const catName = (hierarchyState.selectedCategory || '').toLowerCase();
+
+        if (catName === 'scripture') {
+            const doc = hierarchyState.selectedDoc;
+            const metaKey = `${doc.lang}:${doc.version}`;
+            const meta = cachedScriptureMetaMap[metaKey];
+
+            if (!meta || !meta.books) {
+                box.innerHTML = `<div class="p-6 text-center font-mono text-xs" style="color: var(--text-muted);">Loading books catalog...</div>`;
+                getScriptureMeta(doc.lang, doc.version).then(m => {
+                    cachedScriptureMetaMap[metaKey] = m;
+                    renderHierarchyExplorer();
+                }).catch(() => {
+                    box.innerHTML = `<div class="p-6 text-center font-mono text-xs text-red-500">Failed to load translation books.</div>`;
+                });
+                return;
+            }
+
+            const allBooks = meta.books || [];
+            const filter = (hierarchyState.filterText || '').trim().toLowerCase();
+            const filteredBooks = allBooks.filter(b => {
+                if (!filter) return true;
+                return b.name.toLowerCase().includes(filter);
+            });
+
+            let html = `
+                <div class="space-y-3 font-mono">
+                    <div class="flex items-center justify-between">
+                        <div class="truncate pr-2">
+                            <span class="text-xs font-bold" style="color: var(--text-main);">${escapeHtml(doc.title)}</span>
+                            <div class="text-[9px]" style="color: var(--text-muted);">${filteredBooks.length} Canonical Books</div>
+                        </div>
+                        <button id="btn-tree-back-vers" class="text-[9px] px-2 py-0.5 rounded border hover:opacity-80 shrink-0"
+                                style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ VERSIONS</button>
+                    </div>
+
+                    <div class="relative">
+                        <input id="input-book-filter" type="text" placeholder="Filter canonical books... (e.g. Genesis, Psalms, John, Romans, Rev)"
+                               value="${escapeHtml(hierarchyState.filterText || '')}"
+                               class="w-full text-xs font-mono px-3 py-1.5 rounded-lg border outline-none transition-all"
+                               style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);" />
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[560px] overflow-y-auto reader-scroll pr-1">
+            `;
+
+            if (filteredBooks.length === 0) {
+                html += `
+                    <div class="col-span-2 p-6 text-center text-xs" style="color: var(--text-muted);">
+                        No books matching "${escapeHtml(filter)}".
+                    </div>
+                `;
+            } else {
+                filteredBooks.forEach((b, idx) => {
+                    html += `
+                        <div data-book-name="${escapeHtml(b.name)}" data-book-chapters="${b.chapters}" class="tree-node-card cursor-pointer p-2.5 rounded-xl border flex items-center justify-between transition-all hover:scale-[1.01]"
+                             style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                            <div class="min-w-0 pr-1">
+                                <div class="font-bold text-xs truncate" style="color: var(--text-main);">${escapeHtml(b.name)}</div>
+                                <div class="text-[8.5px]" style="color: var(--text-secondary);">${b.chapters} ${b.chapters === 1 ? 'Chapter' : 'Chapters'}</div>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button data-read-book="${escapeHtml(b.name)}" class="text-[8px] px-2 py-0.5 rounded border font-bold uppercase transition-all"
+                                        style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
+                                    READ ›
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            box.innerHTML = html;
+
+            const backBtn = document.getElementById('btn-tree-back-vers');
+            if (backBtn) {
+                backBtn.addEventListener('click', () => {
+                    hierarchyState.level = 'language';
+                    hierarchyState.selectedDoc = null;
+                    hierarchyState.filterText = '';
+                    renderHierarchyExplorer();
+                });
+            }
+
+            const filterInput = document.getElementById('input-book-filter');
+            if (filterInput) {
+                filterInput.addEventListener('input', (e) => {
+                    hierarchyState.filterText = e.target.value;
+                    renderHierarchyExplorer();
+                    const newInp = document.getElementById('input-book-filter');
+                    if (newInp) {
+                        newInp.focus();
+                        newInp.selectionStart = newInp.selectionEnd = newInp.value.length;
+                    }
+                });
+            }
+
+            box.querySelectorAll('[data-read-book]').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const bName = el.getAttribute('data-read-book');
+                    hierarchyState.selectedBook = { name: bName };
+                    loadScriptureBookIntoReader(doc.lang, doc.version, bName, 0);
+                });
+            });
+
+            box.querySelectorAll('[data-book-name]').forEach(el => {
+                el.addEventListener('click', () => {
+                    const bName = el.getAttribute('data-book-name');
+                    const bChapters = parseInt(el.getAttribute('data-book-chapters') || '1', 10);
+                    hierarchyState.selectedBook = { name: bName, chapters: bChapters };
+                    hierarchyState.level = 'book';
+                    renderHierarchyExplorer();
+                });
+            });
+            return;
+        }
+
+        // Standard non-scripture document chapters
         const doc = hierarchyState.selectedDoc;
         const chapters = doc.chapters || [];
 
@@ -643,7 +1223,7 @@ function renderHierarchyExplorer() {
                 <div class="text-[11px] leading-relaxed flex items-center justify-between" style="color: var(--text-secondary);">
                     <span class="truncate pr-2 font-bold" style="color: var(--text-main);">${escapeHtml(doc.title)}</span>
                     <button id="btn-tree-back-docs" class="text-[9px] px-2 py-0.5 rounded border hover:opacity-80 shrink-0"
-                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ BACK TO BOOKS</button>
+                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ DOCUMENTS</button>
                 </div>
                 <div class="grid grid-cols-1 gap-2">
         `;
@@ -683,33 +1263,64 @@ function renderHierarchyExplorer() {
         box.querySelectorAll('[data-ch-idx]').forEach(el => {
             const idx = parseInt(el.getAttribute('data-ch-idx'), 10);
             el.addEventListener('click', () => {
-                getDocument(doc.id).then(fullDoc => {
-                    currentNode = {
-                        id: doc.id,
-                        doc_id: doc.id,
-                        name: fullDoc.title,
-                        category: (fullDoc.category || '').toUpperCase(),
-                        provenance: fullDoc.provenance,
-                        chapters: fullDoc.structure.map(ch => {
-                            const header = ch.title ? `${ch.title}\n\n` : '';
-                            const body = (ch.sections || []).map(s => {
-                                const secTitle = s.title ? `${s.title}\n` : '';
-                                return secTitle + s.text;
-                            }).join('\n\n');
-                            return (header + body).trim();
-                        })
-                    };
-                    currentChapterIndex = idx;
+                loadDocumentIntoReader(doc.id, idx);
+            });
+        });
+        return;
+    }
 
-                    const titleEl = document.getElementById('reader-title');
-                    const tagEl = document.getElementById('reader-tag');
-                    const idEl = document.getElementById('reader-id');
-                    if (titleEl) titleEl.innerText = currentNode.name;
-                    if (tagEl) tagEl.innerText = currentNode.category;
-                    if (idEl) idEl.innerText = `#${doc.id}`;
+    // LEVEL 4: BOOK (Chapters Grid for Scripture)
+    if (hierarchyState.level === 'book') {
+        const doc = hierarchyState.selectedDoc;
+        const book = hierarchyState.selectedBook;
+        const totalCh = book.chapters || 1;
 
-                    renderChapterBody();
-                });
+        let html = `
+            <div class="space-y-3 font-mono">
+                <div class="flex items-center justify-between">
+                    <div class="truncate pr-2">
+                        <span class="text-xs font-bold" style="color: var(--text-main);">${escapeHtml(book.name)}</span>
+                        <div class="text-[9px]" style="color: var(--text-muted);">${totalCh} Chapters • ${escapeHtml(doc.title)}</div>
+                    </div>
+                    <button id="btn-tree-back-booklist" class="text-[9px] px-2 py-0.5 rounded border hover:opacity-80 shrink-0"
+                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ BOOKS</button>
+                </div>
+
+                <div class="text-[10px]" style="color: var(--text-secondary);">
+                    Select Chapter to Read:
+                </div>
+
+                <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-[560px] overflow-y-auto reader-scroll pr-1">
+        `;
+
+        for (let c = 1; c <= totalCh; c++) {
+            html += `
+                <button data-open-ch="${c}" class="py-2.5 rounded-lg border font-bold text-xs transition-all hover:scale-105"
+                        style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-main);">
+                    ${c}
+                </button>
+            `;
+        }
+
+        html += `
+                </div>
+            </div>
+        `;
+
+        box.innerHTML = html;
+
+        const backBtn = document.getElementById('btn-tree-back-booklist');
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                hierarchyState.level = 'document';
+                renderHierarchyExplorer();
+            });
+        }
+
+        box.querySelectorAll('[data-open-ch]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const chNum = parseInt(btn.getAttribute('data-open-ch'), 10);
+                loadScriptureBookIntoReader(doc.lang, doc.version, book.name, chNum - 1);
             });
         });
     }
@@ -732,9 +1343,9 @@ function renderChapterBody() {
     // Quick button to open category index
     const indexBar = `
         <div class="flex items-center justify-between pb-2 mb-2 border-b font-mono text-[9px]" style="border-color: var(--border-subtle);">
-            <button id="btn-reader-open-index" class="px-2 py-0.5 rounded border hover:opacity-80 flex items-center gap-1"
+            <button id="btn-reader-open-index" class="px-2 py-0.5 rounded border hover:opacity-80 flex items-center gap-1 transition-all"
                     style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
-                <span>📁</span> <strong>BROWSE CATEGORY THEMES</strong>
+                <span>📁</span> <strong>EXPLORE HIERARCHY / THEMES</strong>
             </button>
             <span style="color: var(--text-muted);">${escapeHtml(currentNode.category || 'DOCUMENT')}</span>
         </div>
@@ -742,11 +1353,11 @@ function renderChapterBody() {
 
     // Format real provenance footer
     const provFooter = currentNode.provenance 
-        ? `<div class="mt-3 pt-2 border-t font-mono text-[9px]" style="border-color: var(--border-subtle); color: var(--text-muted);">
+        ? `<div class="mt-4 pt-2.5 border-t font-mono text-[9px]" style="border-color: var(--border-subtle); color: var(--text-muted);">
             <div><strong>PROVENANCE:</strong> ${escapeHtml(currentNode.provenance.publisher || currentNode.provenance.source || 'Verified Source')}</div>
-            <div class="text-[8px] opacity-75">License: ${escapeHtml(currentNode.provenance.license || 'public-domain')} • Date: ${escapeHtml(currentNode.provenance.retrieved_date || '2026-09-28')}</div>
+            <div class="text-[8px] opacity-75 mt-0.5">License: ${escapeHtml(currentNode.provenance.license || 'public-domain')} • Retr: ${escapeHtml(currentNode.provenance.retrieved_date || '2026-09-28')}</div>
            </div>`
-        : `<div class="mt-3 pt-2 border-t font-mono text-[9px]" style="border-color: var(--border-subtle); color: var(--text-muted);">PROVENANCE: LOCAL SOVEREIGN ARCHIVE</div>`;
+        : `<div class="mt-4 pt-2.5 border-t font-mono text-[9px]" style="border-color: var(--border-subtle); color: var(--text-muted);">PROVENANCE: LOCAL SOVEREIGN ARCHIVE</div>`;
 
     box.innerHTML = `${indexBar}<p class="text-justify font-sans leading-relaxed whitespace-pre-line">${escapeHtml(text)}</p>${provFooter}`;
     updateReaderFontSize();
@@ -860,6 +1471,14 @@ function setupToolbars() {
         });
     }
 
+    const hierarchyBtn = document.getElementById('tool-hierarchy');
+    if (hierarchyBtn) {
+        hierarchyBtn.addEventListener('click', () => {
+            showHierarchyRoot();
+            showToast('Knowledge Themes Opened');
+        });
+    }
+
     const mapGratBtn = document.getElementById('tool-map-graticule');
     if (mapGratBtn) {
         mapGratBtn.addEventListener('click', () => {
@@ -902,7 +1521,7 @@ function setupToolbars() {
     }
 }
 
-// ⌘K Search (Nodes + BM25)
+// ⌘K Search (Nodes + BM25 + Scripture Corpus)
 function setupSearchModal() {
     const sModal = document.getElementById('modal-search');
     const sBtn = document.getElementById('btn-star-search');
@@ -949,12 +1568,13 @@ function setupSearchModal() {
         sResults.innerHTML = '';
 
         if (!q) {
-            sResults.innerHTML = `<div class="p-3 font-mono text-[10px] text-center" style="color: var(--text-muted);">Type to search database nodes and BM25 index...</div>`;
+            sResults.innerHTML = `<div class="p-3 font-mono text-[10px] text-center" style="color: var(--text-muted);">Type to search database nodes, 66 scripture languages, and BM25 index...</div>`;
             return;
         }
 
         try {
             const hits = [];
+            const lowQ = q.toLowerCase();
 
             // 1. Backend BM25 chunks
             try {
@@ -964,33 +1584,89 @@ function setupSearchModal() {
                         id: h.doc_id,
                         title: h.doc_title,
                         subtitle: h.snippet,
-                        badge: 'BM25'
+                        badge: 'BM25',
+                        type: 'doc'
                     }));
                 }
             } catch (e) {}
 
+            // 2. Scripture Languages & Versions Matching
+            const langs = cachedScriptureLangs || [];
+            langs.forEach(l => {
+                if (l.name.toLowerCase().includes(lowQ) || (l.native_name && l.native_name.toLowerCase().includes(lowQ)) || l.code.toLowerCase() === lowQ) {
+                    hits.push({
+                        id: `scripture:${l.code}`,
+                        title: `Holy Scriptures in ${l.name} (${l.native_name || l.code})`,
+                        subtitle: `${(l.versions || []).length} canonical translation(s) available`,
+                        badge: 'LANG',
+                        type: 'scripture-lang',
+                        langObj: l
+                    });
+                }
+            });
+
+            // 3. Common canonical scripture books matching
+            const commonBooks = [
+                "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth",
+                "1 Samuel", "2 Samuel", "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra",
+                "Nehemiah", "Esther", "Job", "Psalms", "Proverbs", "Ecclesiastes", "Song of Solomon",
+                "Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel", "Hosea", "Joel", "Amos",
+                "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah",
+                "Malachi", "Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians",
+                "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians",
+                "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James",
+                "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"
+            ];
+            commonBooks.forEach(b => {
+                if (b.toLowerCase().includes(lowQ)) {
+                    hits.push({
+                        id: `scripture:eng:kjv:${b}`,
+                        title: `${b} (KJV, English)`,
+                        subtitle: `Canonical Scripture Book • Holy Bible`,
+                        badge: 'BOOK',
+                        type: 'scripture-book',
+                        lang: 'eng',
+                        version: 'kjv',
+                        book: b
+                    });
+                }
+            });
+
             if (hits.length > 0) {
-                hits.slice(0, 10).forEach(hit => {
+                hits.slice(0, 12).forEach(hit => {
                     const row = document.createElement('div');
                     row.className = 'p-2.5 rounded-xl border flex items-center justify-between cursor-pointer hover:opacity-80 transition-all font-mono text-xs';
                     row.style.backgroundColor = 'var(--panel-bg-subtle)';
                     row.style.borderColor = 'var(--border-subtle)';
                     row.innerHTML = `
-                        <div class="pr-2">
+                        <div class="pr-2 min-w-0">
                             <div class="font-bold truncate" style="color: var(--text-main);">${escapeHtml(hit.title)}</div>
                             <div class="text-[10px] truncate" style="color: var(--text-muted);">${escapeHtml(hit.subtitle)}</div>
                         </div>
                         <span class="text-[9px] px-1.5 py-0.5 rounded border flex-shrink-0" style="border-color: var(--panel-border); color: var(--text-main);">${hit.badge}</span>
                     `;
                     row.addEventListener('click', () => {
-                        loadNodeIntoReader({
-                            id: hit.id,
-                            name: hit.title,
-                            doc_id: hit.id,
-                            tags: ["SEARCH_RESULT"],
-                            chapters: [hit.subtitle],
-                            connections: ["NEXUS-0"]
-                        });
+                        if (hit.type === 'scripture-lang') {
+                            hierarchyState.selectedCategory = 'scripture';
+                            hierarchyState.selectedLanguage = hit.langObj;
+                            hierarchyState.level = 'language';
+                            renderHierarchyExplorer();
+                        } else if (hit.type === 'scripture-book') {
+                            hierarchyState.selectedCategory = 'scripture';
+                            hierarchyState.selectedLanguage = { code: hit.lang, name: 'English', versions: ['kjv'] };
+                            hierarchyState.selectedDoc = { id: `scripture:${hit.lang}:${hit.version}`, lang: hit.lang, version: hit.version, title: `Holy Bible (${hit.version.toUpperCase()}, English)` };
+                            hierarchyState.selectedBook = { name: hit.book };
+                            loadScriptureBookIntoReader(hit.lang, hit.version, hit.book, 0);
+                        } else {
+                            loadNodeIntoReader({
+                                id: hit.id,
+                                name: hit.title,
+                                doc_id: hit.id,
+                                tags: ["SEARCH_RESULT"],
+                                chapters: [hit.subtitle],
+                                connections: ["NEXUS-0"]
+                            });
+                        }
                         closeSearch();
                     });
                     sResults.appendChild(row);

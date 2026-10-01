@@ -77,6 +77,13 @@ pub async fn handle_scripture_languages(
     Ok(Json(langs))
 }
 
+pub async fn handle_scripture_languages_detailed(
+    State(state): State<ServerState>,
+) -> Result<Json<Vec<librarian_core::ScriptureLanguageInfo>>, StatusCode> {
+    let detailed = state.scripture.get_languages_detailed();
+    Ok(Json(detailed))
+}
+
 pub async fn handle_scripture_versions(
     State(state): State<ServerState>,
     Query(query): Query<ScriptureVersionsQuery>,
