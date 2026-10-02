@@ -82,19 +82,51 @@ fn current_utc_ymd_h() -> (i32, u32, u32, f64) {
 pub async fn handle_sky_projection(
     Query(params): Query<SkyQueryParams>,
 ) -> Json<SkyProjection> {
-    let lat = params.lat.unwrap_or(35.6762);
-    let lon = params.lon.unwrap_or(139.6503);
-    let radius = params.radius.unwrap_or(300.0);
+    let lat = params
+        .lat
+        .filter(|v| v.is_finite())
+        .unwrap_or(35.6762)
+        .clamp(-90.0, 90.0);
+    let lon = params
+        .lon
+        .filter(|v| v.is_finite())
+        .map(|v| {
+            if (-180.0..=180.0).contains(&v) {
+                v
+            } else {
+                (v + 180.0).rem_euclid(360.0) - 180.0
+            }
+        })
+        .unwrap_or(139.6503);
+    let radius = params
+        .radius
+        .filter(|v| v.is_finite())
+        .unwrap_or(300.0)
+        .clamp(50.0, 2000.0);
 
     let (year, month, day, ut_hour) = if let Some(ref t) = params.time {
         parse_iso_datetime(t).unwrap_or_else(current_utc_ymd_h)
     } else if let (Some(y), Some(m), Some(d)) = (params.year, params.month, params.day) {
-        let h = params.hour.unwrap_or(0.0);
-        (y, m, d, h)
+        let h = params
+            .hour
+            .filter(|v| v.is_finite())
+            .unwrap_or(0.0)
+            .rem_euclid(24.0);
+        let m_clamped = m.clamp(1, 12);
+        let d_clamped = d.clamp(1, 31);
+        (y, m_clamped, d_clamped, h)
     } else {
         current_utc_ymd_h()
     };
 
-    let proj = project_sky(lat, lon, year, month, day, ut_hour, radius);
+    let proj = project_sky(
+        lat,
+        lon,
+        year,
+        month.clamp(1, 12),
+        day.clamp(1, 31),
+        ut_hour.clamp(0.0, 24.0),
+        radius,
+    );
     Json(proj)
 }

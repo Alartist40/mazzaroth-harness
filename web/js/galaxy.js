@@ -495,7 +495,7 @@ function setupCanvasEvents() {
 
         const hovered = findClosestStarToScreen(mouseX, mouseY, rect.width, rect.height, 36);
         if (hovered && tooltip) {
-            tooltip.innerHTML = `<strong>${escapeHtml(hovered.name)}</strong> <span style="opacity: 0.6;">[${hovered.category}]</span>`;
+            tooltip.innerHTML = `<strong>${escapeHtml(hovered.name)}</strong> <span style="opacity: 0.6;">[${escapeHtml(hovered.category || '')}]</span>`;
             tooltip.style.left = `${e.clientX + 14}px`;
             tooltip.style.top = `${e.clientY - 14}px`;
             tooltip.classList.remove('hidden');

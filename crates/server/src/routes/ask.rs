@@ -121,22 +121,40 @@ pub async fn handle_ask(
                 let mut buffer = String::new();
                 
                 // Allow slow CPU / SBC inference with a generous 45s idle chunk timeout
-                while let Ok(Some(item)) = tokio::time::timeout(std::time::Duration::from_secs(45), byte_stream.next()).await {
-                    if let Ok(bytes) = item {
-                        if let Ok(text) = std::str::from_utf8(&bytes) {
-                            buffer.push_str(text);
-                            while let Some(pos) = buffer.find('\n') {
-                                let line = buffer[..pos].trim().to_string();
-                                buffer = buffer[pos + 1..].to_string();
-                                if let Ok(val) = serde_json::from_str::<serde_json::Value>(&line) {
-                                    if let Some(token) = val["response"].as_str() {
-                                        yield Ok(Event::default().event("token").data(token));
-                                    }
-                                    if val["done"].as_bool() == Some(true) {
-                                        break;
+                let mut is_completed = false;
+                loop {
+                    match tokio::time::timeout(std::time::Duration::from_secs(45), byte_stream.next()).await {
+                        Ok(Some(Ok(bytes))) => {
+                            if let Ok(text) = std::str::from_utf8(&bytes) {
+                                buffer.push_str(text);
+                                while let Some(pos) = buffer.find('\n') {
+                                    let line = buffer[..pos].trim().to_string();
+                                    buffer = buffer[pos + 1..].to_string();
+                                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(&line) {
+                                        if let Some(token) = val["response"].as_str() {
+                                            yield Ok(Event::default().event("token").data(token));
+                                        }
+                                        if val["done"].as_bool() == Some(true) {
+                                            is_completed = true;
+                                            break;
+                                        }
                                     }
                                 }
+                                if is_completed {
+                                    break;
+                                }
                             }
+                        }
+                        Ok(Some(Err(_))) => {
+                            yield Ok(Event::default().event("token").data("\n[stream read error]"));
+                            break;
+                        }
+                        Ok(None) => {
+                            break;
+                        }
+                        Err(_) => {
+                            yield Ok(Event::default().event("token").data("\n[stream interrupted after 45s idle]"));
+                            break;
                         }
                     }
                 }

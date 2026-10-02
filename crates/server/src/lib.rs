@@ -8,6 +8,7 @@ use axum::http::{header, HeaderValue};
 use axum::routing::{delete, get, post};
 use axum::Router;
 use std::path::PathBuf;
+use tower::Layer;
 use tower_http::services::{ServeDir, ServeFile};
 use tower_http::set_header::SetResponseHeaderLayer;
 
@@ -64,11 +65,21 @@ pub fn create_app(state: ServerState) -> Router {
             HeaderValue::from_static("public, max-age=86400, stale-while-revalidate=604800"),
         ));
 
+
+    // Static assets (index.html / JS / CSS) get an explicit no-cache header —
+    // without it browsers use heuristic freshness and serve stale builds after
+    // an update (the exact bug this header previously fixed router-wide).
+    let static_service = SetResponseHeaderLayer::overriding(
+        header::CACHE_CONTROL,
+        HeaderValue::from_static("no-cache, no-store, must-revalidate"),
+    )
+    .layer(ServeDir::new(&dev_ui).fallback(ServeFile::new(index_file)));
+
     Router::new()
         .route("/health", get(|| async { "OK" }))
         .nest("/api", api_router)
         .route("/maps/{filename}", get(routes::maps::handle_serve_pmtiles))
         .nest("/fonts", fonts_router)
-        .fallback_service(ServeDir::new(&dev_ui).fallback(ServeFile::new(index_file)))
+        .fallback_service(static_service)
         .with_state(state)
 }

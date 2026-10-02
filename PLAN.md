@@ -104,12 +104,7 @@ the new build from the browser) and a missing `let maplibreInstance` declaration
    `src/`, `tests/`, `main.js`, `base.css`). GATES C0/C1-R1 CHECKs updated to
    surviving paths; `cargo check` + all 8 test suites + C0/C5/C6/R1/L8/L9 CHECKs +
    browser sanity re-passed after the move.
-A2-11 duplicate theme tokens + dead `--core-*` vars; A2-6 galaxy still ignores
-stored `x/y/z` + synthetic `STAR-####` filler on short API; A2-9 domain colors
-vs monochrome DNA (owner decision); A2-5 corpus = 3 docs (owner: ingest more);
-constellations = copy-exact 20-catalog (backend 125 KB/32-body API mapping
-rejected by user as visual regression — API integration deferred); visual
-screenshot evidence for C1/C2/C7 parity grid still manual.
+Remaining open: A2-10 (local @font-face for Space Grotesk / JetBrains Mono offline font files); A2-11 (duplicate theme tokens + dead `--core-*` vars); A2-12 (⌘K search across star/memory node labels in addition to FTS5 chunks); A2-6 (galaxy custom stored coordinates mapping); A2-9 (domain accent colors vs strict monochrome DNA).
 
 New authoritative reference (2026-09-29 13:05, 2,521 lines / 135 KB — replaces
 `minimalist_monochrome_galaxy_database.html`, now demoted to secondary):

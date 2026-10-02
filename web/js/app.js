@@ -6,8 +6,7 @@ import {
     createMemoryNode, 
     getKnowledgeTree, 
     getScriptureLanguagesDetailed, 
-    getScriptureMeta, 
-    getScriptureChapter 
+    getScriptureMeta 
 } from './api.js';
 import { 
     initGalaxy, 
@@ -669,30 +668,30 @@ function renderHierarchyExplorer() {
         }
     ];
 
-    // Category meta info
+    // Category meta info (monospace design tokens)
     const categoryIcons = {
         scripture: { 
-            icon: '📜', 
+            icon: 'S', 
             label: 'SCRIPTURE & SACRED TEXTS', 
             desc: '66 Languages, 226 Translations & Thousands of Canonical Books' 
         },
         astronomy: { 
-            icon: '🔭', 
+            icon: 'A', 
             label: 'ASTRONOMY & ASTROMETRY', 
             desc: 'Star navigation handbook, celestial lore & ephemeris data' 
         },
         survival: { 
-            icon: '🌲', 
+            icon: 'V', 
             label: 'SURVIVAL & EXPEDITION', 
             desc: 'Field manual, water purification, shelter & wilderness tactics' 
         },
         medical: { 
-            icon: '🏥', 
+            icon: 'M', 
             label: 'EMERGENCY MEDICAL', 
             desc: 'First responder protocols, triage & wound intervention' 
         },
         cognitive: { 
-            icon: '🧠', 
+            icon: 'C', 
             label: 'COGNITIVE MEMORY', 
             desc: 'Sovereign neural memory stars & contextual linkages' 
         }
@@ -715,7 +714,7 @@ function renderHierarchyExplorer() {
         const renderCatCard = (catName) => {
             const cat = tree.find(c => c.category.toLowerCase() === catName) || { category: catName, languages: [] };
             const meta = categoryIcons[catName] || {
-                icon: '📁',
+                icon: 'D',
                 label: catName.toUpperCase(),
                 desc: 'Indexed domain knowledge and documents'
             };
@@ -1345,7 +1344,7 @@ function renderChapterBody() {
         <div class="flex items-center justify-between pb-2 mb-2 border-b font-mono text-[9px]" style="border-color: var(--border-subtle);">
             <button id="btn-reader-open-index" class="px-2 py-0.5 rounded border hover:opacity-80 flex items-center gap-1 transition-all"
                     style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
-                <span>📁</span> <strong>EXPLORE HIERARCHY / THEMES</strong>
+                <span class="font-bold">+</span> <strong>EXPLORE HIERARCHY / THEMES</strong>
             </button>
             <span style="color: var(--text-muted);">${escapeHtml(currentNode.category || 'DOCUMENT')}</span>
         </div>
@@ -1641,9 +1640,9 @@ function setupSearchModal() {
                     row.innerHTML = `
                         <div class="pr-2 min-w-0">
                             <div class="font-bold truncate" style="color: var(--text-main);">${escapeHtml(hit.title)}</div>
-                            <div class="text-[10px] truncate" style="color: var(--text-muted);">${escapeHtml(hit.subtitle)}</div>
+                            <div class="text-[10px] truncate" style="color: var(--text-muted);">${escapeHtml(hit.subtitle).replace(/&lt;b&gt;/g, '<b>').replace(/&lt;\/b&gt;/g, '</b>')}</div>
                         </div>
-                        <span class="text-[9px] px-1.5 py-0.5 rounded border flex-shrink-0" style="border-color: var(--panel-border); color: var(--text-main);">${hit.badge}</span>
+                        <span class="text-[9px] px-1.5 py-0.5 rounded border flex-shrink-0" style="border-color: var(--panel-border); color: var(--text-main);">${escapeHtml(hit.badge)}</span>
                     `;
                     row.addEventListener('click', () => {
                         if (hit.type === 'scripture-lang') {

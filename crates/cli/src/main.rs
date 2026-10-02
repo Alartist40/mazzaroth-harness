@@ -174,7 +174,6 @@ async fn run_server(
         maps_dir,
         bibles_dir,
         constellations_dir,
-        dev_ui_dir: dev_ui.clone(),
         llm_endpoint,
         llm_model,
         bind_addr: bind.clone(),

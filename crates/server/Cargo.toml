@@ -18,6 +18,7 @@ reqwest = { workspace = true }
 futures-util = { workspace = true }
 async-stream = { workspace = true }
 uuid = { workspace = true }
+tower = { workspace = true }
 
 [dev-dependencies]
 tower = { workspace = true }

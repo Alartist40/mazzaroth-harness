@@ -46,14 +46,17 @@ async fn test_sky_deck_and_tree_endpoints() {
     let state = ServerState::new(db, config, None);
     let app = create_app(state);
 
-    // 1. Test /api/sections includes 5 sections including "sky"
+    // 1. Test /api/sections includes 4 unified modules
     let sec_req = Request::builder().uri("/api/sections").body(Body::empty()).unwrap();
     let sec_res = app.clone().oneshot(sec_req).await.unwrap();
     assert_eq!(sec_res.status(), StatusCode::OK);
     let sec_bytes = sec_res.into_body().collect().await.unwrap().to_bytes();
     let sections: Vec<serde_json::Value> = serde_json::from_slice(&sec_bytes).unwrap();
-    assert_eq!(sections.len(), 5);
-    assert!(sections.iter().any(|s| s["id"] == "sky"));
+    assert_eq!(sections.len(), 4);
+    assert!(sections.iter().any(|s| s["id"] == "constellations"));
+    assert!(sections.iter().any(|s| s["id"] == "galaxy"));
+    assert!(sections.iter().any(|s| s["id"] == "librarian"));
+    assert!(sections.iter().any(|s| s["id"] == "maps"));
 
     // 2. Test /api/sky default
     let sky_req = Request::builder().uri("/api/sky?lat=35.6762&lon=139.6503&time=2026-09-30T21:00:00Z").body(Body::empty()).unwrap();

@@ -263,13 +263,15 @@ impl LibrarianDb {
         hasher.update(raw.as_bytes());
         let hash = format!("{:x}", hasher.finalize());
 
-        let conn = self.conn.lock().unwrap();
+        let mut conn = self.conn.lock().unwrap();
 
         // 2. Check if already ingested with identical hash
-        let mut check_stmt = conn.prepare("SELECT file_hash FROM ingest_log WHERE file_path = ?1")?;
-        let existing_hash: Option<String> = check_stmt
-            .query_row(params![p.to_string_lossy()], |row| row.get(0))
-            .ok();
+        let existing_hash: Option<String> = {
+            let mut check_stmt = conn.prepare("SELECT file_hash FROM ingest_log WHERE file_path = ?1")?;
+            check_stmt
+                .query_row(params![p.to_string_lossy()], |row| row.get(0))
+                .ok()
+        };
 
         if let Some(h) = existing_hash {
             if h == hash {
@@ -290,9 +292,12 @@ impl LibrarianDb {
             .unwrap_or_default()
             .as_secs() as i64;
 
-        conn.execute_batch("BEGIN TRANSACTION;")?;
+        // RAII transaction: commits on success, rolls back automatically on any
+        // error below (a dropped Transaction issues ROLLBACK), so a mid-ingest
+        // failure can never leave this shared connection stuck in an open tx.
+        let tx = conn.transaction()?;
 
-        conn.execute(
+        tx.execute(
             r#"
             INSERT OR REPLACE INTO documents (
                 id, title, category, language, license, source, publisher, license_url, retrieved_date, notes, personal_use_only, raw_json
@@ -315,11 +320,11 @@ impl LibrarianDb {
         )?;
 
         // Remove old chunks if replacing
-        conn.execute("DELETE FROM chunks WHERE doc_id = ?1", params![doc.id])?;
+        tx.execute("DELETE FROM chunks WHERE doc_id = ?1", params![doc.id])?;
 
         let chunks = doc.to_chunks();
         {
-            let mut chunk_stmt = conn.prepare_cached(
+            let mut chunk_stmt = tx.prepare_cached(
                 "INSERT INTO chunks (doc_id, section_id, title_path, text) VALUES (?1, ?2, ?3, ?4)"
             )?;
             for chunk in &chunks {
@@ -327,7 +332,7 @@ impl LibrarianDb {
             }
         }
 
-        conn.execute(
+        tx.execute(
             r#"
             INSERT OR REPLACE INTO ingest_log (file_path, file_hash, doc_id, ingested_at, warnings)
             VALUES (?1, ?2, ?3, ?4, ?5)
@@ -335,7 +340,7 @@ impl LibrarianDb {
             params![p.to_string_lossy(), hash, doc.id, now, Option::<String>::None],
         )?;
 
-        conn.execute_batch("COMMIT;")?;
+        tx.commit()?;
 
         info!(doc_id = %doc.id, chunks = chunks.len(), "Ingested document successfully");
         Ok(Some(doc.id))

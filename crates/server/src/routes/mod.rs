@@ -22,15 +22,9 @@ pub async fn handle_sections() -> Json<serde_json::Value> {
         },
         {
             "id": "constellations",
-            "label": "Classical Constellations",
+            "label": "Constellations & Celestial Dome",
             "api": "/api/sections/constellations",
-            "description": "32 classical asterisms and complete 12 Zodiac sign geometries"
-        },
-        {
-            "id": "sky",
-            "label": "Sky Deck",
-            "api": "/api/sky",
-            "description": "Live local night sky dome renderer with date/time and GPS lat/lon positioning"
+            "description": "32 classical asterisms, 12 Zodiac geometries, and live Alt/Az dome astrometry"
         },
         {
             "id": "librarian",

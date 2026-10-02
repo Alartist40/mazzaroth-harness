@@ -281,10 +281,14 @@ pub fn project_sky(
         })
         .collect();
 
+    let total_minutes = (ut_hour * 60.0).round() as i64;
+    let display_hour = (total_minutes / 60).rem_euclid(24) as u32;
+    let display_minute = (total_minutes % 60) as u32;
+
     SkyProjection {
         lat: lat_deg,
         lon: lon_deg,
-        utc_time: format!("{:04}-{:02}-{:02} {:02}:{:02} UTC", year, month, day, ut_hour.floor() as u32, ((ut_hour.fract() * 60.0).round() as u32)),
+        utc_time: format!("{:04}-{:02}-{:02} {:02}:{:02} UTC", year, month, day, display_hour, display_minute),
         lst_deg: lst,
         visible_stars,
         background_stars,

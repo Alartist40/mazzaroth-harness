@@ -68,8 +68,10 @@ pub async fn handle_get_document(
     Path(doc_id): Path<String>,
 ) -> Result<Json<ContentDocument>, StatusCode> {
     // 1. Check SQLite database documents
-    if let Ok(Some(doc)) = state.db.get_document(&doc_id) {
-        return Ok(Json(doc));
+    match state.db.get_document(&doc_id) {
+        Ok(Some(doc)) => return Ok(Json(doc)),
+        Ok(None) => {}, // Fall through to dynamic scripture resolution
+        Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 
     // 2. Check dynamic scripture book resolution

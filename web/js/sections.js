@@ -1618,7 +1618,7 @@ function renderRegionList() {
         btn.style.cssText = active
             ? 'background-color: var(--panel-bg); border-color: var(--contrast-ink); color: var(--text-main);'
             : 'background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-secondary); opacity: 0.85;';
-        btn.innerHTML = `<span style="font-weight:600">${r.name}</span> <span style="color:var(--text-muted)">${formatRegionSize(r.size_bytes)}</span>`;
+        btn.innerHTML = `<span style="font-weight:600">${escapeHtml(r.name)}</span> <span style="color:var(--text-muted)">${escapeHtml(formatRegionSize(r.size_bytes))}</span>`;
         btn.title = `Switch map to ${r.filename}`;
         btn.addEventListener('click', () => switchMapRegion(r.filename));
         row.appendChild(btn);
