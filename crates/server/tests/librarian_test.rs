@@ -38,7 +38,8 @@ async fn test_grounded_librarian_prompt_and_refusal() {
     std::fs::write(&doc_file, doc_json).unwrap();
     db.ingest_file(&doc_file).unwrap();
 
-    let config = LibrarianConfig::default();
+    let mut config = LibrarianConfig::default();
+    config.llm_endpoint = "http://127.0.0.1:9".to_string(); // offline test mock
     let state = ServerState::new(db, config, None);
     let app = create_app(state);
 

@@ -2469,6 +2469,7 @@ function setupMapInteractions() {
 /* ========================================================================= */
 let currentLlmModel = null;
 let installedLlmModels = [];
+let librarianConversationHistory = [];
 
 export function initLibrarian() {
     const input = document.getElementById('librarian-input');
@@ -2540,6 +2541,7 @@ export function initLibrarian() {
     const clearBtn = document.getElementById('btn-clear-chat');
     if (clearBtn && chatLog) {
         clearBtn.addEventListener('click', () => {
+            librarianConversationHistory = [];
             chatLog.innerHTML = `
                 <div class="p-4 rounded-xl border flex gap-3" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">
                     <div class="w-6 h-6 rounded-md border flex items-center justify-center font-bold text-[10px]"
@@ -2591,11 +2593,16 @@ export function submitLibrarianQuery(question) {
     const tokenSpan = document.getElementById(tokenContainerId);
     const citSpan = document.getElementById(citationContainerId);
 
+    let accumulatedResponse = '';
+    const outgoingHistory = [...librarianConversationHistory];
+    librarianConversationHistory.push({ role: 'user', content: question });
+
     askStream(
         question,
         (token) => {
             if (tokenSpan) {
                 tokenSpan.innerText += token;
+                accumulatedResponse += token;
                 chatLog.scrollTop = chatLog.scrollHeight;
             }
         },
@@ -2609,13 +2616,18 @@ export function submitLibrarianQuery(question) {
                     }).join('');
             }
         },
-        () => {},
+        () => {
+            if (accumulatedResponse.trim()) {
+                librarianConversationHistory.push({ role: 'assistant', content: accumulatedResponse.trim() });
+            }
+        },
         (err) => {
             if (tokenSpan) {
                 tokenSpan.innerText += `\n[Librarian Offline: ${err.message}]`;
             }
         },
-        currentLlmModel
+        currentLlmModel,
+        outgoingHistory
     );
 }
 

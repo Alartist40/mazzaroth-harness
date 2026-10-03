@@ -8,9 +8,16 @@ use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
 
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ChatMessage {
+    pub role: String,
+    pub content: String,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct AskRequest {
     pub question: String,
+    pub history: Option<Vec<ChatMessage>>,
     pub model: Option<String>,
 }
 
@@ -112,10 +119,11 @@ pub async fn handle_ask(
         .filter(|m| !m.trim().is_empty())
         .cloned()
         .unwrap_or_else(|| state.config.llm_model.clone());
+    let history = req.history.unwrap_or_default();
 
     let stream = async_stream::stream! {
-        // If no passages found in library -> return standard refusal
-        if hits.is_empty() {
+        // If LLM is offline and no passages found -> return standard refusal
+        if !is_reachable && hits.is_empty() {
             yield Ok(Event::default().event("token").data("I don't have that in the library."));
             yield Ok(Event::default().event("done").data("[DONE]"));
             return;
@@ -145,7 +153,7 @@ pub async fn handle_ask(
         let resolved_model = resolve_ollama_model(&client, &endpoint, &requested_model).await;
 
         // Assemble grounded RAG context with budget constraints
-        let max_ctx = state.config.profile.max_context_tokens().max(1024);
+        let max_ctx = state.config.profile.max_context_tokens().max(2048);
         let max_chars = max_ctx * 4;
         let mut context_text = format!("=== LIBRARY CATALOG MANIFEST ===\n{}\n\n", get_library_catalog_summary());
         if !hits.is_empty() {
@@ -167,26 +175,55 @@ pub async fn handle_ask(
             }
         }
 
-        let system_prompt = "You are Mazzaroth, the sovereign offline AI Librarian and cognitive memory intelligence. You have direct awareness of the local offline database and indexed literature.\n\
-Answer the user's question accurately and concisely.\n\
-- For catalog and database inventory questions (such as whether a language, book, theme, or feature is in the database), reference the Library Catalog Manifest directly. If a language or document is absent (such as Twi), state clearly that it is not present in the collection and mention which related items or languages ARE indexed.\n\
-- For queries with retrieved text passages, answer strictly grounded in the passages with exact citations.\n\
-- If the passages and catalog do not contain the answer and the question is completely outside the library's domain, state \"I don't have that in the library.\" Never invent procedures, dosages, or nonexistent texts.";
+        let system_prompt = format!(
+            "You are Mazzaroth, an intelligent, eloquent, and sovereign AI Librarian and polyglot scholar. You reside within a private offline cognitive memory vault.\n\n\
+Your Conversational Purpose:\n\
+- Engage in rich, natural, and insightful conversations with the user. You are a conversational scholar companion, not a mechanical search filter.\n\
+- Discuss literature, theology, history, astronomy, and science with depth, intellectual warmth, and nuance.\n\
+- When discussing scriptures or world texts, feel free to compare verses across translations, analyze original linguistic meanings (e.g. Greek, Hebrew, Latin, English, German, French, etc.), and provide rich context.\n\
+- When relevant document passages are provided in your context, weave them naturally into your response and cite them.\n\
+- For catalog and database inventory inquiries (such as what languages or books are in the vault), speak authoritatively using the Library Catalog Manifest below.\n\
+- If the question is completely unrelated to anything in the library and no text exists, politely let the user know: \"I don't have that in the library.\"\n\n\
+{}",
+            context_text
+        );
 
-        let user_prompt = format!("Question: {}\n\nContext Passages:\n{}", q, context_text);
+        // Build multi-turn chat messages
+        let mut messages = Vec::new();
+        messages.push(serde_json::json!({
+            "role": "system",
+            "content": system_prompt
+        }));
 
-        let ollama_url = format!("{}/api/generate", endpoint.trim_end_matches('/'));
+        // Append recent conversation history (up to last 8 turns)
+        let hist_start = if history.len() > 8 { history.len() - 8 } else { 0 };
+        for msg in &history[hist_start..] {
+            if msg.role == "user" || msg.role == "assistant" {
+                messages.push(serde_json::json!({
+                    "role": msg.role,
+                    "content": msg.content
+                }));
+            }
+        }
+
+        // Current user message
+        messages.push(serde_json::json!({
+            "role": "user",
+            "content": q
+        }));
+
+        let ollama_chat_url = format!("{}/api/chat", endpoint.trim_end_matches('/'));
         let req_body = serde_json::json!({
             "model": resolved_model,
-            "prompt": format!("System: {}\n\nUser: {}", system_prompt, user_prompt),
+            "messages": messages,
             "stream": true,
             "options": {
-                "temperature": 0.2,
+                "temperature": 0.6,
                 "num_ctx": max_ctx
             }
         });
 
-        match client.post(&ollama_url).json(&req_body).send().await {
+        match client.post(&ollama_chat_url).json(&req_body).send().await {
             Ok(resp) if resp.status().is_success() => {
                 let mut byte_stream = resp.bytes_stream();
                 let mut buffer = String::new();
@@ -201,8 +238,13 @@ Answer the user's question accurately and concisely.\n\
                                     let line = buffer[..pos].trim().to_string();
                                     buffer = buffer[pos + 1..].to_string();
                                     if let Ok(val) = serde_json::from_str::<serde_json::Value>(&line) {
-                                        if let Some(token) = val["response"].as_str() {
-                                            yield Ok(Event::default().event("token").data(token));
+                                        let token = val["message"]["content"]
+                                            .as_str()
+                                            .or_else(|| val["response"].as_str());
+                                        if let Some(tok) = token {
+                                            if !tok.is_empty() {
+                                                yield Ok(Event::default().event("token").data(tok));
+                                            }
                                         }
                                         if val["done"].as_bool() == Some(true) {
                                             is_completed = true;
@@ -232,7 +274,7 @@ Answer the user's question accurately and concisely.\n\
             Ok(resp) => {
                 let err_text = resp.text().await.unwrap_or_else(|_| "Unknown error".to_string());
                 yield Ok(Event::default().event("token").data(format!(
-                    "[Ollama returned error: {}]", err_text
+                    "[Ollama error: {}]", err_text
                 )));
             }
             Err(e) => {

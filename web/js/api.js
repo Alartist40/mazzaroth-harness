@@ -32,7 +32,7 @@ export async function getModels() {
     return await res.json();
 }
 
-export async function askStream(question, onToken, onCitations, onDone, onError, model = null) {
+export async function askStream(question, onToken, onCitations, onDone, onError, model = null, history = []) {
     let doneCalled = false;
     const safeDone = () => {
         if (!doneCalled) {
@@ -44,6 +44,7 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
     try {
         const payload = { question: question.trim() };
         if (model) payload.model = model;
+        if (history && history.length > 0) payload.history = history;
 
         const res = await fetch('/api/ask', {
             method: 'POST',
