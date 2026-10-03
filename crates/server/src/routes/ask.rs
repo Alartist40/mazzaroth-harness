@@ -11,6 +11,7 @@ use std::convert::Infallible;
 #[derive(Debug, Deserialize)]
 pub struct AskRequest {
     pub question: String,
+    pub model: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -21,6 +22,61 @@ pub struct Citation {
     pub license: String,
     pub retrieved_date: String,
     pub snippet: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct OllamaTagsResponse {
+    models: Option<Vec<OllamaTagItem>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OllamaTagItem {
+    name: String,
+}
+
+fn get_library_catalog_summary() -> &'static str {
+    "MAZZAROTH OFFLINE KNOWLEDGE DAEMON & CATALOG MANIFEST:
+- SCRIPTURE DATABASE: 66 Languages, 226 Translations across the globe.
+  Language codes and names present in offline vault:
+  AFR (Afrikaans), ALB (Albanian), ARM (Armenian), ARN (Mapudungun), BEN (Bengali), CEB (Cebuano), CES (Czech), CHE (Chechen), CHU (Old Church Slavonic), COP (Coptic), DAN (Danish), DEU (German: 14 versions), ELL (Greek: 3 versions), ENG (English: 38 versions including KJV, ASV, BSB, Geneva 1599, Darby, Tyndale, Wycliffe, Webster, Young's Literal), EPO (Esperanto), EST (Estonian), FIN (Finnish), FRA (French: 5 versions), GLV (Manx), GOT (Gothic), GUJ (Gujarati), HAT (Haitian Creole), HEB (Hebrew: 4 versions), HIN (Hindi), HRV (Croatian), HUN (Hungarian), IND (Indonesian), ITA (Italian: 3 versions), JPN (Japanese: 3 versions), KAN (Kannada), KOR (Korean: 2 versions), LAT (Latin: 3 versions), MAL (Malayalam), MAR (Marathi), MLG (Malagasy), MRI (Maori), MYA (Burmese), NEP (Nepali), NLD (Dutch: 8 versions), NOR (Norwegian), NSO (Northern Sotho), ORI (Odia), PAN (Punjabi), POL (Polish: 2 versions), PON (Pohnpeian), POR (Portuguese: 3 versions), RUS (Russian: 3 versions), SAM (Samaritan), SLV (Slovenian), SML (Central Sama), SPA (Spanish: 4 versions), SRP (Serbian: 2 versions), SWE (Swedish: 3 versions), SYR (Syriac), TAM (Tamil), TEL (Telugu: 2 versions), TGL (Tagalog: 2 versions), THA (Thai), TPI (Tok Pisin), TSG (Tausug), UKR (Ukrainian), VIE (Vietnamese), VLS (West Flemish), XHO (Xhosa), ZHO (Chinese: 4 versions), ZUL (Zulu).
+  [IMPORTANT INVENTORY NOTE: Languages NOT listed above, such as Twi (Ghana), Yoruba, Swahili, Amharic, Farsi, etc., are currently NOT in this offline database].
+- ASTRONOMY & CELESTIAL ASTROMETRY: Star Navigation Handbook, Polaris Alignment, Vega ground truth, 88 standard constellations, 12 Zodiac asterisms, closed-form Alt/Az dome astrometry engine.
+- SURVIVAL & WILDERNESS EXPEDITION: FM 21-76 Survival Manual, water purification, shelter construction, navigation corridors, triage.
+- EMERGENCY MEDICAL: Emergency Medical Protocols, triage, airway intervention, wound management.
+- COGNITIVE MEMORY: Neural memory stars, semantic nexus linkages, and local personal knowledge graph.
+- CARTOGRAPHY: Sovereign offline MapLibre vector maps and PMTiles regional street packs."
+}
+
+async fn resolve_ollama_model(client: &reqwest::Client, endpoint: &str, requested_model: &str) -> String {
+    let url = format!("{}/api/tags", endpoint.trim_end_matches('/'));
+    if let Ok(resp) = client.get(&url).send().await {
+        if resp.status().is_success() {
+            if let Ok(tags) = resp.json::<OllamaTagsResponse>().await {
+                if let Some(models) = tags.models {
+                    let available_names: Vec<String> = models.into_iter().map(|m| m.name).collect();
+                    // 1. Exact match
+                    if available_names.iter().any(|n| n == requested_model) {
+                        return requested_model.to_string();
+                    }
+                    // 2. Fuzzy / clean prefix match
+                    let req_clean = requested_model.replace([':', '-', '.'], "").to_lowercase();
+                    for name in &available_names {
+                        let name_clean = name.replace([':', '-', '.'], "").to_lowercase();
+                        if name_clean.starts_with(&req_clean) || req_clean.starts_with(&name_clean) {
+                            return name.clone();
+                        }
+                    }
+                    // 3. First non-embed completion model
+                    for name in &available_names {
+                        if !name.contains("embed") {
+                            return name.clone();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    requested_model.to_string()
 }
 
 pub async fn handle_ask(
@@ -50,17 +106,22 @@ pub async fn handle_ask(
 
     let is_reachable = state.is_llm_reachable().await;
     let endpoint = state.config.llm_endpoint.clone();
-    let model = state.config.llm_model.clone();
+    let requested_model = req
+        .model
+        .as_ref()
+        .filter(|m| !m.trim().is_empty())
+        .cloned()
+        .unwrap_or_else(|| state.config.llm_model.clone());
 
     let stream = async_stream::stream! {
-        // Check if no passages found
+        // If no passages found in library -> return standard refusal
         if hits.is_empty() {
             yield Ok(Event::default().event("token").data("I don't have that in the library."));
             yield Ok(Event::default().event("done").data("[DONE]"));
             return;
         }
 
-        // Emit citation block only when citations exist
+        // Emit citation block when citations exist
         if !citations.is_empty() {
             if let Ok(citations_json) = serde_json::to_string(&citations) {
                 yield Ok(Event::default().event("citations").data(citations_json));
@@ -75,38 +136,48 @@ pub async fn handle_ask(
             return;
         }
 
-        // Assemble grounded RAG context with budget constraints
-        let max_ctx = state.config.profile.max_context_tokens().max(512);
-        let max_chars = max_ctx * 3; // Approx 3 chars per token budget for prompt context
-        let mut context_text = String::new();
-        for (i, h) in hits.iter().enumerate() {
-            let passage = format!(
-                "[{}] ({}, Date: {}, License: {}) {}:\n\"{}\"\n\n",
-                i + 1,
-                h.doc_title,
-                h.retrieved_date,
-                h.license,
-                h.title_path,
-                h.text
-            );
-            if context_text.len() + passage.len() > max_chars && !context_text.is_empty() {
-                break;
-            }
-            context_text.push_str(&passage);
-        }
-
-        let system_prompt = "You are the Librarian of an offline collection of books. Answer ONLY from the provided passages. If the passages do not contain the answer, say \"I don't have that in the library.\" Quote precisely. Never invent procedures or dosages.";
-        let user_prompt = format!("Question: {}\n\nContext Passages:\n{}", q, context_text);
-
-        // Client with connection timeout (10s), without global response stream cutoff
+        // Client with connection timeout (10s)
         let client = reqwest::Client::builder()
             .connect_timeout(std::time::Duration::from_secs(10))
             .build()
             .unwrap_or_default();
-            
+
+        let resolved_model = resolve_ollama_model(&client, &endpoint, &requested_model).await;
+
+        // Assemble grounded RAG context with budget constraints
+        let max_ctx = state.config.profile.max_context_tokens().max(1024);
+        let max_chars = max_ctx * 4;
+        let mut context_text = format!("=== LIBRARY CATALOG MANIFEST ===\n{}\n\n", get_library_catalog_summary());
+        if !hits.is_empty() {
+            context_text.push_str("=== RETRIEVED DOCUMENT PASSAGES ===\n");
+            for (i, h) in hits.iter().enumerate() {
+                let passage = format!(
+                    "[{}] ({}, Date: {}, License: {}) {}:\n\"{}\"\n\n",
+                    i + 1,
+                    h.doc_title,
+                    h.retrieved_date,
+                    h.license,
+                    h.title_path,
+                    h.text
+                );
+                if context_text.len() + passage.len() > max_chars {
+                    break;
+                }
+                context_text.push_str(&passage);
+            }
+        }
+
+        let system_prompt = "You are Mazzaroth, the sovereign offline AI Librarian and cognitive memory intelligence. You have direct awareness of the local offline database and indexed literature.\n\
+Answer the user's question accurately and concisely.\n\
+- For catalog and database inventory questions (such as whether a language, book, theme, or feature is in the database), reference the Library Catalog Manifest directly. If a language or document is absent (such as Twi), state clearly that it is not present in the collection and mention which related items or languages ARE indexed.\n\
+- For queries with retrieved text passages, answer strictly grounded in the passages with exact citations.\n\
+- If the passages and catalog do not contain the answer and the question is completely outside the library's domain, state \"I don't have that in the library.\" Never invent procedures, dosages, or nonexistent texts.";
+
+        let user_prompt = format!("Question: {}\n\nContext Passages:\n{}", q, context_text);
+
         let ollama_url = format!("{}/api/generate", endpoint.trim_end_matches('/'));
         let req_body = serde_json::json!({
-            "model": model,
+            "model": resolved_model,
             "prompt": format!("System: {}\n\nUser: {}", system_prompt, user_prompt),
             "stream": true,
             "options": {
@@ -119,9 +190,8 @@ pub async fn handle_ask(
             Ok(resp) if resp.status().is_success() => {
                 let mut byte_stream = resp.bytes_stream();
                 let mut buffer = String::new();
-                
-                // Allow slow CPU / SBC inference with a generous 45s idle chunk timeout
                 let mut is_completed = false;
+
                 loop {
                     match tokio::time::timeout(std::time::Duration::from_secs(45), byte_stream.next()).await {
                         Ok(Some(Ok(bytes))) => {
@@ -159,11 +229,16 @@ pub async fn handle_ask(
                     }
                 }
             }
-            _ => {
-                // Fallback / standard response
-                yield Ok(Event::default().event("token").data(
-                    "Retrieved relevant passages from the library above."
-                ));
+            Ok(resp) => {
+                let err_text = resp.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+                yield Ok(Event::default().event("token").data(format!(
+                    "[Ollama returned error: {}]", err_text
+                )));
+            }
+            Err(e) => {
+                yield Ok(Event::default().event("token").data(format!(
+                    "[Ollama connection error: {}]", e
+                )));
             }
         }
 

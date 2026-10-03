@@ -200,6 +200,9 @@ function setupNavigation() {
                 }
             });
 
+            const tooltip = document.getElementById('galaxy-tooltip');
+            if (tooltip) tooltip.classList.add('hidden');
+
             handleResize();
             showToast(`View: ${target.toUpperCase()}`);
         });
@@ -699,61 +702,89 @@ function renderHierarchyExplorer() {
 
     // LEVEL 0: ROOT CATEGORIES
     if (hierarchyState.level === 'root') {
-        let html = `
-            <div class="space-y-3 font-mono">
-                <div class="text-[11px] leading-relaxed" style="color: var(--text-secondary);">
-                    Select a knowledge theme to explore languages, translations, books, and chapters:
-                </div>
-                <div class="grid grid-cols-1 gap-2.5">
-        `;
-
-        // Ensure scripture is first
+        const filter = (hierarchyState.filterText || '').trim().toLowerCase();
         const orderedCategories = ['scripture', 'astronomy', 'survival', 'medical', 'cognitive'];
         const renderedSet = new Set();
+        const allCatNames = [];
 
-        const renderCatCard = (catName) => {
-            const cat = tree.find(c => c.category.toLowerCase() === catName) || { category: catName, languages: [] };
-            const meta = categoryIcons[catName] || {
-                icon: 'D',
-                label: catName.toUpperCase(),
-                desc: 'Indexed domain knowledge and documents'
-            };
-
-            let countLabel = '';
-            if (catName === 'scripture') {
-                const langCount = cachedScriptureLangs ? cachedScriptureLangs.length : 66;
-                countLabel = `${langCount} LANGS / 226 VERSIONS ›`;
-            } else {
-                const totalDocs = (cat.languages || []).reduce((acc, l) => acc + (l.documents || []).length, 0);
-                countLabel = `${totalDocs} ${totalDocs === 1 ? 'DOC' : 'DOCS'} ›`;
-            }
-
-            html += `
-                <div data-cat="${escapeHtml(cat.category)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between transition-all hover:scale-[1.01]"
-                     style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
-                    <div class="flex items-center space-x-3">
-                        <div class="text-xl p-2 rounded-lg border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">${meta.icon}</div>
-                        <div>
-                            <div class="font-bold text-xs" style="color: var(--text-main);">${escapeHtml(meta.label)}</div>
-                            <div class="text-[9px] mt-0.5" style="color: var(--text-secondary);">${escapeHtml(meta.desc)}</div>
-                        </div>
-                    </div>
-                    <span class="text-[8.5px] px-2.5 py-1 rounded border font-semibold shrink-0" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
-                        ${countLabel}
-                    </span>
-                </div>
-            `;
-            renderedSet.add(catName);
-        };
-
-        orderedCategories.forEach(catName => renderCatCard(catName));
-
+        orderedCategories.forEach(c => allCatNames.push(c));
         tree.forEach(cat => {
             const low = cat.category.toLowerCase();
-            if (!renderedSet.has(low)) {
-                renderCatCard(low);
+            if (!allCatNames.includes(low)) {
+                allCatNames.push(low);
             }
         });
+
+        const filteredCatNames = allCatNames.filter(catName => {
+            if (!filter) return true;
+            const meta = categoryIcons[catName] || { label: catName, desc: '' };
+            return catName.includes(filter) ||
+                   meta.label.toLowerCase().includes(filter) ||
+                   meta.desc.toLowerCase().includes(filter);
+        });
+
+        let html = `
+            <div class="space-y-3 font-mono">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold" style="color: var(--text-main);">
+                        KNOWLEDGE THEMES (${filteredCatNames.length} MATCHED)
+                    </span>
+                    <span class="text-[9px]" style="color: var(--text-muted);">Mazzaroth Sovereign Vault</span>
+                </div>
+
+                <div class="relative">
+                    <input id="input-root-filter" type="text" placeholder="Filter knowledge themes... (e.g. scripture, astronomy, survival, medical, cognitive)"
+                           value="${escapeHtml(hierarchyState.filterText || '')}"
+                           class="w-full text-xs font-mono px-3 py-1.5 rounded-lg border outline-none transition-all"
+                           style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);" />
+                </div>
+
+                <div class="grid grid-cols-1 gap-2.5 max-h-[580px] overflow-y-auto reader-scroll pr-1">
+        `;
+
+        if (filteredCatNames.length === 0) {
+            html += `
+                <div class="p-6 text-center text-xs" style="color: var(--text-muted);">
+                    No knowledge themes matching "${escapeHtml(filter)}".
+                </div>
+            `;
+        } else {
+            const renderCatCard = (catName) => {
+                const cat = tree.find(c => c.category.toLowerCase() === catName) || { category: catName, languages: [] };
+                const meta = categoryIcons[catName] || {
+                    icon: 'D',
+                    label: catName.toUpperCase(),
+                    desc: 'Indexed domain knowledge and documents'
+                };
+
+                let countLabel = '';
+                if (catName === 'scripture') {
+                    const langCount = cachedScriptureLangs ? cachedScriptureLangs.length : 66;
+                    countLabel = `${langCount} LANGS / 226 VERSIONS ›`;
+                } else {
+                    const totalDocs = (cat.languages || []).reduce((acc, l) => acc + (l.documents || []).length, 0);
+                    countLabel = `${totalDocs} ${totalDocs === 1 ? 'DOC' : 'DOCS'} ›`;
+                }
+
+                html += `
+                    <div data-cat="${escapeHtml(cat.category || catName)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between transition-all hover:scale-[1.01]"
+                         style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                        <div class="flex items-center space-x-3">
+                            <div class="text-xl p-2 rounded-lg border font-bold" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">${meta.icon}</div>
+                            <div>
+                                <div class="font-bold text-xs" style="color: var(--text-main);">${escapeHtml(meta.label)}</div>
+                                <div class="text-[9px] mt-0.5" style="color: var(--text-secondary);">${escapeHtml(meta.desc)}</div>
+                            </div>
+                        </div>
+                        <span class="text-[8.5px] px-2.5 py-1 rounded border font-semibold shrink-0" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
+                            ${countLabel}
+                        </span>
+                    </div>
+                `;
+            };
+
+            filteredCatNames.forEach(catName => renderCatCard(catName));
+        }
 
         html += `
                 </div>
@@ -761,6 +792,19 @@ function renderHierarchyExplorer() {
         `;
 
         box.innerHTML = html;
+
+        const filterInput = document.getElementById('input-root-filter');
+        if (filterInput) {
+            filterInput.addEventListener('input', (e) => {
+                hierarchyState.filterText = e.target.value;
+                renderHierarchyExplorer();
+                const newInp = document.getElementById('input-root-filter');
+                if (newInp) {
+                    newInp.focus();
+                    newInp.selectionStart = newInp.selectionEnd = newInp.value.length;
+                }
+            });
+        }
 
         box.querySelectorAll('[data-cat]').forEach(el => {
             el.addEventListener('click', () => {
@@ -877,39 +921,60 @@ function renderHierarchyExplorer() {
 
         // Standard non-scripture category
         const catData = tree.find(c => c.category.toLowerCase() === catName) || { category: catName, languages: [] };
-        const langs = catData.languages || [];
+        const allLangs = catData.languages || [];
+        const filter = (hierarchyState.filterText || '').trim().toLowerCase();
+        const filteredLangs = allLangs.filter(l => {
+            if (!filter) return true;
+            return (l.language && l.language.toLowerCase().includes(filter));
+        });
 
         let html = `
             <div class="space-y-3 font-mono">
                 <div class="text-[11px] leading-relaxed flex items-center justify-between" style="color: var(--text-secondary);">
-                    <span>THEME: <strong style="color: var(--text-main);">${escapeHtml(hierarchyState.selectedCategory.toUpperCase())}</strong></span>
+                    <span>THEME: <strong style="color: var(--text-main);">${escapeHtml(hierarchyState.selectedCategory.toUpperCase())}</strong> (${filteredLangs.length} MATCHED)</span>
                     <button id="btn-tree-back-root" class="text-[9px] px-2 py-0.5 rounded border hover:opacity-80"
                             style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ THEMES</button>
                 </div>
-                <div class="grid grid-cols-1 gap-2">
+
+                <div class="relative">
+                    <input id="input-nonscrip-lang-filter" type="text" placeholder="Filter languages / corpora... (e.g. en, english)"
+                           value="${escapeHtml(hierarchyState.filterText || '')}"
+                           class="w-full text-xs font-mono px-3 py-1.5 rounded-lg border outline-none transition-all"
+                           style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);" />
+                </div>
+
+                <div class="grid grid-cols-1 gap-2 max-h-[580px] overflow-y-auto reader-scroll pr-1">
         `;
 
-        langs.forEach(l => {
-            const docCount = (l.documents || []).length;
+        if (filteredLangs.length === 0) {
             html += `
-                <div data-lang="${escapeHtml(l.language)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between"
-                     style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 rounded-lg border flex items-center justify-center font-bold text-xs"
-                             style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
-                            ${escapeHtml(l.language.toUpperCase())}
-                        </div>
-                        <div>
-                            <div class="font-bold text-xs" style="color: var(--text-main);">${l.language === 'en' ? 'English (en)' : l.language.toUpperCase()}</div>
-                            <div class="text-[9px]" style="color: var(--text-secondary);">${docCount} documents cataloged</div>
-                        </div>
-                    </div>
-                    <span class="text-[9px] px-2 py-0.5 rounded border font-semibold" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
-                        OPEN ›
-                    </span>
+                <div class="p-6 text-center text-xs" style="color: var(--text-muted);">
+                    No languages found matching "${escapeHtml(filter)}".
                 </div>
             `;
-        });
+        } else {
+            filteredLangs.forEach(l => {
+                const docCount = (l.documents || []).length;
+                html += `
+                    <div data-lang="${escapeHtml(l.language)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between"
+                         style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 rounded-lg border flex items-center justify-center font-bold text-xs"
+                                 style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
+                                ${escapeHtml(l.language.toUpperCase())}
+                            </div>
+                            <div>
+                                <div class="font-bold text-xs" style="color: var(--text-main);">${l.language === 'en' ? 'English (en)' : l.language.toUpperCase()}</div>
+                                <div class="text-[9px]" style="color: var(--text-secondary);">${docCount} documents cataloged</div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] px-2 py-0.5 rounded border font-semibold" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
+                            OPEN ›
+                        </span>
+                    </div>
+                `;
+            });
+        }
 
         html += `
                 </div>
@@ -921,11 +986,25 @@ function renderHierarchyExplorer() {
         const backBtn = document.getElementById('btn-tree-back-root');
         if (backBtn) backBtn.addEventListener('click', () => showHierarchyRoot());
 
+        const filterInput = document.getElementById('input-nonscrip-lang-filter');
+        if (filterInput) {
+            filterInput.addEventListener('input', (e) => {
+                hierarchyState.filterText = e.target.value;
+                renderHierarchyExplorer();
+                const newInp = document.getElementById('input-nonscrip-lang-filter');
+                if (newInp) {
+                    newInp.focus();
+                    newInp.selectionStart = newInp.selectionEnd = newInp.value.length;
+                }
+            });
+        }
+
         box.querySelectorAll('[data-lang]').forEach(el => {
             el.addEventListener('click', () => {
                 const langName = el.getAttribute('data-lang');
                 hierarchyState.selectedLanguage = langName;
                 hierarchyState.level = 'language';
+                hierarchyState.filterText = '';
                 renderHierarchyExplorer();
             });
         });
@@ -941,7 +1020,12 @@ function renderHierarchyExplorer() {
                 ? hierarchyState.selectedLanguage
                 : (cachedScriptureLangs || []).find(l => l.code === hierarchyState.selectedLanguage) || { code: hierarchyState.selectedLanguage, name: hierarchyState.selectedLanguage, versions: [] };
             
-            const versions = langObj.versions || [];
+            const allVersions = langObj.versions || [];
+            const filter = (hierarchyState.filterText || '').trim().toLowerCase();
+            const filteredVersions = allVersions.filter(v => {
+                if (!filter) return true;
+                return v.toLowerCase().includes(filter);
+            });
 
             let html = `
                 <div class="space-y-3 font-mono">
@@ -954,34 +1038,49 @@ function renderHierarchyExplorer() {
                                 style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ ALL LANGUAGES</button>
                     </div>
 
-                    <div class="text-[10px]" style="color: var(--text-muted);">
-                        Available Bible Translations (${versions.length}):
+                    <div class="relative">
+                        <input id="input-ver-filter" type="text" placeholder="Filter translations... (e.g. KJV, ASV, Geneva, Darby, Luther, Webster)"
+                               value="${escapeHtml(hierarchyState.filterText || '')}"
+                               class="w-full text-xs font-mono px-3 py-1.5 rounded-lg border outline-none transition-all"
+                               style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);" />
                     </div>
 
-                    <div class="grid grid-cols-1 gap-2.5">
+                    <div class="text-[10px]" style="color: var(--text-muted);">
+                        Available Bible Translations (${filteredVersions.length} of ${allVersions.length}):
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-2.5 max-h-[560px] overflow-y-auto reader-scroll pr-1">
             `;
 
-            versions.forEach(ver => {
+            if (filteredVersions.length === 0) {
                 html += `
-                    <div data-ver="${escapeHtml(ver)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between transition-all hover:scale-[1.01]"
-                         style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
-                        <div class="flex items-center space-x-3">
-                            <span class="w-12 h-8 rounded border font-bold text-xs flex items-center justify-center shrink-0 uppercase font-mono"
-                                  style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
-                                ${escapeHtml(ver.toUpperCase())}
-                            </span>
-                            <div>
-                                <div class="font-bold text-xs" style="color: var(--text-main);">Holy Bible (${escapeHtml(ver.toUpperCase())})</div>
-                                <div class="text-[9px] mt-0.5" style="color: var(--text-secondary);">Canonical Scripture Translation • Sovereign Archive</div>
-                            </div>
-                        </div>
-                        <span class="text-[9px] px-2.5 py-1 rounded border font-semibold uppercase"
-                              style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
-                            BOOKS ›
-                        </span>
+                    <div class="p-6 text-center text-xs" style="color: var(--text-muted);">
+                        No translations matching "${escapeHtml(filter)}".
                     </div>
                 `;
-            });
+            } else {
+                filteredVersions.forEach(ver => {
+                    html += `
+                        <div data-ver="${escapeHtml(ver)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between transition-all hover:scale-[1.01]"
+                             style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-12 h-8 rounded border font-bold text-xs flex items-center justify-center shrink-0 uppercase font-mono"
+                                      style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
+                                    ${escapeHtml(ver.toUpperCase())}
+                                </span>
+                                <div>
+                                    <div class="font-bold text-xs" style="color: var(--text-main);">Holy Bible (${escapeHtml(ver.toUpperCase())})</div>
+                                    <div class="text-[9px] mt-0.5" style="color: var(--text-secondary);">Canonical Scripture Translation • Sovereign Archive</div>
+                                </div>
+                            </div>
+                            <span class="text-[9px] px-2.5 py-1 rounded border font-semibold uppercase"
+                                  style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
+                                BOOKS ›
+                            </span>
+                        </div>
+                    `;
+                });
+            }
 
             html += `
                     </div>
@@ -1000,6 +1099,19 @@ function renderHierarchyExplorer() {
                 });
             }
 
+            const filterInput = document.getElementById('input-ver-filter');
+            if (filterInput) {
+                filterInput.addEventListener('input', (e) => {
+                    hierarchyState.filterText = e.target.value;
+                    renderHierarchyExplorer();
+                    const newInp = document.getElementById('input-ver-filter');
+                    if (newInp) {
+                        newInp.focus();
+                        newInp.selectionStart = newInp.selectionEnd = newInp.value.length;
+                    }
+                });
+            }
+
             box.querySelectorAll('[data-ver]').forEach(el => {
                 el.addEventListener('click', async () => {
                     const ver = el.getAttribute('data-ver');
@@ -1013,7 +1125,6 @@ function renderHierarchyExplorer() {
                     hierarchyState.level = 'document';
                     hierarchyState.filterText = '';
 
-                    // Pre-fetch metadata for books list
                     const metaKey = `${langCode}:${ver}`;
                     if (!cachedScriptureMetaMap[metaKey]) {
                         try {
@@ -1030,34 +1141,57 @@ function renderHierarchyExplorer() {
         const catData = tree.find(c => c.category.toLowerCase() === catName) || { category: catName, languages: [] };
         const langCode = typeof hierarchyState.selectedLanguage === 'object' ? hierarchyState.selectedLanguage.language : hierarchyState.selectedLanguage;
         const langData = (catData.languages || []).find(l => l.language === langCode) || { language: langCode, documents: [] };
-        const docs = langData.documents || [];
+        const allDocs = langData.documents || [];
+        const filter = (hierarchyState.filterText || '').trim().toLowerCase();
+        const filteredDocs = allDocs.filter(d => {
+            if (!filter) return true;
+            return (d.title && d.title.toLowerCase().includes(filter)) ||
+                   (d.id && d.id.toLowerCase().includes(filter)) ||
+                   (d.publisher && d.publisher.toLowerCase().includes(filter));
+        });
 
         let html = `
             <div class="space-y-3 font-mono">
                 <div class="text-[11px] leading-relaxed flex items-center justify-between" style="color: var(--text-secondary);">
-                    <span>DOCUMENTS [${escapeHtml(langCode.toUpperCase())}]</span>
+                    <span>DOCUMENTS [${escapeHtml(langCode.toUpperCase())}] (${filteredDocs.length} MATCHED)</span>
                     <button id="btn-tree-back-cat" class="text-[9px] px-2 py-0.5 rounded border hover:opacity-80"
                             style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ LANGUAGES</button>
                 </div>
-                <div class="grid grid-cols-1 gap-2">
+
+                <div class="relative">
+                    <input id="input-doc-filter" type="text" placeholder="Filter documents... (e.g. navigation, emergency, survival, triage)"
+                           value="${escapeHtml(hierarchyState.filterText || '')}"
+                           class="w-full text-xs font-mono px-3 py-1.5 rounded-lg border outline-none transition-all"
+                           style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);" />
+                </div>
+
+                <div class="grid grid-cols-1 gap-2 max-h-[560px] overflow-y-auto reader-scroll pr-1">
         `;
 
-        docs.forEach(doc => {
-            const chCount = (doc.chapters || []).length;
+        if (filteredDocs.length === 0) {
             html += `
-                <div data-doc-id="${escapeHtml(doc.id)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex flex-col gap-1.5"
-                     style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
-                    <div class="flex items-center justify-between">
-                        <div class="font-bold text-xs" style="color: var(--text-main);">${escapeHtml(doc.title)}</div>
-                        <span class="text-[8.5px] px-1.5 py-0.5 rounded border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-muted);">${escapeHtml(doc.license || 'public-domain')}</span>
-                    </div>
-                    <div class="flex items-center justify-between text-[9px]" style="color: var(--text-secondary);">
-                        <span>Publisher: ${escapeHtml(doc.publisher || 'Verified Archive')}</span>
-                        <span class="font-semibold" style="color: var(--text-main);">${chCount} ${chCount === 1 ? 'CHAPTER' : 'CHAPTERS'} ›</span>
-                    </div>
+                <div class="p-6 text-center text-xs" style="color: var(--text-muted);">
+                    No documents matching "${escapeHtml(filter)}".
                 </div>
             `;
-        });
+        } else {
+            filteredDocs.forEach(doc => {
+                const chCount = (doc.chapters || []).length;
+                html += `
+                    <div data-doc-id="${escapeHtml(doc.id)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex flex-col gap-1.5"
+                         style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                        <div class="flex items-center justify-between">
+                            <div class="font-bold text-xs" style="color: var(--text-main);">${escapeHtml(doc.title)}</div>
+                            <span class="text-[8.5px] px-1.5 py-0.5 rounded border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-muted);">${escapeHtml(doc.license || 'public-domain')}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-[9px]" style="color: var(--text-secondary);">
+                            <span>Publisher: ${escapeHtml(doc.publisher || 'Verified Archive')}</span>
+                            <span class="font-semibold" style="color: var(--text-main);">${chCount} ${chCount === 1 ? 'CHAPTER' : 'CHAPTERS'} ›</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
 
         html += `
                 </div>
@@ -1070,17 +1204,32 @@ function renderHierarchyExplorer() {
         if (backBtn) {
             backBtn.addEventListener('click', () => {
                 hierarchyState.level = 'category';
+                hierarchyState.filterText = '';
                 renderHierarchyExplorer();
+            });
+        }
+
+        const filterInput = document.getElementById('input-doc-filter');
+        if (filterInput) {
+            filterInput.addEventListener('input', (e) => {
+                hierarchyState.filterText = e.target.value;
+                renderHierarchyExplorer();
+                const newInp = document.getElementById('input-doc-filter');
+                if (newInp) {
+                    newInp.focus();
+                    newInp.selectionStart = newInp.selectionEnd = newInp.value.length;
+                }
             });
         }
 
         box.querySelectorAll('[data-doc-id]').forEach(el => {
             const docId = el.getAttribute('data-doc-id');
             el.addEventListener('click', () => {
-                const foundDoc = docs.find(d => d.id === docId);
+                const foundDoc = allDocs.find(d => d.id === docId);
                 if (foundDoc) {
                     hierarchyState.selectedDoc = foundDoc;
                     hierarchyState.level = 'document';
+                    hierarchyState.filterText = '';
                     renderHierarchyExplorer();
                 }
             });
@@ -1207,6 +1356,7 @@ function renderHierarchyExplorer() {
                     const bChapters = parseInt(el.getAttribute('data-book-chapters') || '1', 10);
                     hierarchyState.selectedBook = { name: bName, chapters: bChapters };
                     hierarchyState.level = 'book';
+                    hierarchyState.filterText = '';
                     renderHierarchyExplorer();
                 });
             });
@@ -1215,34 +1365,56 @@ function renderHierarchyExplorer() {
 
         // Standard non-scripture document chapters
         const doc = hierarchyState.selectedDoc;
-        const chapters = doc.chapters || [];
+        const allChapters = doc.chapters || [];
+        const filter = (hierarchyState.filterText || '').trim().toLowerCase();
+        const filteredChapters = allChapters.map((ch, idx) => ({ ch, idx })).filter(({ ch, idx }) => {
+            if (!filter) return true;
+            const title = (ch.title || `Chapter ${idx + 1}`).toLowerCase();
+            return title.includes(filter) || `${idx + 1}`.includes(filter);
+        });
 
         let html = `
             <div class="space-y-3 font-mono">
                 <div class="text-[11px] leading-relaxed flex items-center justify-between" style="color: var(--text-secondary);">
-                    <span class="truncate pr-2 font-bold" style="color: var(--text-main);">${escapeHtml(doc.title)}</span>
+                    <span class="truncate pr-2 font-bold" style="color: var(--text-main);">${escapeHtml(doc.title)} (${filteredChapters.length} MATCHED)</span>
                     <button id="btn-tree-back-docs" class="text-[9px] px-2 py-0.5 rounded border hover:opacity-80 shrink-0"
                             style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ DOCUMENTS</button>
                 </div>
-                <div class="grid grid-cols-1 gap-2">
+
+                <div class="relative">
+                    <input id="input-ch-filter" type="text" placeholder="Filter chapters/topics... (e.g. Chapter 1, water, navigation)"
+                           value="${escapeHtml(hierarchyState.filterText || '')}"
+                           class="w-full text-xs font-mono px-3 py-1.5 rounded-lg border outline-none transition-all"
+                           style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);" />
+                </div>
+
+                <div class="grid grid-cols-1 gap-2 max-h-[560px] overflow-y-auto reader-scroll pr-1">
         `;
 
-        chapters.forEach((ch, idx) => {
-            const secCount = ch.section_count || (ch.sections || []).length;
+        if (filteredChapters.length === 0) {
             html += `
-                <div data-ch-idx="${idx}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between"
-                     style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
-                    <div>
-                        <div class="font-bold text-xs" style="color: var(--text-main);">${escapeHtml(ch.title || `Chapter ${idx + 1}`)}</div>
-                        <div class="text-[9px] mt-0.5" style="color: var(--text-secondary);">${secCount} sections / passages</div>
-                    </div>
-                    <span class="text-[9px] px-2.5 py-1 rounded border font-bold uppercase transition-all"
-                          style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
-                        READ ›
-                    </span>
+                <div class="p-6 text-center text-xs" style="color: var(--text-muted);">
+                    No chapters matching "${escapeHtml(filter)}".
                 </div>
             `;
-        });
+        } else {
+            filteredChapters.forEach(({ ch, idx }) => {
+                const secCount = ch.section_count || (ch.sections || []).length;
+                html += `
+                    <div data-ch-idx="${idx}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between"
+                         style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                        <div>
+                            <div class="font-bold text-xs" style="color: var(--text-main);">${escapeHtml(ch.title || `Chapter ${idx + 1}`)}</div>
+                            <div class="text-[9px] mt-0.5" style="color: var(--text-secondary);">${secCount} sections / passages</div>
+                        </div>
+                        <span class="text-[9px] px-2.5 py-1 rounded border font-bold uppercase transition-all"
+                              style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
+                            READ ›
+                        </span>
+                    </div>
+                `;
+            });
+        }
 
         html += `
                 </div>
@@ -1255,7 +1427,21 @@ function renderHierarchyExplorer() {
         if (backBtn) {
             backBtn.addEventListener('click', () => {
                 hierarchyState.level = 'language';
+                hierarchyState.filterText = '';
                 renderHierarchyExplorer();
+            });
+        }
+
+        const filterInput = document.getElementById('input-ch-filter');
+        if (filterInput) {
+            filterInput.addEventListener('input', (e) => {
+                hierarchyState.filterText = e.target.value;
+                renderHierarchyExplorer();
+                const newInp = document.getElementById('input-ch-filter');
+                if (newInp) {
+                    newInp.focus();
+                    newInp.selectionStart = newInp.selectionEnd = newInp.value.length;
+                }
             });
         }
 
@@ -1273,6 +1459,14 @@ function renderHierarchyExplorer() {
         const doc = hierarchyState.selectedDoc;
         const book = hierarchyState.selectedBook;
         const totalCh = book.chapters || 1;
+        const filter = (hierarchyState.filterText || '').trim();
+
+        const chList = [];
+        for (let c = 1; c <= totalCh; c++) {
+            if (!filter || `${c}`.includes(filter)) {
+                chList.push(c);
+            }
+        }
 
         let html = `
             <div class="space-y-3 font-mono">
@@ -1285,20 +1479,35 @@ function renderHierarchyExplorer() {
                             style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">‹ BOOKS</button>
                 </div>
 
-                <div class="text-[10px]" style="color: var(--text-secondary);">
-                    Select Chapter to Read:
+                <div class="relative">
+                    <input id="input-ch-jump-filter" type="text" placeholder="Filter chapters... (e.g. 1, 5, 23, 50)"
+                           value="${escapeHtml(hierarchyState.filterText || '')}"
+                           class="w-full text-xs font-mono px-3 py-1.5 rounded-lg border outline-none transition-all"
+                           style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);" />
                 </div>
 
-                <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-[560px] overflow-y-auto reader-scroll pr-1">
+                <div class="text-[10px]" style="color: var(--text-secondary);">
+                    Select Chapter (${chList.length} of ${totalCh}):
+                </div>
+
+                <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-[520px] overflow-y-auto reader-scroll pr-1">
         `;
 
-        for (let c = 1; c <= totalCh; c++) {
+        if (chList.length === 0) {
             html += `
-                <button data-open-ch="${c}" class="py-2.5 rounded-lg border font-bold text-xs transition-all hover:scale-105"
-                        style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-main);">
-                    ${c}
-                </button>
+                <div class="col-span-8 p-6 text-center text-xs" style="color: var(--text-muted);">
+                    No chapter matching "${escapeHtml(filter)}".
+                </div>
             `;
+        } else {
+            chList.forEach(c => {
+                html += `
+                    <button data-open-ch="${c}" class="py-2.5 rounded-lg border font-bold text-xs transition-all hover:scale-105"
+                            style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-main);">
+                        ${c}
+                    </button>
+                `;
+            });
         }
 
         html += `
@@ -1312,7 +1521,21 @@ function renderHierarchyExplorer() {
         if (backBtn) {
             backBtn.addEventListener('click', () => {
                 hierarchyState.level = 'document';
+                hierarchyState.filterText = '';
                 renderHierarchyExplorer();
+            });
+        }
+
+        const filterInput = document.getElementById('input-ch-jump-filter');
+        if (filterInput) {
+            filterInput.addEventListener('input', (e) => {
+                hierarchyState.filterText = e.target.value;
+                renderHierarchyExplorer();
+                const newInp = document.getElementById('input-ch-jump-filter');
+                if (newInp) {
+                    newInp.focus();
+                    newInp.selectionStart = newInp.selectionEnd = newInp.value.length;
+                }
             });
         }
 

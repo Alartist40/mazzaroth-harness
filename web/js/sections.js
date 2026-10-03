@@ -1,5 +1,5 @@
 // MAZZAROTH Sections: Constellations, Sovereign Vector Cartography Map, Librarian AI, and Sky Deck
-import { askStream, getStatus, getMaps, startMapFetch, getMapFetchStatus, deleteMapRegion, getSkyProjection } from './api.js';
+import { askStream, getStatus, getMaps, startMapFetch, getMapFetchStatus, deleteMapRegion, getSkyProjection, getModels } from './api.js';
 
 
 /* ========================================================================= */
@@ -1128,10 +1128,24 @@ export function renderConstellations() {
 }
 
 function handleConstHover(e) {
-    if (!cCanvas) return;
+    const tooltip = document.getElementById('galaxy-tooltip');
+    if (!cCanvas || cCanvas.offsetParent === null) {
+        if (tooltip && !tooltip.classList.contains('hidden')) {
+            tooltip.classList.add('hidden');
+        }
+        return;
+    }
+
+    const constView = document.getElementById('view-constellations');
+    if (constView && constView.classList.contains('hidden')) {
+        if (tooltip && !tooltip.classList.contains('hidden')) {
+            tooltip.classList.add('hidden');
+        }
+        return;
+    }
+
     if (constLayoutMode !== 'DOME') {
-        const tooltip = document.getElementById('galaxy-tooltip');
-        if (tooltip && !tooltip.classList.contains('hidden') && cCanvas.offsetParent !== null) {
+        if (tooltip && !tooltip.classList.contains('hidden')) {
             tooltip.classList.add('hidden');
         }
         return;
@@ -1142,6 +1156,17 @@ function handleConstHover(e) {
     const rect = cCanvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
+
+    if (mx < 0 || mx > rect.width || my < 0 || my > rect.height) {
+        if (tooltip && !tooltip.classList.contains('hidden')) {
+            tooltip.classList.add('hidden');
+        }
+        if (hoveredSkyStar) {
+            hoveredSkyStar = null;
+            renderConstellations();
+        }
+        return;
+    }
 
     const dpr = window.devicePixelRatio || 1;
     const cx = cCanvas.width / (2 * dpr);
@@ -1165,7 +1190,6 @@ function handleConstHover(e) {
     }
 
     hoveredSkyStar = closest;
-    const tooltip = document.getElementById('galaxy-tooltip');
 
     if (closest && tooltip) {
         tooltip.classList.remove('hidden');
@@ -1176,7 +1200,7 @@ function handleConstHover(e) {
             <div class="text-[9px] opacity-80">${escapeHtml(closest.constellation)} • Mag ${closest.magnitude.toFixed(2)}</div>
             <div class="text-[8px] opacity-75">Alt: ${closest.alt_deg.toFixed(1)}° • Az: ${closest.az_deg.toFixed(1)}°</div>
         `;
-    } else if (tooltip && !tooltip.classList.contains('hidden') && cCanvas.offsetParent !== null) {
+    } else if (tooltip && !tooltip.classList.contains('hidden')) {
         tooltip.classList.add('hidden');
     }
 
@@ -1186,6 +1210,13 @@ function handleConstHover(e) {
 function setupConstInteractions() {
     if (constEventsBound || !cCanvas) return;
     constEventsBound = true;
+
+    cCanvas.addEventListener('mouseleave', () => {
+        hoveredSkyStar = null;
+        const tooltip = document.getElementById('galaxy-tooltip');
+        if (tooltip) tooltip.classList.add('hidden');
+        renderConstellations();
+    });
 
     cCanvas.addEventListener('mousedown', (e) => {
         if (e.button === 0) {
@@ -2403,8 +2434,9 @@ function setupMapInteractions() {
             mapPanX = e.clientX - mapDragStartX;
             mapPanY = e.clientY - mapDragStartY;
             renderMap();
-        } else if (mCanvas) {
+        } else if (mCanvas && mCanvas.offsetParent !== null) {
             const rect = mCanvas.getBoundingClientRect();
+            if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) return;
             const mx = (e.clientX - rect.left - mapPanX) / mapZoom;
             const my = (e.clientY - rect.top - mapPanY) / mapZoom;
             const lon = (mx / scaleX).toFixed(2);
@@ -2435,6 +2467,9 @@ function setupMapInteractions() {
 /* ========================================================================= */
 /* 5. LIBRARIAN AI CHAT MODULE                                               */
 /* ========================================================================= */
+let currentLlmModel = null;
+let installedLlmModels = [];
+
 export function initLibrarian() {
     const input = document.getElementById('librarian-input');
     const sendBtn = document.getElementById('btn-librarian-send');
@@ -2445,11 +2480,40 @@ export function initLibrarian() {
     getStatus().then(status => {
         if (status.llm_online) {
             if (statusDot) statusDot.style.backgroundColor = '#22c55e';
-            if (modelBtn && status.llm_model) modelBtn.innerText = status.llm_model.toUpperCase().slice(0, 8);
+            if (modelBtn && status.llm_model) {
+                if (!currentLlmModel) currentLlmModel = status.llm_model;
+                modelBtn.innerText = currentLlmModel.toUpperCase().slice(0, 8);
+                modelBtn.title = `Active Model: ${currentLlmModel}`;
+            }
         } else {
             if (statusDot) statusDot.style.backgroundColor = '#eab308';
         }
     }).catch(() => {});
+
+    getModels().then(models => {
+        if (models && models.length > 0) {
+            installedLlmModels = models.map(m => m.name || m.model);
+            if (!currentLlmModel && installedLlmModels.length > 0) {
+                currentLlmModel = installedLlmModels[0];
+            }
+            if (modelBtn && currentLlmModel) {
+                modelBtn.innerText = currentLlmModel.toUpperCase().slice(0, 8);
+                modelBtn.title = `Active Model: ${currentLlmModel} (click to cycle)`;
+            }
+        }
+    }).catch(() => {});
+
+    if (modelBtn) {
+        modelBtn.addEventListener('click', () => {
+            if (installedLlmModels.length > 0) {
+                const idx = installedLlmModels.indexOf(currentLlmModel);
+                const nextIdx = (idx + 1) % installedLlmModels.length;
+                currentLlmModel = installedLlmModels[nextIdx];
+                modelBtn.innerText = currentLlmModel.toUpperCase().slice(0, 8);
+                modelBtn.title = `Active Model: ${currentLlmModel} (click to cycle)`;
+            }
+        });
+    }
 
     document.querySelectorAll('.prompt-chip').forEach(chip => {
         chip.addEventListener('click', () => {
@@ -2548,10 +2612,10 @@ export function submitLibrarianQuery(question) {
         () => {},
         (err) => {
             if (tokenSpan) {
-                tokenSpan.innerText += `
-[Librarian Offline: ${err.message}]`;
+                tokenSpan.innerText += `\n[Librarian Offline: ${err.message}]`;
             }
-        }
+        },
+        currentLlmModel
     );
 }
 

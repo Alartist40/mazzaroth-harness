@@ -83,7 +83,7 @@ impl Default for LibrarianConfig {
             bibles_dir: PathBuf::from("galaxy/data/bibles"),
             constellations_dir: PathBuf::from("constellation/data"),
             llm_endpoint: "http://127.0.0.1:11434".to_string(),
-            llm_model: "ministral-3b".to_string(),
+            llm_model: "ministral-3:3b".to_string(),
             bind_addr: "0.0.0.0:8080".to_string(),
         }
     }

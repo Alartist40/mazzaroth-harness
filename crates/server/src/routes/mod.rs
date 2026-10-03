@@ -2,6 +2,7 @@ pub mod ask;
 pub mod constellation;
 pub mod galaxy;
 pub mod maps;
+pub mod models;
 pub mod notes;
 pub mod read;
 pub mod scripture;

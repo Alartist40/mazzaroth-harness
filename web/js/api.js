@@ -26,7 +26,13 @@ export async function search(query) {
     }));
 }
 
-export async function askStream(question, onToken, onCitations, onDone, onError) {
+export async function getModels() {
+    const res = await fetch('/api/models');
+    if (!res.ok) throw new Error(`models failed: ${res.status}`);
+    return await res.json();
+}
+
+export async function askStream(question, onToken, onCitations, onDone, onError, model = null) {
     let doneCalled = false;
     const safeDone = () => {
         if (!doneCalled) {
@@ -36,10 +42,13 @@ export async function askStream(question, onToken, onCitations, onDone, onError)
     };
 
     try {
+        const payload = { question: question.trim() };
+        if (model) payload.model = model;
+
         const res = await fetch('/api/ask', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question: question.trim() })
+            body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error(`ask failed: ${res.status}`);
 
