@@ -759,7 +759,9 @@ export function renderConstellations() {
     const strokeColor = rootStyle.getPropertyValue('--contrast-ink').trim() || '#ffffff';
     const textMain = rootStyle.getPropertyValue('--text-main').trim() || '#ffffff';
     const textMuted = rootStyle.getPropertyValue('--text-muted').trim() || '#71717a';
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const theme = document.documentElement.getAttribute('data-theme') || 'midnight-gold';
+    const isLight = theme === 'technical-paper' || theme === 'light';
+    const isDark = !isLight;
 
     cCtx.fillStyle = bg;
     cCtx.fillRect(0, 0, w, h);
@@ -777,21 +779,36 @@ export function renderConstellations() {
         // 1. Sky Dome Outer Disc & Technical Gradient
         cCtx.beginPath();
         cCtx.arc(0, 0, r, 0, Math.PI * 2);
-        if (isDark) {
+        if (isLight) {
             const grad = cCtx.createRadialGradient(0, 0, 10, 0, 0, r);
-            grad.addColorStop(0, '#0a0f1d');
-            grad.addColorStop(0.7, '#070a14');
-            grad.addColorStop(1, '#020306');
+            grad.addColorStop(0, '#f8fafc');
+            grad.addColorStop(0.7, '#edf2f7');
+            grad.addColorStop(1, '#e2e8f0');
+            cCtx.fillStyle = grad;
+        } else if (theme === 'synth-magenta') {
+            const grad = cCtx.createRadialGradient(0, 0, 10, 0, 0, r);
+            grad.addColorStop(0, '#0f1224');
+            grad.addColorStop(0.7, '#090b17');
+            grad.addColorStop(1, '#04050a');
+            cCtx.fillStyle = grad;
+        } else if (theme === 'obsidian-mono') {
+            const grad = cCtx.createRadialGradient(0, 0, 10, 0, 0, r);
+            grad.addColorStop(0, '#141822');
+            grad.addColorStop(0.7, '#0d1017');
+            grad.addColorStop(1, '#06070a');
             cCtx.fillStyle = grad;
         } else {
+            // default midnight-gold
             const grad = cCtx.createRadialGradient(0, 0, 10, 0, 0, r);
-            grad.addColorStop(0, '#f1f5f9');
-            grad.addColorStop(0.7, '#e2e8f0');
-            grad.addColorStop(1, '#cbd5e1');
+            grad.addColorStop(0, '#0c1a2f');
+            grad.addColorStop(0.7, '#071324');
+            grad.addColorStop(1, '#030a14');
             cCtx.fillStyle = grad;
         }
         cCtx.fill();
-        cCtx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.35)';
+        cCtx.strokeStyle = isLight 
+            ? '#0b0d11' 
+            : (theme === 'synth-magenta' ? 'rgba(0, 240, 255, 0.45)' : (theme === 'midnight-gold' ? 'rgba(245, 158, 11, 0.45)' : 'rgba(255, 255, 255, 0.35)'));
         cCtx.lineWidth = 1.5;
         cCtx.stroke();
 
@@ -1358,7 +1375,9 @@ let mapEventsBound = false;
 let mapOperatingMode = 'HEXAGON'; // 'HEXAGON' | 'OFFLINE'
 let activeMapDatasetKey = 'TOTAL';
 let hoveredHex = null;
+let hoveredCountry = null;
 let selectedMapRegion = null;
+let selectedCountry = null;
 let hexWorldGrid = [];
 
 export const MAP_DATASETS = {
@@ -1429,78 +1448,95 @@ export const MAP_DATASETS = {
     }
 };
 
-export const MAP_BADGE_COORDINATES = [
-    { regionId: "NA", label: "NORTH AMERICA", lon: -95, lat: 40, focalCity: "Chicago • New York" },
-    { regionId: "LA", label: "LATIN AMERICA", lon: -58, lat: -16, focalCity: "São Paulo • Manaus" },
-    { regionId: "EU", label: "EUROPE", lon: 15, lat: 50, focalCity: "Berlin • Rome • London" },
-    { regionId: "AF", label: "SUB-SAHARAN AFRICA", lon: 22, lat: 2, focalCity: "Lagos • Kinshasa • Addis" },
-    { regionId: "ME", label: "MIDDLE EAST & LEVANT", lon: 42, lat: 28, focalCity: "Jerusalem • Sinai • Cairo" },
-    { regionId: "AP", label: "ASIA-PACIFIC", lon: 118, lat: 25, focalCity: "Shanghai • Manila • Seoul" }
-];
+export const COUNTRY_DATA = {
+    "US": { id: "US", name: "United States", flag: "🇺🇸", region: "NA", lon: -95, lat: 38, count: "230,000,000", pct: "70.6%", centers: "Smithsonian, Princeton Seminary, Houghton Library", chapters: ["The United States holds one of the most diverse concentrations of Christian traditions globally, spanning Protestant, Evangelical, Roman Catholic, and Eastern Orthodox communities.", "Chapter 2: Major archival collections include the Chester Beatty papyri facsimiles, the Morgan Library Gutenberg Bibles, and Princeton Theological Seminary cuneiform and uncial archives."] },
+    "CA": { id: "CA", name: "Canada", flag: "🇨🇦", region: "NA", lon: -105, lat: 55, count: "22,000,000", pct: "57.5%", centers: "Toronto Pontifical Institute, McGill, Laval", chapters: ["Canada retains historic Catholic foundations in Quebec dating to 1608 alongside Anglican and Presbyterian settlements in Ontario and Maritime provinces.", "Chapter 2: Contains prominent rare book holdings at the Pontifical Institute of Mediaeval Studies (Toronto) and McGill University Rare Books."] },
+    "MX": { id: "MX", name: "Mexico", flag: "🇲🇽", region: "NA", lon: -102, lat: 23, count: "115,000,000", pct: "89.3%", centers: "Basilica of Guadalupe, Puebla Cathedral Library", chapters: ["Mexico has the second-largest Catholic population worldwide, anchored historically in 16th-century Franciscan and Dominican missionary foundations.", "Chapter 2: Houses the historic Biblioteca Palafoxiana in Puebla (founded 1646), the first public library in the Americas preserving polyglot scripture codices."] },
+    "BR": { id: "BR", name: "Brazil", flag: "🇧🇷", region: "LA", lon: -52, lat: -14, count: "180,000,000", pct: "86.8%", centers: "Aparecida National Sanctuary, São Paulo Archdiocesan Archives", chapters: ["Brazil is home to the largest total Roman Catholic community on Earth (approx 120M) alongside a dynamic Evangelical and Pentecostal demographic exceeding 50M.", "Chapter 2: Major centers include the National Sanctuary of Aparecida and Rio de Janeiro Benedictine Monastery collections."] },
+    "CO": { id: "CO", name: "Colombia", flag: "🇨🇴", region: "LA", lon: -73, lat: 4, count: "45,000,000", pct: "92.1%", centers: "Bogotá Archdiocesan Archive, Las Lajas Sanctuary", chapters: ["Colombia has maintained a continuous Catholic cultural heritage since the 16th century, preserving early missionary catechetical manuscripts."] },
+    "AR": { id: "AR", name: "Argentina", flag: "🇦🇷", region: "LA", lon: -64, lat: -34, count: "36,000,000", pct: "80.0%", centers: "Buenos Aires Metropolitan Cathedral, Jesuit Reductions", chapters: ["Argentina features deep Jesuit historical roots across the Rio de la Plata, with historic archival repositories in Córdoba and Buenos Aires."] },
+    "GB": { id: "GB", name: "United Kingdom", flag: "🇬🇧", region: "EU", lon: -2, lat: 54, count: "33,000,000", pct: "48.0%", centers: "British Library, Oxford Bodleian, Cambridge", chapters: ["The United Kingdom preserves some of the world's most critical biblical codices: Codex Alexandrinus (5th c.) and major leaves of Codex Sinaiticus (4th c.) at the British Library.", "Chapter 2: The Bodleian Library at Oxford houses extensive Greek, Latin, and Ge'ez scripture manuscripts."] },
+    "DE": { id: "DE", name: "Germany", flag: "🇩🇪", region: "EU", lon: 10, lat: 51, count: "43,000,000", pct: "52.0%", centers: "Wittenberg Luther House, Gutenberg Museum Mainz", chapters: ["Germany is the historic cradle of the Protestant Reformation (1517). Mainz produced the Gutenberg 42-Line Bible (1455), the first major book printed using movable metal type."] },
+    "FR": { id: "FR", name: "France", flag: "🇫🇷", region: "EU", lon: 2, lat: 47, count: "36,000,000", pct: "54.0%", centers: "Bibliothèque Nationale de France, Cluny, Avignon", chapters: ["The Bibliothèque Nationale de France in Paris preserves Codex Ephraemi Rescriptus (5th c.) and irreplaceable Carolingian illuminated Gospel books."] },
+    "IT": { id: "IT", name: "Italy & Vatican", flag: "🇮🇹", region: "EU", lon: 12.5, lat: 42, count: "48,000,000", pct: "80.5%", centers: "Vatican Apostolic Library, St. Peter's, Roman Catacombs", chapters: ["The Vatican Apostolic Library houses Codex Vaticanus Graecus 1209 (c. 325 AD), one of the oldest and most authoritative Greek manuscripts of the Bible."] },
+    "ES": { id: "ES", name: "Spain", flag: "🇪🇸", region: "EU", lon: -4, lat: 40, count: "34,000,000", pct: "72.0%", centers: "El Escorial Royal Library, Complutensian Polyglot", chapters: ["Spain was the birthplace of the Complutensian Polyglot Bible (1514-1517), the first printed multi-language edition of the entire Bible (Hebrew, Greek, Aramaic, Latin)."] },
+    "PL": { id: "PL", name: "Poland", flag: "🇵🇱", region: "EU", lon: 19, lat: 52, count: "33,000,000", pct: "88.0%", centers: "Jasna Góra Monastery, Jagiellonian Library", chapters: ["Poland has one of the highest densities of Catholic adherence in Europe, preserving historic Latin and Polish scripture translations from the 15th century."] },
+    "GR": { id: "GR", name: "Greece", flag: "🇬🇷", region: "EU", lon: 22, lat: 39, count: "10,000,000", pct: "93.0%", centers: "Mt. Athos Monasteries, Patmos Apocalypse Grotto", chapters: ["Mt. Athos (Holy Mountain) autonomous monastic republic preserves over 15,000 Byzantine and post-Byzantine Greek biblical manuscripts."] },
+    "UA": { id: "UA", name: "Ukraine", flag: "🇺🇦", region: "EU", lon: 31, lat: 49, count: "30,000,000", pct: "78.0%", centers: "Kyiv Pechersk Lavra, Ostrog Bible Archives", chapters: ["Home to the Ostrog Bible (1581), the first complete printed edition of the Old and New Testaments in Church Slavonic."] },
+    "NG": { id: "NG", name: "Nigeria", flag: "🇳🇬", region: "AF", lon: 8, lat: 9, count: "95,000,000", pct: "46.5%", centers: "Lagos Theological Hubs, Jos Archival Center", chapters: ["Nigeria possesses the largest Christian population on the African continent, featuring massive Anglican, Catholic, and Pentecostal assemblies."] },
+    "CD": { id: "CD", name: "DR Congo", flag: "🇨🇩", region: "AF", lon: 23, lat: -2, count: "85,000,000", pct: "92.0%", centers: "Kinshasa Archdiocesan Archive, Kisangani", chapters: ["The Democratic Republic of the Congo has the largest Catholic population in Africa and a rapidly growing theological faculty network."] },
+    "ET": { id: "ET", name: "Ethiopia", flag: "🇪🇹", region: "AF", lon: 39, lat: 9, count: "65,000,000", pct: "62.0%", centers: "Axum St. Mary of Zion, Lake Tana Monasteries, Lalibela", chapters: ["The Ethiopian Orthodox Tewahedo Church preserves an ancient continuous tradition dating back to King Ezana of Axum (c. 330 AD), with thousands of illuminated Ge'ez Gospel codices."] },
+    "KE": { id: "KE", name: "Kenya", flag: "🇰🇪", region: "AF", lon: 37, lat: 0, count: "43,000,000", pct: "85.0%", centers: "Nairobi Theological Colleges", chapters: ["Kenya serves as a central publishing and translation crossroads for over 60 East African languages."] },
+    "ZA": { id: "ZA", name: "South Africa", flag: "🇿🇦", region: "AF", lon: 25, lat: -29, count: "44,000,000", pct: "78.0%", centers: "Cape Town Archives, Genadendal Mission", chapters: ["South Africa maintains deep archival collections from early Dutch Reformed, Anglican, and Moravian missionary translation initiatives."] },
+    "EG": { id: "EG", name: "Egypt", flag: "🇪🇬", region: "ME", lon: 30, lat: 27, count: "11,000,000", pct: "10.0%", centers: "Coptic Orthodox Patriarchate, Wadi El Natrun, St. Catherine (Sinai)", chapters: ["Egypt is home to the ancient Coptic Orthodox Church founded by St. Mark the Evangelist. The desert monasteries of Wadi El Natrun and Sinai preserve 3rd-century Sahidic and Bohairic papyri."] },
+    "IL": { id: "IL", name: "Israel & Palestine", flag: "🇮🇱", region: "ME", lon: 35.2, lat: 31.8, count: "300,000", pct: "2.5%", centers: "Jerusalem Holy Sepulchre, Shrine of the Book (Dead Sea Scrolls)", chapters: ["The historic geographic ground zero of both the Old and New Testaments. Jerusalem holds the Dead Sea Scrolls (dating from 3rd c. BC to 1st c. AD)."] },
+    "LB": { id: "LB", name: "Lebanon & Syria", flag: "🇱🇧", region: "ME", lon: 35.8, lat: 33.8, count: "2,500,000", pct: "36.0%", centers: "Maronite Bkerké Patriarchate, Antiochian Patriarchate", chapters: ["Preserves ancient Eastern Rite Catholic and Orthodox heritage in Syriac, Aramaic, and Arabic liturgical traditions."] },
+    "TR": { id: "TR", name: "Turkey", flag: "🇹🇷", region: "ME", lon: 35, lat: 39, count: "300,000", pct: "0.4%", centers: "Ecumenical Patriarchate of Constantinople, Seven Churches of Asia", chapters: ["Asia Minor was the setting for the missionary journeys of Paul and the Seven Churches of Revelation (Ephesus, Smyrna, Pergamum, etc.)."] },
+    "SA": { id: "SA", name: "Saudi Arabia & Gulf", flag: "🇸🇦", region: "ME", lon: 45, lat: 24, count: "2,200,000", pct: "4.0%", centers: "Historic Najran Inscriptions, Expatriate Fellowships", chapters: ["Features pre-Islamic Christian inscriptions in Najran alongside international expatriate church communities."] },
+    "PH": { id: "PH", name: "Philippines", flag: "🇵🇭", region: "AP", lon: 122, lat: 13, count: "92,000,000", pct: "85.0%", centers: "San Agustin Church Manila, Santo Niño de Cebu", chapters: ["The Philippines is the largest Christian nation in Asia (approx 85M Catholics, 10M Protestants), rooted in 1521 Spanish foundations."] },
+    "CN": { id: "CN", name: "China", flag: "🇨🇳", region: "AP", lon: 104, lat: 35, count: "70,000,000", pct: "5.0%", centers: "Amity Printing Company Nanjing, Xi'an Nestorian Stele", chapters: ["China hosts the Amity Printing Company in Nanjing (over 200 million Bibles printed in 100+ languages). The Xi'an Stele records Christian presence dating back to 635 AD (Tang Dynasty)."] },
+    "IN": { id: "IN", name: "India", flag: "🇮🇳", region: "AP", lon: 79, lat: 21, count: "32,000,000", pct: "2.4%", centers: "St. Thomas Mount (Chennai), Malankara Archives (Kerala)", chapters: ["The St. Thomas Christians of Kerala trace their tradition directly to the Apostle Thomas arriving in Muziris (52 AD), preserving ancient East Syriac and Malayalam manuscripts."] },
+    "KR": { id: "KR", name: "South Korea", flag: "🇰🇷", region: "AP", lon: 128, lat: 36, count: "14,000,000", pct: "28.0%", centers: "Seoul Theological Centers, Yanghwajin Martyr Archives", chapters: ["South Korea has an extraordinary history of self-initiated Christian learning in the late 18th century, becoming one of the largest missionary-sending nations in the world."] },
+    "JP": { id: "JP", name: "Japan", flag: "🇯🇵", region: "AP", lon: 138, lat: 37, count: "2,000,000", pct: "1.5%", centers: "Nagasaki Kakure Kirishitan Sites, Oura Cathedral", chapters: ["Features the remarkable history of the Hidden Christians (Kakure Kirishitan) who preserved their faith and Latin/Portuguese prayers underground for over 250 years."] },
+    "ID": { id: "ID", name: "Indonesia", flag: "🇮🇩", region: "AP", lon: 118, lat: -2, count: "29,000,000", pct: "10.5%", centers: "North Sumatra Batak Church (HKBP), Moluccas Dioceses", chapters: ["Indonesia has a vibrant Christian population exceeding 29 million, with major concentrations in North Sumatra, North Sulawesi, and Papua."] },
+    "AU": { id: "AU", name: "Australia", flag: "🇦🇺", region: "AP", lon: 134, lat: -25, count: "11,000,000", pct: "44.0%", centers: "St. Mary's Cathedral Sydney, Australian Bible Society", chapters: ["Australia maintains extensive Pacific Bible translation archives and historical missionary records across Indigenous and diaspora communities."] }
+};
 
 export const MAP_HOTSPOTS = {
     "TOTAL": [
-        { lon: -87.6, lat: 41.8, weight: 1.0 },
-        { lon: -74.0, lat: 40.7, weight: 0.95 },
-        { lon: -99.1, lat: 19.4, weight: 0.90 },
-        { lon: -46.6, lat: -23.5, weight: 1.0 },
-        { lon: -60.0, lat: -3.1, weight: 0.75 },
-        { lon: -58.4, lat: -34.6, weight: 0.88 },
-        { lon: 12.5, lat: 41.9, weight: 1.0 },
-        { lon: 13.4, lat: 52.5, weight: 0.95 },
-        { lon: 0.1, lat: 51.5, weight: 0.92 },
-        { lon: 3.4, lat: 6.5, weight: 1.0 },
-        { lon: 15.3, lat: -4.4, weight: 0.98 },
-        { lon: 38.7, lat: 9.0, weight: 0.95 },
-        { lon: 35.2, lat: 31.8, weight: 1.0 },
-        { lon: 31.2, lat: 30.0, weight: 0.85 },
-        { lon: 120.9, lat: 14.6, weight: 1.0 },
-        { lon: 126.9, lat: 37.5, weight: 0.90 },
-        { lon: 121.4, lat: 31.2, weight: 0.88 },
-        { lon: 76.3, lat: 9.9, weight: 0.85 },
-        { lon: 151.2, lat: -33.8, weight: 0.82 }
+        { lon: -95.0, lat: 38.0, code: "US", weight: 1.0 },
+        { lon: -105.0, lat: 55.0, code: "CA", weight: 0.85 },
+        { lon: -102.0, lat: 23.0, code: "MX", weight: 0.90 },
+        { lon: -52.0, lat: -14.0, code: "BR", weight: 1.0 },
+        { lon: -73.0, lat: 4.0, code: "CO", weight: 0.88 },
+        { lon: -64.0, lat: -34.0, code: "AR", weight: 0.88 },
+        { lon: 12.5, lat: 42.0, code: "IT", weight: 1.0 },
+        { lon: 10.0, lat: 51.0, code: "DE", weight: 0.95 },
+        { lon: -2.0, lat: 54.0, code: "GB", weight: 0.92 },
+        { lon: 2.0, lat: 47.0, code: "FR", weight: 0.90 },
+        { lon: 8.0, lat: 9.0, code: "NG", weight: 1.0 },
+        { lon: 23.0, lat: -2.0, code: "CD", weight: 0.98 },
+        { lon: 39.0, lat: 9.0, code: "ET", weight: 0.95 },
+        { lon: 30.0, lat: 27.0, code: "EG", weight: 0.92 },
+        { lon: 35.2, lat: 31.8, code: "IL", weight: 1.0 },
+        { lon: 122.0, lat: 13.0, code: "PH", weight: 1.0 },
+        { lon: 104.0, lat: 35.0, code: "CN", weight: 0.90 },
+        { lon: 79.0, lat: 21.0, code: "IN", weight: 0.88 },
+        { lon: 128.0, lat: 36.0, code: "KR", weight: 0.92 },
+        { lon: 138.0, lat: 37.0, code: "JP", weight: 0.80 },
+        { lon: 134.0, lat: -25.0, code: "AU", weight: 0.85 }
     ],
     "CATHOLIC": [
-        { lon: 12.5, lat: 41.9, weight: 1.0 },
-        { lon: -3.7, lat: 40.4, weight: 0.92 },
-        { lon: 19.9, lat: 50.0, weight: 0.90 },
-        { lon: -46.6, lat: -23.5, weight: 1.0 },
-        { lon: -99.1, lat: 19.4, weight: 0.98 },
-        { lon: -58.4, lat: -34.6, weight: 0.88 },
-        { lon: 15.3, lat: -4.4, weight: 0.95 },
-        { lon: 120.9, lat: 14.6, weight: 1.0 },
-        { lon: -71.0, lat: 42.3, weight: 0.85 }
+        { lon: 12.5, lat: 42.0, code: "IT", weight: 1.0 },
+        { lon: -4.0, lat: 40.0, code: "ES", weight: 0.95 },
+        { lon: -52.0, lat: -14.0, code: "BR", weight: 1.0 },
+        { lon: -102.0, lat: 23.0, code: "MX", weight: 0.98 },
+        { lon: 122.0, lat: 13.0, code: "PH", weight: 1.0 },
+        { lon: 23.0, lat: -2.0, code: "CD", weight: 0.95 },
+        { lon: 19.0, lat: 52.0, code: "PL", weight: 0.92 }
     ],
     "PROTESTANT": [
-        { lon: 0.1, lat: 51.5, weight: 0.95 },
-        { lon: 13.4, lat: 52.5, weight: 0.90 },
-        { lon: -86.7, lat: 36.1, weight: 1.0 },
-        { lon: -87.6, lat: 41.8, weight: 0.92 },
-        { lon: 3.4, lat: 6.5, weight: 1.0 },
-        { lon: 36.8, lat: -1.3, weight: 0.92 },
-        { lon: 126.9, lat: 37.5, weight: 0.95 },
-        { lon: 120.7, lat: 28.0, weight: 0.88 }
+        { lon: -95.0, lat: 38.0, code: "US", weight: 1.0 },
+        { lon: 10.0, lat: 51.0, code: "DE", weight: 0.95 },
+        { lon: -2.0, lat: 54.0, code: "GB", weight: 0.92 },
+        { lon: 8.0, lat: 9.0, code: "NG", weight: 1.0 },
+        { lon: 37.0, lat: 0.0, code: "KE", weight: 0.92 },
+        { lon: 128.0, lat: 36.0, code: "KR", weight: 0.95 }
     ],
     "ORTHODOX": [
-        { lon: 23.7, lat: 37.9, weight: 1.0 },
-        { lon: 28.9, lat: 41.0, weight: 0.95 },
-        { lon: 37.6, lat: 55.7, weight: 0.98 },
-        { lon: 26.1, lat: 44.4, weight: 0.90 },
-        { lon: 38.7, lat: 9.0, weight: 1.0 },
-        { lon: 31.2, lat: 30.0, weight: 0.95 },
-        { lon: 36.3, lat: 33.5, weight: 0.90 },
-        { lon: 76.5, lat: 9.6, weight: 0.92 }
+        { lon: 22.0, lat: 39.0, code: "GR", weight: 1.0 },
+        { lon: 39.0, lat: 9.0, code: "ET", weight: 1.0 },
+        { lon: 30.0, lat: 27.0, code: "EG", weight: 0.95 },
+        { lon: 31.0, lat: 49.0, code: "UA", weight: 0.92 },
+        { lon: 35.8, lat: 33.8, code: "LB", weight: 0.90 }
     ],
     "MANUSCRIPTS": [
-        { lon: 33.9, lat: 28.5, weight: 1.0 },
-        { lon: 35.4, lat: 31.7, weight: 1.0 },
-        { lon: 12.5, lat: 41.9, weight: 1.0 },
-        { lon: 0.1, lat: 51.5, weight: 0.95 },
-        { lon: 24.3, lat: 40.2, weight: 0.95 },
-        { lon: 37.3, lat: 12.0, weight: 0.92 },
-        { lon: 30.4, lat: 30.4, weight: 0.90 },
-        { lon: -6.2, lat: 53.3, weight: 0.88 },
-        { lon: -77.0, lat: 38.9, weight: 0.85 }
+        { lon: 30.0, lat: 27.0, code: "EG", weight: 1.0 },
+        { lon: 35.2, lat: 31.8, code: "IL", weight: 1.0 },
+        { lon: 12.5, lat: 42.0, code: "IT", weight: 1.0 },
+        { lon: -2.0, lat: 54.0, code: "GB", weight: 0.95 },
+        { lon: 22.0, lat: 39.0, code: "GR", weight: 0.95 },
+        { lon: 39.0, lat: 9.0, code: "ET", weight: 0.92 }
     ]
 };
 
@@ -2472,7 +2508,7 @@ export function toggleGraticule() {
 }
 
 export function recenterMap() {
-    if (maplibreActive && maplibreInstance) {
+    if (mapOperatingMode === 'OFFLINE' && maplibreActive && maplibreInstance) {
         if (activeRegion && activeRegion.schema === 'street' && activeRegion.bounds) {
             maplibreInstance.fitBounds(activeRegion.bounds, { padding: 36, duration: 600 });
         } else {
@@ -2481,29 +2517,32 @@ export function recenterMap() {
         return;
     }
     if (!mCanvas) return;
-    mapPanX = mCanvas.width / 2;
-    mapPanY = mCanvas.height / 2;
+    const redZone = document.getElementById('zone-red');
+    const w = redZone ? redZone.clientWidth : mCanvas.width;
+    const h = redZone ? redZone.clientHeight : mCanvas.height;
+    mapPanX = w / 2;
+    mapPanY = h / 2;
     mapZoom = 1.0;
     renderMap();
 }
 
 export function zoomMapIn() {
-    if (maplibreActive && maplibreInstance) {
+    if (mapOperatingMode === 'OFFLINE' && maplibreActive && maplibreInstance) {
         try { maplibreInstance.zoomIn({ duration: 220 }); } catch (e) {}
         return;
     }
     if (!mCanvas) return;
-    mapZoom = Math.max(0.4, Math.min(4.5, mapZoom * 1.35));
+    mapZoom = Math.max(0.4, Math.min(5.0, mapZoom * 1.3));
     renderMap();
 }
 
 export function zoomMapOut() {
-    if (maplibreActive && maplibreInstance) {
+    if (mapOperatingMode === 'OFFLINE' && maplibreActive && maplibreInstance) {
         try { maplibreInstance.zoomOut({ duration: 220 }); } catch (e) {}
         return;
     }
     if (!mCanvas) return;
-    mapZoom = Math.max(0.4, Math.min(4.5, mapZoom / 1.35));
+    mapZoom = Math.max(0.4, Math.min(5.0, mapZoom / 1.3));
     renderMap();
 }
 
@@ -2860,14 +2899,47 @@ function renderHexDataMap() {
         drawHexagon(mCtx, hex.x, hex.y, hex.radius, fillColor, strokeColor, glowColor, glowBlur);
     });
 
-    // 4. Hotspot Core Beacons
-    hotspots.forEach(spot => {
-        const sx = spot.lon * scaleX;
-        const sy = -spot.lat * scaleY;
+    // 4. Country Beacons & Regional Nodes
+    Object.values(COUNTRY_DATA).forEach(c => {
+        const cx = c.lon * scaleX;
+        const cy = -c.lat * scaleY;
+        const isSel = selectedCountry && selectedCountry.id === c.id;
+        const isHov = hoveredCountry && hoveredCountry.id === c.id;
+
+        // Outer glow/ring
         mCtx.beginPath();
-        mCtx.arc(sx, sy, 2.5, 0, Math.PI * 2);
-        mCtx.fillStyle = '#ffffff';
-        mCtx.fill();
+        mCtx.arc(cx, cy, isSel ? 7.5 : (isHov ? 5.5 : 3.5), 0, Math.PI * 2);
+        if (isSel) {
+            mCtx.fillStyle = accentGold;
+            mCtx.shadowColor = accentGold;
+            mCtx.shadowBlur = 14;
+            mCtx.fill();
+            mCtx.lineWidth = 2;
+            mCtx.strokeStyle = '#ffffff';
+            mCtx.stroke();
+            mCtx.shadowBlur = 0;
+        } else if (isHov) {
+            mCtx.fillStyle = accentCyan;
+            mCtx.shadowColor = accentCyan;
+            mCtx.shadowBlur = 8;
+            mCtx.fill();
+            mCtx.lineWidth = 1.5;
+            mCtx.strokeStyle = '#ffffff';
+            mCtx.stroke();
+            mCtx.shadowBlur = 0;
+        } else {
+            mCtx.fillStyle = isLight ? '#0284c7' : '#ffffff';
+            mCtx.fill();
+            mCtx.lineWidth = 0.8;
+            mCtx.strokeStyle = isLight ? '#0369a1' : 'rgba(255, 255, 255, 0.6)';
+            mCtx.stroke();
+        }
+
+        // Country code label
+        mCtx.font = isSel ? 'bold 8.5px "JetBrains Mono", monospace' : 'bold 7px "JetBrains Mono", monospace';
+        mCtx.fillStyle = isSel ? accentGold : (isHov ? accentCyan : (isLight ? '#334155' : 'rgba(255, 255, 255, 0.75)'));
+        mCtx.textAlign = 'center';
+        mCtx.fillText(c.id, cx, cy - (isSel ? 10 : 7));
     });
 
     mCtx.restore();
@@ -2883,68 +2955,179 @@ function updateMapFloatingBadges() {
         return;
     }
 
-    const currDataset = MAP_DATASETS[activeMapDatasetKey];
+    const currDataset = MAP_DATASETS[activeMapDatasetKey] || MAP_DATASETS["TOTAL"];
     if (!currDataset) {
         container.innerHTML = '';
         return;
     }
 
-    container.innerHTML = '';
     container.classList.remove('hidden');
+    container.innerHTML = '';
 
     const scaleX = 2.4;
     const scaleY = 2.4;
 
-    const icons = {
-        "NA": `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
-        "LA": `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
-        "EU": `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
-        "AF": `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
-        "ME": `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>`,
-        "AP": `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>`
-    };
-
-    MAP_BADGE_COORDINATES.forEach(badge => {
-        const regData = currDataset.regions[badge.regionId];
-        if (!regData) return;
-
-        const screenX = mapPanX + badge.lon * scaleX * mapZoom;
-        const screenY = mapPanY - badge.lat * scaleY * mapZoom;
-
-        const isSelected = selectedMapRegion && selectedMapRegion.id === badge.regionId;
+    // 1. Single on-demand detail card if a Country is selected
+    if (selectedCountry) {
+        const c = selectedCountry;
+        const screenX = mapPanX + c.lon * scaleX * mapZoom;
+        const screenY = mapPanY - c.lat * scaleY * mapZoom;
 
         const card = document.createElement('div');
-        card.className = "absolute pointer-events-auto cursor-pointer rounded-2xl p-2.5 shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 text-xs font-mono select-none flex flex-col gap-1 backdrop-blur-md";
-        card.style.left = `${screenX - 80}px`;
-        card.style.top = `${screenY - 32}px`;
-        card.style.minWidth = '160px';
-        card.style.backgroundColor = isSelected ? 'var(--panel-bg-subtle)' : 'var(--panel-bg)';
-        card.style.border = isSelected ? '1.5px solid var(--accent-primary)' : '1px solid var(--panel-border)';
-        card.style.boxShadow = isSelected ? '0 8px 32px rgba(245, 158, 11, 0.35)' : 'var(--card-shadow)';
+        card.className = "absolute pointer-events-auto rounded-2xl p-4 shadow-2xl transition-all duration-200 text-xs font-mono select-none flex flex-col gap-2 backdrop-blur-xl animate-fade-in";
+        card.style.left = `${Math.max(16, Math.min(window.innerWidth - 320, screenX + 16))}px`;
+        card.style.top = `${Math.max(60, Math.min(window.innerHeight - 340, screenY - 60))}px`;
+        card.style.width = '300px';
+        card.style.backgroundColor = 'var(--panel-bg)';
+        card.style.border = '1.5px solid var(--accent-primary)';
+        card.style.boxShadow = '0 12px 36px rgba(0, 0, 0, 0.45), 0 0 20px rgba(245, 158, 11, 0.2)';
 
         card.innerHTML = `
-            <div class="flex items-center justify-between gap-2 border-b pb-1" style="border-color: var(--border-subtle);">
-                <div class="flex items-center space-x-1.5">
-                    <span class="w-5 h-5 rounded-md flex items-center justify-center text-[10px]" style="background-color: var(--panel-bg-subtle); color: var(--accent-secondary);">
-                        ${icons[badge.regionId] || '●'}
-                    </span>
-                    <span class="font-bold text-[9.5px] uppercase tracking-wider" style="color: var(--text-main);">${badge.label}</span>
+            <div class="flex items-center justify-between border-b pb-2" style="border-color: var(--border-subtle);">
+                <div class="flex items-center space-x-2">
+                    <span class="text-base leading-none">${c.flag || '📍'}</span>
+                    <div class="flex flex-col">
+                        <span class="font-bold text-sm tracking-wide" style="color: var(--text-main);">${c.name}</span>
+                        <span class="text-[9px] uppercase tracking-widest" style="color: var(--accent-secondary);">${c.region} REGION • ${c.id}</span>
+                    </div>
                 </div>
-                <span class="text-[8px] font-bold px-1 py-0.5 rounded" style="background-color: var(--panel-bg-subtle); color: var(--accent-primary);">${regData.pct}</span>
+                <button id="btn-close-detail-card" class="w-6 h-6 rounded-full flex items-center justify-center opacity-70 hover:opacity-100 hover:bg-white/10 transition-colors" style="color: var(--text-muted);" title="Close detail card">✕</button>
             </div>
-            <div class="flex items-baseline justify-between mt-0.5">
-                <span class="font-extrabold text-xs tracking-tight" style="color: var(--accent-primary);">${regData.count}</span>
+            
+            <div class="flex items-baseline justify-between py-1 px-2.5 rounded-lg" style="background-color: var(--panel-bg-subtle);">
+                <div class="flex flex-col">
+                    <span class="text-[9px] uppercase tracking-wider" style="color: var(--text-muted);">${currDataset.metricLabel}</span>
+                    <span class="font-extrabold text-base tracking-tight" style="color: var(--accent-primary);">${c.count}</span>
+                </div>
+                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded" style="background-color: var(--panel-border); color: var(--accent-secondary);">${c.pct}</span>
             </div>
-            <div class="text-[8px] truncate" style="color: var(--text-muted);">${badge.focalCity}</div>
+
+            ${c.centers ? `
+            <div class="text-[10px] leading-relaxed">
+                <span class="font-bold uppercase tracking-wider" style="color: var(--text-secondary);">Centers: </span>
+                <span style="color: var(--text-muted);">${c.centers}</span>
+            </div>
+            ` : ''}
+
+            ${c.chapters && c.chapters.length > 0 ? `
+            <div class="text-[10.5px] leading-relaxed line-clamp-3 p-2 rounded border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
+                ${c.chapters[0]}
+            </div>
+            ` : ''}
+
+            <button id="btn-inspect-country-librarian" class="w-full mt-1 py-1.5 rounded-lg border text-[10px] font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-[0.98]" style="background-color: var(--panel-bg-subtle); border-color: var(--accent-primary); color: var(--accent-primary);">
+                <span>📖</span> <span>LOAD TO READING DECK</span>
+            </button>
         `;
 
-        card.addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            selectDataMapRegion(badge.regionId);
-        });
+        const closeBtn = card.querySelector('#btn-close-detail-card');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectedCountry = null;
+                selectedMapRegion = null;
+                renderMap();
+            });
+        }
+
+        const inspectBtn = card.querySelector('#btn-inspect-country-librarian');
+        if (inspectBtn) {
+            inspectBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectCountry(c.id);
+            });
+        }
 
         container.appendChild(card);
-    });
+        return;
+    }
+
+    // 2. Single on-demand detail card if a Region is selected
+    if (selectedMapRegion) {
+        const reg = selectedMapRegion;
+        const regData = currDataset.regions[reg.id] || reg;
+        
+        const card = document.createElement('div');
+        card.className = "absolute pointer-events-auto rounded-2xl p-4 shadow-2xl transition-all duration-200 text-xs font-mono select-none flex flex-col gap-2 backdrop-blur-xl animate-fade-in";
+        card.style.right = '24px';
+        card.style.top = '72px';
+        card.style.width = '290px';
+        card.style.backgroundColor = 'var(--panel-bg)';
+        card.style.border = '1.5px solid var(--accent-primary)';
+        card.style.boxShadow = '0 12px 36px rgba(0, 0, 0, 0.45), 0 0 20px rgba(245, 158, 11, 0.2)';
+
+        card.innerHTML = `
+            <div class="flex items-center justify-between border-b pb-2" style="border-color: var(--border-subtle);">
+                <div class="flex items-center space-x-2">
+                    <span class="font-bold text-sm tracking-wide" style="color: var(--text-main);">${regData.name || reg.name}</span>
+                    <span class="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded" style="background-color: var(--panel-bg-subtle); color: var(--accent-secondary);">${reg.id}</span>
+                </div>
+                <button id="btn-close-region-card" class="w-6 h-6 rounded-full flex items-center justify-center opacity-70 hover:opacity-100 hover:bg-white/10 transition-colors" style="color: var(--text-muted);" title="Close detail card">✕</button>
+            </div>
+            
+            <div class="flex items-baseline justify-between py-1 px-2.5 rounded-lg" style="background-color: var(--panel-bg-subtle);">
+                <div class="flex flex-col">
+                    <span class="text-[9px] uppercase tracking-wider" style="color: var(--text-muted);">${currDataset.metricLabel}</span>
+                    <span class="font-extrabold text-base tracking-tight" style="color: var(--accent-primary);">${regData.count || '--'}</span>
+                </div>
+                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded" style="background-color: var(--panel-border); color: var(--accent-secondary);">${regData.pct || '--'}</span>
+            </div>
+
+            ${regData.chapters && regData.chapters.length > 0 ? `
+            <div class="text-[10.5px] leading-relaxed line-clamp-4 p-2 rounded border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
+                ${regData.chapters[0]}
+            </div>
+            ` : ''}
+
+            <button id="btn-inspect-region-librarian" class="w-full mt-1 py-1.5 rounded-lg border text-[10px] font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-[0.98]" style="background-color: var(--panel-bg-subtle); border-color: var(--accent-primary); color: var(--accent-primary);">
+                <span>📖</span> <span>LOAD REGION TO READING DECK</span>
+            </button>
+        `;
+
+        const closeBtn = card.querySelector('#btn-close-region-card');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectedMapRegion = null;
+                renderMap();
+            });
+        }
+
+        const inspectBtn = card.querySelector('#btn-inspect-region-librarian');
+        if (inspectBtn) {
+            inspectBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectDataMapRegion(reg.id);
+            });
+        }
+
+        container.appendChild(card);
+    }
+}
+
+export function selectCountry(code) {
+    const country = COUNTRY_DATA[code];
+    if (!country) return;
+    selectedCountry = country;
+    selectedMapRegion = { id: country.region, name: country.name };
+    renderMap();
+
+    if (onSelectGeocacheCallback) {
+        const dataset = MAP_DATASETS[activeMapDatasetKey] || MAP_DATASETS["TOTAL"];
+        onSelectGeocacheCallback({
+            id: `GEO-${country.id}`,
+            name: `${country.flag || '📍'} ${country.name} — ${dataset.title}`,
+            tags: ["NATION_DATA", country.region, country.id, activeMapDatasetKey],
+            chapters: [
+                `Metric: ${country.count} (${country.pct} demographic presence) — ${dataset.metricLabel}`,
+                ...(country.centers ? [`Key Centers: ${country.centers}`] : []),
+                ...(country.chapters || [
+                    `${country.name} represents a foundational repository of sovereign data and demographic distribution in the offline index.`
+                ])
+            ],
+            connections: ["NEXUS-0"]
+        });
+    }
 }
 
 export function selectDataMapRegion(regionId) {
@@ -2953,6 +3136,7 @@ export function selectDataMapRegion(regionId) {
     const regData = dataset.regions[regionId];
     if (!regData) return;
 
+    selectedCountry = null;
     selectedMapRegion = { id: regionId, ...regData };
     renderMap();
 
@@ -3019,7 +3203,7 @@ export function setMapMode(mode) {
     }
     if (legendText) {
         legendText.innerText = isHex 
-            ? 'DRAG: PAN • SCROLL: ZOOM • CLICK REGION CARD OR CELL TO INSPECT'
+            ? 'DRAG: PAN • SCROLL: ZOOM • CLICK COUNTRY PIN OR HEX CELL TO INSPECT'
             : 'DRAG: PAN • SCROLL OR +/−: ZOOM • CLICK GEOCACHE PIN TO READ';
     }
 
@@ -3094,6 +3278,23 @@ function setupMapInteractions() {
         const my = (e.clientY - rect.top - mapPanY) / mapZoom;
 
         if (mapOperatingMode === 'HEXAGON') {
+            // Check country beacon click first (radius 16px)
+            let hitCountry = null;
+            for (const c of Object.values(COUNTRY_DATA)) {
+                const cx = c.lon * scaleX;
+                const cy = -c.lat * scaleY;
+                if (Math.hypot(mx - cx, my - cy) <= 16) {
+                    hitCountry = c;
+                    break;
+                }
+            }
+
+            if (hitCountry) {
+                selectCountry(hitCountry.id);
+                return;
+            }
+
+            // Check hex cell click
             let clickedHex = null;
             for (let hex of hexWorldGrid) {
                 if (Math.hypot(mx - hex.x, my - hex.y) <= hex.radius * 1.3) {
@@ -3101,8 +3302,30 @@ function setupMapInteractions() {
                     break;
                 }
             }
+
             if (clickedHex && clickedHex.region) {
-                selectDataMapRegion(clickedHex.region);
+                // find nearest country in that region
+                let nearestCountry = null;
+                let nearestDist = 9999;
+                for (const c of Object.values(COUNTRY_DATA)) {
+                    if (c.region === clickedHex.region) {
+                        const dist = Math.hypot(clickedHex.lon - c.lon, clickedHex.lat - c.lat);
+                        if (dist < nearestDist) {
+                            nearestDist = dist;
+                            nearestCountry = c;
+                        }
+                    }
+                }
+                if (nearestCountry && nearestDist < 30) {
+                    selectCountry(nearestCountry.id);
+                } else {
+                    selectedCountry = null;
+                    selectDataMapRegion(clickedHex.region);
+                }
+            } else {
+                selectedCountry = null;
+                selectedMapRegion = null;
+                renderMap();
             }
         } else {
             let hitGeo = null;
@@ -3140,8 +3363,9 @@ function setupMapInteractions() {
         } else if (mCanvas && mCanvas.offsetParent !== null) {
             const rect = mCanvas.getBoundingClientRect();
             if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
-                if (hoveredHex) {
+                if (hoveredHex || hoveredCountry) {
                     hoveredHex = null;
+                    hoveredCountry = null;
                     if (mapOperatingMode === 'HEXAGON') renderMap();
                 }
                 return;
@@ -3157,8 +3381,20 @@ function setupMapInteractions() {
                         break;
                     }
                 }
-                if (foundHex !== hoveredHex) {
+
+                let foundCountry = null;
+                for (const c of Object.values(COUNTRY_DATA)) {
+                    const cx = c.lon * scaleX;
+                    const cy = -c.lat * scaleY;
+                    if (Math.hypot(mx - cx, my - cy) <= 12) {
+                        foundCountry = c;
+                        break;
+                    }
+                }
+
+                if (foundHex !== hoveredHex || foundCountry !== hoveredCountry) {
                     hoveredHex = foundHex;
+                    hoveredCountry = foundCountry;
                     renderMap();
                 }
             } else {
