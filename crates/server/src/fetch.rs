@@ -49,6 +49,9 @@ pub fn validate_bbox(parts: &[f64]) -> anyhow::Result<[f64; 4]> {
     {
         anyhow::bail!("bbox out of range or inverted: {minlon},{minlat},{maxlon},{maxlat}");
     }
+    if (maxlon - minlon) > 60.0 || (maxlat - minlat) > 60.0 {
+        anyhow::bail!("bbox span too large: maximum 60 degrees longitude and latitude allowed per extract");
+    }
     Ok([minlon, minlat, maxlon, maxlat])
 }
 
@@ -67,14 +70,14 @@ pub fn derive_region_name(bbox: &[f64; 4]) -> String {
 
 /// Keep region names filename-safe (used by CLI, API and delete route).
 pub fn sanitize_region_name(raw: impl Into<String>) -> String {
-    let cleaned: String = raw
-        .into()
+    let raw_str = raw.into();
+    let cleaned: String = raw_str
         .trim()
         .trim_end_matches(".pmtiles")
         .chars()
-        .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_' || *c == '.')
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
         .collect();
-    if cleaned.is_empty() {
+    if cleaned.is_empty() || cleaned == "world" || cleaned == "base" {
         "region".to_string()
     } else {
         cleaned
@@ -371,7 +374,12 @@ pub async fn run_fetch(
     let region = sanitize_region_name(name.unwrap_or_else(|| derive_region_name(&bbox)));
 
     let source = match source {
-        Some(s) => s,
+        Some(s) => {
+            if !s.starts_with("https://build.protomaps.com/") && !s.starts_with("https://r2-public.protomaps.com/") {
+                anyhow::bail!("invalid custom PMTiles source `{s}` — must start with https://build.protomaps.com/ or https://r2-public.protomaps.com/");
+            }
+            s
+        }
         None => {
             progress(format!("→ resolving latest Protomaps planet build ({PMTILES_MANIFEST})…"));
             let s = resolve_latest_build().await?;
@@ -494,3 +502,45 @@ fn pump<R: Read + Send + 'static>(mut reader: R, progress: Progress) -> std::thr
         }
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_bbox_bounds_and_span() {
+        // Valid small bbox (Tokyo)
+        assert!(validate_bbox(&[139.5, 35.5, 140.0, 36.0]).is_ok());
+
+        // Inverted bbox
+        assert!(validate_bbox(&[140.0, 35.5, 139.5, 36.0]).is_err());
+        assert!(validate_bbox(&[139.5, 36.0, 140.0, 35.5]).is_err());
+
+        // Out of world bounds
+        assert!(validate_bbox(&[-185.0, 0.0, 10.0, 10.0]).is_err());
+        assert!(validate_bbox(&[0.0, -95.0, 10.0, 10.0]).is_err());
+
+        // Span exceeding 60 degrees
+        assert!(validate_bbox(&[0.0, 0.0, 65.0, 10.0]).is_err());
+        assert!(validate_bbox(&[0.0, 0.0, 10.0, 65.0]).is_err());
+    }
+
+    #[test]
+    fn test_sanitize_region_name() {
+        assert_eq!(sanitize_region_name("japan-tokyo"), "japan-tokyo");
+        assert_eq!(sanitize_region_name("../../../etc/passwd"), "etcpasswd");
+        assert_eq!(sanitize_region_name("world.pmtiles"), "region");
+        assert_eq!(sanitize_region_name("world"), "region");
+        assert_eq!(sanitize_region_name("base"), "region");
+        assert_eq!(sanitize_region_name(""), "region");
+        assert_eq!(sanitize_region_name("tokyo_v1.pmtiles"), "tokyo_v1");
+    }
+
+    #[test]
+    fn test_parse_bbox() {
+        let b = parse_bbox("139.5,35.5,140.0,36.0").expect("parse bbox");
+        assert_eq!(b, [139.5, 35.5, 140.0, 36.0]);
+        assert!(parse_bbox("invalid,foo,bar,baz").is_err());
+    }
+}
+

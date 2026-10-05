@@ -1936,8 +1936,8 @@ async function initTelemetry() {
         const starEl = document.getElementById('spec-star-count');
         const linkEl = document.getElementById('spec-link-count');
 
-        if (starEl) starEl.innerText = `${(status.total_documents || 1105).toLocaleString()} STARS`;
-        if (linkEl && status.total_chunks) linkEl.innerText = `${status.total_chunks.toLocaleString()} LINKS`;
+        if (starEl) starEl.innerText = `${(status.total_nodes || status.total_documents || 1105).toLocaleString()}`;
+        if (linkEl) linkEl.innerText = `${(status.total_links || status.total_chunks || 0).toLocaleString()}`;
     } catch (e) {}
 }
 

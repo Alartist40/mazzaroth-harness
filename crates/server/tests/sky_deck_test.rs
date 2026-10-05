@@ -99,3 +99,37 @@ async fn test_sky_deck_and_tree_endpoints() {
     assert_eq!(tree_val[0]["languages"][0]["documents"][0]["id"], "star-navigation-handbook");
     assert_eq!(tree_val[0]["languages"][0]["documents"][0]["chapters"][0]["id"], "chapter-1-northern-pointers");
 }
+
+#[test]
+fn test_epoch_seconds_to_civil_date_boundary_precision() {
+    use librarian_server::routes::sky::epoch_seconds_to_ymd_h;
+
+    // 2026-02-26 12:00:00 UTC (20510 days from Unix epoch + 43200s)
+    let d2026_02_26 = 20510 * 86400 + 43200;
+    assert_eq!(epoch_seconds_to_ymd_h(d2026_02_26), (2026, 2, 26, 12.0));
+    assert_eq!(epoch_seconds_to_ymd_h(d2026_02_26 + 86400), (2026, 2, 27, 12.0));
+    assert_eq!(epoch_seconds_to_ymd_h(d2026_02_26 + 2 * 86400), (2026, 2, 28, 12.0));
+    assert_eq!(epoch_seconds_to_ymd_h(d2026_02_26 + 3 * 86400), (2026, 3, 1, 12.0));
+
+    // 2027-02-26 12:00:00 UTC
+    let d2027_02_26 = d2026_02_26 + 365 * 86400;
+    assert_eq!(epoch_seconds_to_ymd_h(d2027_02_26), (2027, 2, 26, 12.0));
+    assert_eq!(epoch_seconds_to_ymd_h(d2027_02_26 + 86400), (2027, 2, 27, 12.0));
+    assert_eq!(epoch_seconds_to_ymd_h(d2027_02_26 + 2 * 86400), (2027, 2, 28, 12.0));
+    assert_eq!(epoch_seconds_to_ymd_h(d2027_02_26 + 3 * 86400), (2027, 3, 1, 12.0));
+
+    // 2028-02-28 12:00:00 UTC (2028 is a leap year)
+    let d2028_02_28 = d2027_02_26 + (365 + 2) * 86400;
+    assert_eq!(epoch_seconds_to_ymd_h(d2028_02_28), (2028, 2, 28, 12.0));
+    assert_eq!(epoch_seconds_to_ymd_h(d2028_02_28 + 86400), (2028, 2, 29, 12.0)); // Leap Day
+    assert_eq!(epoch_seconds_to_ymd_h(d2028_02_28 + 2 * 86400), (2028, 3, 1, 12.0));
+
+    // 2029-02-26 12:00:00 UTC
+    let d2029_02_26 = d2028_02_28 + (366 - 2) * 86400;
+    assert_eq!(epoch_seconds_to_ymd_h(d2029_02_26), (2029, 2, 26, 12.0));
+    assert_eq!(epoch_seconds_to_ymd_h(d2029_02_26 + 2 * 86400), (2029, 2, 28, 12.0));
+
+    // 2030-02-28 12:00:00 UTC
+    let d2030_02_28 = d2029_02_26 + (365 + 2) * 86400;
+    assert_eq!(epoch_seconds_to_ymd_h(d2030_02_28), (2030, 2, 28, 12.0));
+}

@@ -546,6 +546,8 @@ export function cycleConstSeason() {
     filterSeason = seasons[(idx + 1) % seasons.length];
     const badge = document.getElementById('badge-active-season');
     if (badge) badge.innerText = filterSeason;
+    const btn = document.getElementById('btn-season-cycle');
+    if (btn) btn.innerText = filterSeason;
     renderConstellations();
     return filterSeason;
 }
@@ -556,6 +558,8 @@ export function cycleConstPosition() {
     filterPosition = positions[(idx + 1) % positions.length];
     const badge = document.getElementById('badge-active-position');
     if (badge) badge.innerText = filterPosition;
+    const btn = document.getElementById('btn-position-cycle');
+    if (btn) btn.innerText = filterPosition;
     renderConstellations();
     return filterPosition;
 }
@@ -567,6 +571,10 @@ export function resetConstFilter() {
     const pBadge = document.getElementById('badge-active-position');
     if (sBadge) sBadge.innerText = 'ALL';
     if (pBadge) pBadge.innerText = 'ALL';
+    const sBtn = document.getElementById('btn-season-cycle');
+    const pBtn = document.getElementById('btn-position-cycle');
+    if (sBtn) sBtn.innerText = 'ALL';
+    if (pBtn) pBtn.innerText = 'ALL';
     renderConstellations();
 }
 
@@ -1131,7 +1139,7 @@ export function renderConstellations() {
     cCtx.restore();
 }
 
-function handleConstHover(e) {
+function performConstHover(e) {
     const tooltip = document.getElementById('galaxy-tooltip');
     if (!cCanvas || cCanvas.offsetParent === null) {
         if (tooltip && !tooltip.classList.contains('hidden')) {

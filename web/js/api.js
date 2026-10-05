@@ -1,20 +1,25 @@
 // MAZZAROTH Sovereign API Contract Layer (PLAN.md §D)
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+    const signal = options.signal || (typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(timeoutMs) : undefined);
+    return await fetch(url, { ...options, signal });
+}
+
 export async function getGalaxy() {
-    const res = await fetch('/api/galaxy');
+    const res = await fetchWithTimeout('/api/galaxy');
     if (!res.ok) throw new Error(`getGalaxy failed: ${res.status}`);
     return await res.json();
 }
 
 export async function getStatus() {
-    const res = await fetch('/api/status');
+    const res = await fetchWithTimeout('/api/status');
     if (!res.ok) throw new Error(`getStatus failed: ${res.status}`);
     return await res.json();
 }
 
 export async function search(query) {
     if (!query || !query.trim()) return [];
-    const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`);
+    const res = await fetchWithTimeout(`/api/search?q=${encodeURIComponent(query.trim())}`);
     if (!res.ok) throw new Error(`search failed: ${res.status}`);
     const results = await res.json();
     return results.map(r => ({
@@ -27,7 +32,7 @@ export async function search(query) {
 }
 
 export async function getModels() {
-    const res = await fetch('/api/models');
+    const res = await fetchWithTimeout('/api/models');
     if (!res.ok) throw new Error(`models failed: ${res.status}`);
     return await res.json();
 }
@@ -46,11 +51,11 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
         if (model) payload.model = model;
         if (history && history.length > 0) payload.history = history;
 
-        const res = await fetch('/api/ask', {
+        const res = await fetchWithTimeout('/api/ask', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
-        });
+        }, 60000);
         if (!res.ok) throw new Error(`ask failed: ${res.status}`);
 
         const reader = res.body.getReader();
@@ -104,7 +109,7 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
 }
 
 export async function createMemoryNode(nodeData) {
-    const res = await fetch('/api/memory/node', {
+    const res = await fetchWithTimeout('/api/memory/node', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -122,37 +127,37 @@ export async function createMemoryNode(nodeData) {
 }
 
 export async function getDocument(docId) {
-    const res = await fetch(`/api/read/${encodeURIComponent(docId)}`);
+    const res = await fetchWithTimeout(`/api/read/${encodeURIComponent(docId)}`);
     if (!res.ok) throw new Error(`getDocument failed: ${res.status}`);
     return await res.json();
 }
 
 export async function getDocuments() {
-    const res = await fetch('/api/documents');
+    const res = await fetchWithTimeout('/api/documents');
     if (!res.ok) throw new Error(`getDocuments failed: ${res.status}`);
     return await res.json();
 }
 
 export async function getCategories() {
-    const res = await fetch('/api/categories');
+    const res = await fetchWithTimeout('/api/categories');
     if (!res.ok) throw new Error(`getCategories failed: ${res.status}`);
     return await res.json();
 }
 
 export async function getConstellations() {
-    const res = await fetch('/api/sections/constellations');
+    const res = await fetchWithTimeout('/api/sections/constellations');
     if (!res.ok) throw new Error(`getConstellations failed: ${res.status}`);
     return await res.json();
 }
 
 export async function getMaps() {
-    const res = await fetch('/api/maps');
+    const res = await fetchWithTimeout('/api/maps');
     if (!res.ok) throw new Error(`getMaps failed: ${res.status}`);
     return await res.json();
 }
 
 export async function startMapFetch(bbox, name, maxzoom) {
-    const res = await fetch('/api/maps/fetch', {
+    const res = await fetchWithTimeout('/api/maps/fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bbox, name, maxzoom })
@@ -166,13 +171,13 @@ export async function startMapFetch(bbox, name, maxzoom) {
 }
 
 export async function getMapFetchStatus() {
-    const res = await fetch('/api/maps/fetch');
+    const res = await fetchWithTimeout('/api/maps/fetch');
     if (!res.ok) throw new Error(`fetch status failed: ${res.status}`);
     return await res.json();
 }
 
 export async function deleteMapRegion(filename) {
-    const res = await fetch(`/api/maps/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+    const res = await fetchWithTimeout(`/api/maps/${encodeURIComponent(filename)}`, { method: 'DELETE' });
     if (!res.ok) {
         let msg = '';
         try { msg = (await res.text()).trim(); } catch (e) {}
@@ -182,13 +187,13 @@ export async function deleteMapRegion(filename) {
 }
 
 export async function getNotes() {
-    const res = await fetch('/api/notes');
+    const res = await fetchWithTimeout('/api/notes');
     if (!res.ok) throw new Error(`getNotes failed: ${res.status}`);
     return await res.json();
 }
 
 export async function createNote(title, content) {
-    const res = await fetch('/api/notes', {
+    const res = await fetchWithTimeout('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, content })
@@ -198,7 +203,7 @@ export async function createNote(title, content) {
 }
 
 export async function getKnowledgeTree() {
-    const res = await fetch('/api/tree');
+    const res = await fetchWithTimeout('/api/tree');
     if (!res.ok) throw new Error(`getKnowledgeTree failed: ${res.status}`);
     return await res.json();
 }
@@ -211,31 +216,31 @@ export async function getSkyProjection(params = {}) {
     if (params.radius !== undefined) searchParams.set('radius', params.radius);
     
     const qs = searchParams.toString();
-    const res = await fetch(`/api/sky${qs ? '?' + qs : ''}`);
+    const res = await fetchWithTimeout(`/api/sky${qs ? '?' + qs : ''}`);
     if (!res.ok) throw new Error(`getSkyProjection failed: ${res.status}`);
     return await res.json();
 }
 
 export async function getScriptureLanguagesDetailed() {
-    const res = await fetch('/api/scripture/languages/detailed');
+    const res = await fetchWithTimeout('/api/scripture/languages/detailed');
     if (!res.ok) throw new Error(`getScriptureLanguagesDetailed failed: ${res.status}`);
     return await res.json();
 }
 
 export async function getScriptureVersions(lang = 'eng') {
-    const res = await fetch(`/api/scripture/versions?lang=${encodeURIComponent(lang)}`);
+    const res = await fetchWithTimeout(`/api/scripture/versions?lang=${encodeURIComponent(lang)}`);
     if (!res.ok) throw new Error(`getScriptureVersions failed: ${res.status}`);
     return await res.json();
 }
 
 export async function getScriptureMeta(lang = 'eng', version = 'kjv') {
-    const res = await fetch(`/api/scripture/meta?lang=${encodeURIComponent(lang)}&version=${encodeURIComponent(version)}`);
+    const res = await fetchWithTimeout(`/api/scripture/meta?lang=${encodeURIComponent(lang)}&version=${encodeURIComponent(version)}`);
     if (!res.ok) throw new Error(`getScriptureMeta failed: ${res.status}`);
     return await res.json();
 }
 
 export async function getScriptureChapter(lang = 'eng', version = 'kjv', book = 'Genesis', chapter = 1) {
-    const res = await fetch(`/api/scripture/chapter?lang=${encodeURIComponent(lang)}&version=${encodeURIComponent(version)}&book=${encodeURIComponent(book)}&chapter=${encodeURIComponent(chapter)}`);
+    const res = await fetchWithTimeout(`/api/scripture/chapter?lang=${encodeURIComponent(lang)}&version=${encodeURIComponent(version)}&book=${encodeURIComponent(book)}&chapter=${encodeURIComponent(chapter)}`);
     if (!res.ok) throw new Error(`getScriptureChapter failed: ${res.status}`);
     return await res.json();
 }

@@ -53,12 +53,7 @@ fn parse_iso_datetime(s: &str) -> Option<(i32, u32, u32, f64)> {
     Some((y, m, d, ut_hour))
 }
 
-fn current_utc_ymd_h() -> (i32, u32, u32, f64) {
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs();
-    
+pub fn epoch_seconds_to_ymd_h(now: u64) -> (i32, u32, u32, f64) {
     // Convert epoch seconds to (year, month, day, hour)
     let days_since_epoch = (now / 86400) as i64;
     let secs_of_day = now % 86400;
@@ -77,6 +72,14 @@ fn current_utc_ymd_h() -> (i32, u32, u32, f64) {
     let final_y = if m <= 2 { y + 1 } else { y };
 
     (final_y, m, d, ut_hour)
+}
+
+fn current_utc_ymd_h() -> (i32, u32, u32, f64) {
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    epoch_seconds_to_ymd_h(now)
 }
 
 pub async fn handle_sky_projection(
