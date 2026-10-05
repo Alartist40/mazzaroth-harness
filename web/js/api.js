@@ -71,10 +71,18 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
                 if (!trimmed) continue;
                 if (trimmed.startsWith('event:')) {
                     currentEvent = trimmed.slice(6).trim();
-                } else if (trimmed.startsWith('data:')) {
-                    const dataStr = trimmed.slice(5).trim();
+                } else if (trimmed.startsWith('data:') || line.startsWith('data:')) {
+                    let dataStr = line.startsWith('data:') ? line.slice(5) : trimmed.slice(5);
+                    if (dataStr.startsWith(' ')) {
+                        dataStr = dataStr.slice(1);
+                    }
                     if (currentEvent === 'token') {
-                        if (onToken) onToken(dataStr);
+                        try {
+                            const parsed = JSON.parse(dataStr);
+                            if (onToken) onToken(typeof parsed === 'string' ? parsed : dataStr);
+                        } catch {
+                            if (onToken) onToken(dataStr);
+                        }
                     } else if (currentEvent === 'citations') {
                         try {
                             const parsed = JSON.parse(dataStr);

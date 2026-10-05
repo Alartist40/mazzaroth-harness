@@ -2563,17 +2563,17 @@ export function submitLibrarianQuery(question) {
     if (input) input.value = '';
 
     const userMsg = document.createElement('div');
-    userMsg.className = 'p-3 rounded-xl border flex gap-2.5 font-mono text-xs';
+    userMsg.className = 'p-3 rounded-xl border flex gap-2.5 font-mono text-xs min-w-0 max-w-full';
     userMsg.style.backgroundColor = 'var(--panel-bg)';
     userMsg.style.borderColor = 'var(--panel-border)';
     userMsg.innerHTML = `
-        <div class="w-6 h-6 rounded-md border flex items-center justify-center font-bold text-[10px]" style="background-color: var(--contrast-ink); color: var(--contrast-paper);">YOU</div>
-        <div class="flex-1" style="color: var(--text-main);">${escapeHtml(question)}</div>
+        <div class="w-6 h-6 rounded-md border flex items-center justify-center font-bold text-[10px] shrink-0" style="background-color: var(--contrast-ink); color: var(--contrast-paper);">YOU</div>
+        <div class="flex-1 min-w-0 break-words whitespace-pre-wrap" style="color: var(--text-main); overflow-wrap: anywhere; word-break: break-word;">${escapeHtml(question)}</div>
     `;
     chatLog.appendChild(userMsg);
 
     const aiMsg = document.createElement('div');
-    aiMsg.className = 'p-4 rounded-xl border flex gap-3 font-mono text-xs';
+    aiMsg.className = 'p-4 rounded-xl border flex gap-3 font-mono text-xs min-w-0 max-w-full';
     aiMsg.style.backgroundColor = 'var(--panel-bg-subtle)';
     aiMsg.style.borderColor = 'var(--border-subtle)';
 
@@ -2581,9 +2581,9 @@ export function submitLibrarianQuery(question) {
     const citationContainerId = `ai-cits-${Date.now()}`;
 
     aiMsg.innerHTML = `
-        <div class="w-6 h-6 rounded-md border flex items-center justify-center font-bold text-[10px]" style="border-color: var(--panel-border); background-color: var(--panel-bg); color: var(--text-main);">AI</div>
-        <div class="space-y-2 flex-1 leading-relaxed">
-            <div id="${tokenContainerId}" style="color: var(--text-main);"></div>
+        <div class="w-6 h-6 rounded-md border flex items-center justify-center font-bold text-[10px] shrink-0" style="border-color: var(--panel-border); background-color: var(--panel-bg); color: var(--text-main);">AI</div>
+        <div class="space-y-2 flex-1 min-w-0 leading-relaxed overflow-hidden">
+            <div id="${tokenContainerId}" class="break-words whitespace-pre-wrap min-w-0" style="color: var(--text-main); overflow-wrap: anywhere; word-break: break-word; line-height: 1.6;"></div>
             <div id="${citationContainerId}" class="flex flex-wrap gap-1.5 pt-2 hidden"></div>
         </div>
     `;

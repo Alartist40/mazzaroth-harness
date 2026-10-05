@@ -124,7 +124,9 @@ pub async fn handle_ask(
     let stream = async_stream::stream! {
         // If LLM is offline and no passages found -> return standard refusal
         if !is_reachable && hits.is_empty() {
-            yield Ok(Event::default().event("token").data("I don't have that in the library."));
+            if let Ok(tok) = serde_json::to_string("I don't have that in the library.") {
+                yield Ok(Event::default().event("token").data(tok));
+            }
             yield Ok(Event::default().event("done").data("[DONE]"));
             return;
         }
@@ -137,9 +139,11 @@ pub async fn handle_ask(
         }
 
         if !is_reachable {
-            yield Ok(Event::default().event("token").data(
+            if let Ok(tok) = serde_json::to_string(
                 "Librarian AI is offline. However, the relevant passages have been retrieved above from the library."
-            ));
+            ) {
+                yield Ok(Event::default().event("token").data(tok));
+            }
             yield Ok(Event::default().event("done").data("[DONE]"));
             return;
         }
@@ -243,7 +247,9 @@ Your Conversational Purpose:\n\
                                             .or_else(|| val["response"].as_str());
                                         if let Some(tok) = token {
                                             if !tok.is_empty() {
-                                                yield Ok(Event::default().event("token").data(tok));
+                                                if let Ok(tok_json) = serde_json::to_string(tok) {
+                                                    yield Ok(Event::default().event("token").data(tok_json));
+                                                }
                                             }
                                         }
                                         if val["done"].as_bool() == Some(true) {
@@ -258,14 +264,18 @@ Your Conversational Purpose:\n\
                             }
                         }
                         Ok(Some(Err(_))) => {
-                            yield Ok(Event::default().event("token").data("\n[stream read error]"));
+                            if let Ok(tok) = serde_json::to_string("\n[stream read error]") {
+                                yield Ok(Event::default().event("token").data(tok));
+                            }
                             break;
                         }
                         Ok(None) => {
                             break;
                         }
                         Err(_) => {
-                            yield Ok(Event::default().event("token").data("\n[stream interrupted after 45s idle]"));
+                            if let Ok(tok) = serde_json::to_string("\n[stream interrupted after 45s idle]") {
+                                yield Ok(Event::default().event("token").data(tok));
+                            }
                             break;
                         }
                     }
@@ -273,14 +283,14 @@ Your Conversational Purpose:\n\
             }
             Ok(resp) => {
                 let err_text = resp.text().await.unwrap_or_else(|_| "Unknown error".to_string());
-                yield Ok(Event::default().event("token").data(format!(
-                    "[Ollama error: {}]", err_text
-                )));
+                if let Ok(tok) = serde_json::to_string(&format!("[Ollama error: {}]", err_text)) {
+                    yield Ok(Event::default().event("token").data(tok));
+                }
             }
             Err(e) => {
-                yield Ok(Event::default().event("token").data(format!(
-                    "[Ollama connection error: {}]", e
-                )));
+                if let Ok(tok) = serde_json::to_string(&format!("[Ollama connection error: {}]", e)) {
+                    yield Ok(Event::default().event("token").data(tok));
+                }
             }
         }
 
