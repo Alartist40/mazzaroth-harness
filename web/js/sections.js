@@ -1430,13 +1430,79 @@ export const MAP_DATASETS = {
 };
 
 export const MAP_BADGE_COORDINATES = [
-    { regionId: "NA", label: "NORTH AMERICA", gx: -140, gy: -70 },
-    { regionId: "LA", label: "LATIN AMERICA", gx: -90, gy: 50 },
-    { regionId: "EU", label: "EUROPE", gx: 30, gy: -80 },
-    { regionId: "AF", label: "SUB-SAHARAN AFRICA", gx: 40, gy: 30 },
-    { regionId: "ME", label: "MIDDLE EAST", gx: 90, gy: -30 },
-    { regionId: "AP", label: "ASIA-PACIFIC", gx: 200, gy: 20 }
+    { regionId: "NA", label: "NORTH AMERICA", lon: -95, lat: 40, focalCity: "Chicago • New York" },
+    { regionId: "LA", label: "LATIN AMERICA", lon: -58, lat: -16, focalCity: "São Paulo • Manaus" },
+    { regionId: "EU", label: "EUROPE", lon: 15, lat: 50, focalCity: "Berlin • Rome • London" },
+    { regionId: "AF", label: "SUB-SAHARAN AFRICA", lon: 22, lat: 2, focalCity: "Lagos • Kinshasa • Addis" },
+    { regionId: "ME", label: "MIDDLE EAST & LEVANT", lon: 42, lat: 28, focalCity: "Jerusalem • Sinai • Cairo" },
+    { regionId: "AP", label: "ASIA-PACIFIC", lon: 118, lat: 25, focalCity: "Shanghai • Manila • Seoul" }
 ];
+
+export const MAP_HOTSPOTS = {
+    "TOTAL": [
+        { lon: -87.6, lat: 41.8, weight: 1.0 },
+        { lon: -74.0, lat: 40.7, weight: 0.95 },
+        { lon: -99.1, lat: 19.4, weight: 0.90 },
+        { lon: -46.6, lat: -23.5, weight: 1.0 },
+        { lon: -60.0, lat: -3.1, weight: 0.75 },
+        { lon: -58.4, lat: -34.6, weight: 0.88 },
+        { lon: 12.5, lat: 41.9, weight: 1.0 },
+        { lon: 13.4, lat: 52.5, weight: 0.95 },
+        { lon: 0.1, lat: 51.5, weight: 0.92 },
+        { lon: 3.4, lat: 6.5, weight: 1.0 },
+        { lon: 15.3, lat: -4.4, weight: 0.98 },
+        { lon: 38.7, lat: 9.0, weight: 0.95 },
+        { lon: 35.2, lat: 31.8, weight: 1.0 },
+        { lon: 31.2, lat: 30.0, weight: 0.85 },
+        { lon: 120.9, lat: 14.6, weight: 1.0 },
+        { lon: 126.9, lat: 37.5, weight: 0.90 },
+        { lon: 121.4, lat: 31.2, weight: 0.88 },
+        { lon: 76.3, lat: 9.9, weight: 0.85 },
+        { lon: 151.2, lat: -33.8, weight: 0.82 }
+    ],
+    "CATHOLIC": [
+        { lon: 12.5, lat: 41.9, weight: 1.0 },
+        { lon: -3.7, lat: 40.4, weight: 0.92 },
+        { lon: 19.9, lat: 50.0, weight: 0.90 },
+        { lon: -46.6, lat: -23.5, weight: 1.0 },
+        { lon: -99.1, lat: 19.4, weight: 0.98 },
+        { lon: -58.4, lat: -34.6, weight: 0.88 },
+        { lon: 15.3, lat: -4.4, weight: 0.95 },
+        { lon: 120.9, lat: 14.6, weight: 1.0 },
+        { lon: -71.0, lat: 42.3, weight: 0.85 }
+    ],
+    "PROTESTANT": [
+        { lon: 0.1, lat: 51.5, weight: 0.95 },
+        { lon: 13.4, lat: 52.5, weight: 0.90 },
+        { lon: -86.7, lat: 36.1, weight: 1.0 },
+        { lon: -87.6, lat: 41.8, weight: 0.92 },
+        { lon: 3.4, lat: 6.5, weight: 1.0 },
+        { lon: 36.8, lat: -1.3, weight: 0.92 },
+        { lon: 126.9, lat: 37.5, weight: 0.95 },
+        { lon: 120.7, lat: 28.0, weight: 0.88 }
+    ],
+    "ORTHODOX": [
+        { lon: 23.7, lat: 37.9, weight: 1.0 },
+        { lon: 28.9, lat: 41.0, weight: 0.95 },
+        { lon: 37.6, lat: 55.7, weight: 0.98 },
+        { lon: 26.1, lat: 44.4, weight: 0.90 },
+        { lon: 38.7, lat: 9.0, weight: 1.0 },
+        { lon: 31.2, lat: 30.0, weight: 0.95 },
+        { lon: 36.3, lat: 33.5, weight: 0.90 },
+        { lon: 76.5, lat: 9.6, weight: 0.92 }
+    ],
+    "MANUSCRIPTS": [
+        { lon: 33.9, lat: 28.5, weight: 1.0 },
+        { lon: 35.4, lat: 31.7, weight: 1.0 },
+        { lon: 12.5, lat: 41.9, weight: 1.0 },
+        { lon: 0.1, lat: 51.5, weight: 0.95 },
+        { lon: 24.3, lat: 40.2, weight: 0.95 },
+        { lon: 37.3, lat: 12.0, weight: 0.92 },
+        { lon: 30.4, lat: 30.4, weight: 0.90 },
+        { lon: -6.2, lat: 53.3, weight: 0.88 },
+        { lon: -77.0, lat: 38.9, weight: 0.85 }
+    ]
+};
 
 export function registerMapDataset(key, data) {
     if (!key || !data) return;
@@ -1451,69 +1517,97 @@ export function getActiveMapDataset() {
     return MAP_DATASETS[activeMapDatasetKey];
 }
 
+const REGION_POLYGONS = {
+    "NA": [
+        [[-168, 65], [-162, 70], [-140, 70], [-130, 70], [-120, 70], [-105, 68], [-90, 70], [-80, 62], [-65, 58], [-55, 48], [-60, 44], [-70, 42], [-75, 38], [-80, 30], [-80, 25], [-82, 24], [-84, 28], [-90, 30], [-97, 26], [-97, 20], [-90, 16], [-84, 9], [-78, 8], [-83, 10], [-87, 14], [-94, 16], [-99, 16], [-105, 20], [-110, 24], [-115, 30], [-120, 34], [-124, 40], [-124, 48], [-130, 54], [-140, 60], [-150, 60], [-160, 58], [-165, 60], [-168, 65]],
+        [[-168, 65], [-155, 66], [-145, 68], [-140, 60], [-150, 57], [-165, 55], [-168, 65]],
+        [[-55, 60], [-45, 60], [-35, 66], [-20, 75], [-20, 82], [-30, 83], [-55, 83], [-65, 78], [-55, 70], [-55, 60]],
+        [[-125, 70], [-100, 70], [-80, 73], [-70, 78], [-85, 82], [-110, 78], [-125, 74], [-125, 70]],
+        [[-85, 22], [-74, 20], [-66, 18], [-65, 18], [-70, 19], [-85, 23], [-85, 22]]
+    ],
+    "LA": [
+        [[-78, 8], [-72, 11], [-60, 10], [-50, 0], [-35, -5], [-35, -10], [-38, -18], [-42, -23], [-48, -28], [-53, -33], [-58, -38], [-65, -54], [-70, -55], [-75, -52], [-75, -45], [-72, -35], [-76, -18], [-81, -5], [-80, 2], [-78, 8]],
+        [[-70, -52], [-65, -52], [-65, -55], [-70, -55], [-70, -52]]
+    ],
+    "EU": [
+        [[-9, 36], [-9, 43], [-1, 46], [-5, 48], [2, 51], [8, 54], [10, 55], [14, 54], [22, 55], [28, 55], [30, 46], [28, 41], [23, 38], [15, 38], [15, 42], [8, 44], [3, 42], [-5, 36], [-9, 36]],
+        [[5, 58], [10, 58], [14, 68], [28, 71], [34, 68], [30, 60], [24, 60], [18, 56], [10, 56], [5, 58]],
+        [[-10, 51], [-6, 51], [-5, 55], [1.5, 52], [0, 58], [-4, 59], [-6, 56], [-10, 54], [-10, 51]],
+        [[-24, 63], [-14, 63], [-14, 66], [-24, 66], [-24, 63]],
+        [[8, 45], [13, 46], [18, 41], [16, 38], [14, 37], [12, 38], [10, 44], [8, 45]],
+        [[19, 42], [28, 42], [28, 36], [23, 36], [20, 39], [19, 42]]
+    ],
+    "AF": [
+        [[-17, 15], [-12, 28], [-9, 36], [10, 37], [25, 32], [33, 31], [35, 28], [43, 12], [51, 11], [42, -2], [40, -12], [35, -25], [28, -34], [18, -34], [12, -18], [9, -4], [3, 5], [-12, 5], [-17, 15]],
+        [[43, -12], [50, -12], [50, -25], [44, -25], [43, -12]]
+    ],
+    "ME": [
+        [[26, 42], [42, 42], [48, 30], [56, 26], [60, 22], [55, 16], [45, 12], [36, 15], [34, 28], [35, 36], [26, 40], [26, 42]],
+        [[45, 38], [60, 42], [75, 42], [75, 30], [60, 25], [50, 30], [45, 38]]
+    ],
+    "AP": [
+        [[30, 60], [60, 70], [80, 73], [100, 76], [130, 74], [170, 68], [180, 65], [170, 60], [160, 52], [142, 50], [130, 42], [100, 50], [70, 52], [50, 55], [30, 60]],
+        [[62, 25], [72, 32], [80, 32], [90, 25], [92, 21], [85, 16], [80, 8], [77, 8], [72, 18], [68, 24], [62, 25]],
+        [[80, 6], [82, 6], [82, 10], [80, 10], [80, 6]],
+        [[75, 30], [90, 40], [105, 45], [122, 42], [122, 30], [118, 22], [108, 20], [98, 24], [85, 28], [75, 30]],
+        [[124, 34], [130, 35], [130, 42], [124, 40], [124, 34]],
+        [[129, 31], [132, 34], [140, 36], [142, 45], [145, 44], [141, 40], [136, 35], [129, 31]],
+        [[93, 22], [108, 22], [109, 10], [104, 1], [100, 4], [98, 10], [93, 16], [93, 22]],
+        [[95, 5], [106, -6], [116, -8], [125, -8], [141, -2], [150, -5], [141, -9], [120, -10], [100, 0], [95, 5]],
+        [[118, 6], [126, 6], [126, 18], [120, 18], [118, 6]],
+        [[108, 4], [118, 4], [118, -4], [108, -2], [108, 4]],
+        [[113, -22], [120, -14], [135, -12], [142, -11], [146, -18], [153, -28], [150, -38], [140, -38], [130, -32], [116, -35], [113, -26], [113, -22]],
+        [[144, -41], [148, -41], [148, -44], [144, -44], [144, -41]],
+        [[166, -46], [172, -41], [178, -37], [174, -35], [172, -40], [168, -45], [166, -46]]
+    ]
+};
+
+function pointInPolygon(pt, poly) {
+    const [x, y] = pt;
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const [xi, yi] = poly[i];
+        const [xj, yj] = poly[j];
+        const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
 function generateHexWorldGrid() {
     hexWorldGrid = [];
-    const hexR = 8.5; // Radius of each hexagon
-    const cols = 58;
-    const rows = 32;
-    const hDist = hexR * 1.5;
-    const vDist = hexR * Math.sqrt(3);
+    const scaleX = 2.4;
+    const scaleY = 2.4;
+    const dLon = 4.2;
+    const dLat = 3.6;
+    const hexRadius = 5.2;
 
-    function getRegionForCell(c, r) {
-        // North America
-        if (c >= 6 && c <= 20 && r >= 4 && r <= 13) {
-            if (c > 17 && r > 11) return null;
-            if (c < 9 && r < 6) return null;
-            return "NA";
-        }
-        // Latin America (Central + South America)
-        if (c >= 12 && c <= 24 && r >= 14 && r <= 28) {
-            if (c < 15 && r > 17) return null;
-            if (c > 22 && r > 25) return null;
-            return "LA";
-        }
-        // Europe
-        if (c >= 25 && c <= 35 && r >= 4 && r <= 11) {
-            if (c > 33 && r < 6) return null;
-            return "EU";
-        }
-        // Sub-Saharan Africa
-        if (c >= 25 && c <= 37 && r >= 14 && r <= 26) {
-            if (c > 35 && r > 24) return null;
-            if (c < 27 && r > 23) return null;
-            return "AF";
-        }
-        // Middle East & Levant
-        if (c >= 26 && c <= 37 && r >= 11 && r <= 14) {
-            return "ME";
-        }
-        // Asia-Pacific & East Asia
-        if (c >= 36 && c <= 54 && r >= 4 && r <= 18) {
-            if (c > 50 && r > 14) return null;
-            if (c < 40 && r < 6) return null;
-            return "AP";
-        }
-        // Australia / Oceania
-        if (c >= 45 && c <= 55 && r >= 20 && r <= 28) {
-            if (c < 47 && r > 25) return null;
-            return "AP";
-        }
-        return null;
-    }
+    let rowIdx = 0;
+    for (let lat = 78; lat >= -56; lat -= dLat) {
+        rowIdx++;
+        const offset = (rowIdx % 2) * (dLon / 2);
+        for (let lon = -175 + offset; lon <= 180; lon += dLon) {
+            let matchedRegion = null;
+            for (let [regId, polys] of Object.entries(REGION_POLYGONS)) {
+                for (let p of polys) {
+                    if (pointInPolygon([lon, lat], p)) {
+                        matchedRegion = regId;
+                        break;
+                    }
+                }
+                if (matchedRegion) break;
+            }
 
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            const reg = getRegionForCell(c, r);
-            if (reg) {
-                const x = (c - cols / 2) * hDist;
-                const y = (r - rows / 2) * vDist + ((c % 2) ? vDist / 2 : 0);
+            if (matchedRegion) {
+                const x = lon * scaleX;
+                const y = -lat * scaleY;
                 hexWorldGrid.push({
-                    col: c,
-                    row: r,
+                    lon: lon,
+                    lat: lat,
                     x: x,
                     y: y,
-                    radius: hexR,
-                    region: reg
+                    radius: hexRadius,
+                    region: matchedRegion
                 });
             }
         }
@@ -2330,8 +2424,13 @@ async function mountMapLibre(file) {
         }
 
         maplibreActive = true;
-        container.classList.remove('hidden');
-        if (mCanvas) mCanvas.classList.add('hidden');
+        if (mapOperatingMode === 'OFFLINE') {
+            container.classList.remove('hidden');
+            if (mCanvas) mCanvas.classList.add('hidden');
+        } else {
+            container.classList.add('hidden');
+            if (mCanvas) mCanvas.classList.remove('hidden');
+        }
         addGeocacheMarkers();
         applyMapLibreTheme();
         renderRegionList();
@@ -2598,7 +2697,7 @@ export function renderMap() {
     mCtx.restore();
 }
 
-function drawHexagon(ctx, x, y, r, fill, stroke) {
+function drawHexagon(ctx, x, y, r, fill, stroke, glowColor, glowBlur) {
     ctx.beginPath();
     for (let i = 0; i < 6; i++) {
         const angle = (Math.PI / 3) * i;
@@ -2608,11 +2707,24 @@ function drawHexagon(ctx, x, y, r, fill, stroke) {
         else ctx.lineTo(hx, hy);
     }
     ctx.closePath();
-    ctx.fillStyle = fill;
-    ctx.fill();
-    ctx.lineWidth = 0.8;
-    ctx.strokeStyle = stroke;
-    ctx.stroke();
+
+    if (glowColor && glowBlur > 0) {
+        ctx.save();
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = glowBlur;
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.restore();
+    } else {
+        ctx.fillStyle = fill;
+        ctx.fill();
+    }
+
+    if (stroke) {
+        ctx.lineWidth = 0.75;
+        ctx.strokeStyle = stroke;
+        ctx.stroke();
+    }
 }
 
 function renderHexDataMap() {
@@ -2625,6 +2737,7 @@ function renderHexDataMap() {
     const accentGold = colors.accentPrimary;
     const accentCyan = colors.accentSecondary;
     const theme = document.documentElement.getAttribute('data-theme') || 'midnight-gold';
+    const isLight = theme === 'technical-paper' || theme === 'light';
 
     mCtx.fillStyle = bg;
     mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
@@ -2633,42 +2746,128 @@ function renderHexDataMap() {
     mCtx.translate(mapPanX, mapPanY);
     mCtx.scale(mapZoom, mapZoom);
 
-    const currDataset = MAP_DATASETS[activeMapDatasetKey] || MAP_DATASETS["TOTAL"];
+    const scaleX = 2.4;
+    const scaleY = 2.4;
 
+    // 1. Subtle Oceanic Radar Grid Dots (Background Matrix)
+    mCtx.fillStyle = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.04)';
+    const dLon = 8.4;
+    const dLat = 7.2;
+    for (let lat = 72; lat >= -54; lat -= dLat) {
+        for (let lon = -170; lon <= 170; lon += dLon) {
+            mCtx.beginPath();
+            mCtx.arc(lon * scaleX, -lat * scaleY, 0.8, 0, Math.PI * 2);
+            mCtx.fill();
+        }
+    }
+
+    // 2. Active Dataset & Hotspot Proximity
+    const currDataset = MAP_DATASETS[activeMapDatasetKey] || MAP_DATASETS["TOTAL"];
+    const hotspots = MAP_HOTSPOTS[activeMapDatasetKey] || MAP_HOTSPOTS["TOTAL"] || [];
+
+    // 3. Render High-Detail Continent Hexagon Cells with Heatmap Glow
     hexWorldGrid.forEach(hex => {
         const regData = currDataset.regions[hex.region];
-        const isHovered = hoveredHex && hoveredHex.col === hex.col && hoveredHex.row === hex.row;
+        const isHovered = hoveredHex && Math.hypot(hoveredHex.x - hex.x, hoveredHex.y - hex.y) < 1;
         const isSelected = selectedMapRegion && selectedMapRegion.id === hex.region;
+
+        let minDist = 999;
+        hotspots.forEach(spot => {
+            const d = Math.hypot(hex.lon - spot.lon, (hex.lat - spot.lat) * 1.15);
+            if (d < minDist) minDist = d;
+        });
+
+        const proximityBoost = Math.max(0, 1 - minDist / 24);
+        const baseIntensity = regData ? regData.intensity : 0.4;
+        const cellIntensity = Math.min(1.0, baseIntensity * 0.35 + proximityBoost * 0.65);
 
         let fillColor = hexBase;
         let strokeColor = hexStroke;
-        let glowIntensity = regData ? regData.intensity : 0.2;
+        let glowColor = null;
+        let glowBlur = 0;
 
-        if (regData) {
-            if (theme === 'synth-magenta') {
-                fillColor = `rgba(236, 72, 153, ${0.15 + glowIntensity * 0.75})`;
-                strokeColor = `rgba(0, 240, 255, ${0.25 + glowIntensity * 0.5})`;
-            } else if (theme === 'midnight-gold') {
-                fillColor = `rgba(245, 158, 11, ${0.12 + glowIntensity * 0.72})`;
-                strokeColor = `rgba(56, 189, 248, ${0.2 + glowIntensity * 0.5})`;
-            } else if (theme === 'technical-paper' || theme === 'light') {
-                fillColor = `rgba(11, 13, 17, ${0.1 + glowIntensity * 0.75})`;
-                strokeColor = '#14171d';
+        if (isLight) {
+            if (cellIntensity < 0.35) {
+                fillColor = '#cbd5e1';
+                strokeColor = '#94a3b8';
+            } else if (cellIntensity < 0.65) {
+                fillColor = '#38bdf8';
+                strokeColor = '#0284c7';
+            } else if (cellIntensity < 0.85) {
+                fillColor = '#f43f5e';
+                strokeColor = '#be123c';
             } else {
-                fillColor = `rgba(255, 255, 255, ${0.1 + glowIntensity * 0.75})`;
-                strokeColor = 'rgba(255, 255, 255, 0.3)';
+                fillColor = '#f59e0b';
+                strokeColor = '#b45309';
+                glowColor = 'rgba(245, 158, 11, 0.4)';
+                glowBlur = 6;
+            }
+        } else if (theme === 'synth-magenta') {
+            if (cellIntensity < 0.30) {
+                fillColor = '#121424';
+                strokeColor = '#1e2238';
+            } else if (cellIntensity < 0.60) {
+                fillColor = '#0284c7';
+                strokeColor = '#00f0ff';
+                glowColor = 'rgba(0, 240, 255, 0.4)';
+                glowBlur = 4;
+            } else if (cellIntensity < 0.82) {
+                fillColor = '#db2777';
+                strokeColor = '#ec4899';
+                glowColor = 'rgba(236, 72, 153, 0.6)';
+                glowBlur = 8;
+            } else {
+                fillColor = '#f43f5e';
+                strokeColor = '#ffffff';
+                glowColor = 'rgba(244, 63, 94, 0.85)';
+                glowBlur = 12;
+            }
+        } else {
+            // Default Midnight Gold & Obsidian Mono
+            if (cellIntensity < 0.30) {
+                fillColor = '#101728';
+                strokeColor = '#1c263e';
+            } else if (cellIntensity < 0.60) {
+                fillColor = '#0369a1';
+                strokeColor = '#38bdf8';
+                glowColor = 'rgba(56, 189, 248, 0.35)';
+                glowBlur = 4;
+            } else if (cellIntensity < 0.82) {
+                fillColor = '#e11d48';
+                strokeColor = '#fb7185';
+                glowColor = 'rgba(225, 29, 72, 0.6)';
+                glowBlur = 8;
+            } else {
+                fillColor = '#f59e0b';
+                strokeColor = '#fef08a';
+                glowColor = 'rgba(245, 158, 11, 0.85)';
+                glowBlur = 12;
             }
         }
 
         if (isSelected) {
             fillColor = accentGold;
             strokeColor = '#ffffff';
+            glowColor = '#ffffff';
+            glowBlur = 10;
         } else if (isHovered) {
             fillColor = accentCyan;
             strokeColor = '#ffffff';
+            glowColor = accentCyan;
+            glowBlur = 8;
         }
 
-        drawHexagon(mCtx, hex.x, hex.y, hex.radius - 0.75, fillColor, strokeColor);
+        drawHexagon(mCtx, hex.x, hex.y, hex.radius, fillColor, strokeColor, glowColor, glowBlur);
+    });
+
+    // 4. Hotspot Core Beacons
+    hotspots.forEach(spot => {
+        const sx = spot.lon * scaleX;
+        const sy = -spot.lat * scaleY;
+        mCtx.beginPath();
+        mCtx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+        mCtx.fillStyle = '#ffffff';
+        mCtx.fill();
     });
 
     mCtx.restore();
@@ -2680,6 +2879,7 @@ function updateMapFloatingBadges() {
     if (!container) return;
     if (mapOperatingMode !== 'HEXAGON') {
         container.innerHTML = '';
+        container.classList.add('hidden');
         return;
     }
 
@@ -2690,35 +2890,60 @@ function updateMapFloatingBadges() {
     }
 
     container.innerHTML = '';
+    container.classList.remove('hidden');
+
+    const scaleX = 2.4;
+    const scaleY = 2.4;
+
+    const icons = {
+        "NA": `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
+        "LA": `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+        "EU": `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+        "AF": `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+        "ME": `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>`,
+        "AP": `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>`
+    };
 
     MAP_BADGE_COORDINATES.forEach(badge => {
         const regData = currDataset.regions[badge.regionId];
         if (!regData) return;
 
-        const screenX = mapPanX + badge.gx * mapZoom;
-        const screenY = mapPanY + badge.gy * mapZoom;
+        const screenX = mapPanX + badge.lon * scaleX * mapZoom;
+        const screenY = mapPanY - badge.lat * scaleY * mapZoom;
 
-        const el = document.createElement('div');
-        el.className = "absolute pointer-events-auto cursor-pointer p-2 rounded-xl mono-card shadow-2xl transition-transform hover:scale-105 active:scale-95 text-xs font-mono select-none";
-        el.style.left = `${screenX - 70}px`;
-        el.style.top = `${screenY - 24}px`;
-        el.style.borderColor = (selectedMapRegion && selectedMapRegion.id === badge.regionId) ? "var(--accent-primary)" : "var(--panel-border)";
+        const isSelected = selectedMapRegion && selectedMapRegion.id === badge.regionId;
 
-        el.innerHTML = `
-            <div class="flex items-center space-x-1.5">
-                <span class="w-2 h-2 rounded-full inline-block" style="background-color: var(--accent-primary);"></span>
-                <span class="font-bold text-[10px]" style="color: var(--text-main);">${badge.label}</span>
+        const card = document.createElement('div');
+        card.className = "absolute pointer-events-auto cursor-pointer rounded-2xl p-2.5 shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 text-xs font-mono select-none flex flex-col gap-1 backdrop-blur-md";
+        card.style.left = `${screenX - 80}px`;
+        card.style.top = `${screenY - 32}px`;
+        card.style.minWidth = '160px';
+        card.style.backgroundColor = isSelected ? 'var(--panel-bg-subtle)' : 'var(--panel-bg)';
+        card.style.border = isSelected ? '1.5px solid var(--accent-primary)' : '1px solid var(--panel-border)';
+        card.style.boxShadow = isSelected ? '0 8px 32px rgba(245, 158, 11, 0.35)' : 'var(--card-shadow)';
+
+        card.innerHTML = `
+            <div class="flex items-center justify-between gap-2 border-b pb-1" style="border-color: var(--border-subtle);">
+                <div class="flex items-center space-x-1.5">
+                    <span class="w-5 h-5 rounded-md flex items-center justify-center text-[10px]" style="background-color: var(--panel-bg-subtle); color: var(--accent-secondary);">
+                        ${icons[badge.regionId] || '●'}
+                    </span>
+                    <span class="font-bold text-[9.5px] uppercase tracking-wider" style="color: var(--text-main);">${badge.label}</span>
+                </div>
+                <span class="text-[8px] font-bold px-1 py-0.5 rounded" style="background-color: var(--panel-bg-subtle); color: var(--accent-primary);">${regData.pct}</span>
             </div>
-            <div class="font-bold text-xs mt-0.5" style="color: var(--accent-secondary);">${regData.count}</div>
-            <div class="text-[9px]" style="color: var(--text-muted);">${regData.pct} share</div>
+            <div class="flex items-baseline justify-between mt-0.5">
+                <span class="font-extrabold text-xs tracking-tight" style="color: var(--accent-primary);">${regData.count}</span>
+            </div>
+            <div class="text-[8px] truncate" style="color: var(--text-muted);">${badge.focalCity}</div>
         `;
 
-        el.addEventListener('click', (ev) => {
+        card.addEventListener('click', (ev) => {
             ev.stopPropagation();
             selectDataMapRegion(badge.regionId);
         });
 
-        container.appendChild(el);
+        container.appendChild(card);
     });
 }
 
@@ -2755,9 +2980,14 @@ export function setMapMode(mode) {
     const badgeContainer = document.getElementById('map-floating-badges');
     const modeLabel = document.getElementById('map-active-mode-label');
     const datasetHud = document.getElementById('map-dataset-hud');
+    const datasetLabel = document.getElementById('map-dataset-label');
     const datasetWrap = document.getElementById('deck-map-dataset-wrap');
     const modeBtn = document.getElementById('btn-map-mode');
     const legendText = document.getElementById('map-legend-text');
+    const regionsEl = document.getElementById('map-regions');
+    const dlPanel = document.getElementById('map-download-panel');
+    const dlBtn = document.getElementById('tool-map-download');
+    const gratBtn = document.getElementById('tool-map-graticule');
 
     if (modeBtn) {
         modeBtn.innerText = isHex ? 'HEXAGON' : 'OFFLINE';
@@ -2765,15 +2995,31 @@ export function setMapMode(mode) {
     if (datasetWrap) {
         datasetWrap.classList.toggle('hidden', !isHex);
     }
+    if (dlBtn) {
+        dlBtn.classList.toggle('hidden', isHex);
+    }
+    if (gratBtn) {
+        gratBtn.classList.toggle('hidden', isHex);
+    }
+    if (regionsEl) {
+        regionsEl.classList.toggle('hidden', isHex);
+    }
+    if (dlPanel && isHex) {
+        dlPanel.classList.add('hidden');
+    }
     if (modeLabel) {
         modeLabel.innerText = isHex ? 'HEXAGONAL DATA MATRIX' : 'OFFLINE VECTOR BASEMAP';
     }
     if (datasetHud) {
         datasetHud.classList.toggle('hidden', !isHex);
     }
+    if (datasetLabel) {
+        const currDataset = MAP_DATASETS[activeMapDatasetKey];
+        if (currDataset) datasetLabel.innerText = currDataset.title;
+    }
     if (legendText) {
         legendText.innerText = isHex 
-            ? 'DRAG: PAN • SCROLL: ZOOM • CLICK FLOATING BADGE / CELL TO READ RECORD'
+            ? 'DRAG: PAN • SCROLL: ZOOM • CLICK REGION CARD OR CELL TO INSPECT'
             : 'DRAG: PAN • SCROLL OR +/−: ZOOM • CLICK GEOCACHE PIN TO READ';
     }
 
@@ -2828,58 +3074,59 @@ function setupMapInteractions() {
 
     const scaleX = 2.4;
     const scaleY = 2.4;
+    let pointerDownPos = { x: 0, y: 0 };
 
     mCanvas.addEventListener('mousedown', (e) => {
         if (e.button === 0) {
-            const rect = mCanvas.getBoundingClientRect();
-            const mx = (e.clientX - rect.left - mapPanX) / mapZoom;
-            const my = (e.clientY - rect.top - mapPanY) / mapZoom;
+            pointerDownPos = { x: e.clientX, y: e.clientY };
+            isDraggingMap = true;
+            mapDragStartX = e.clientX - mapPanX;
+            mapDragStartY = e.clientY - mapPanY;
+        }
+    });
 
-            if (mapOperatingMode === 'HEXAGON') {
-                let clickedHex = null;
-                for (let hex of hexWorldGrid) {
-                    if (Math.hypot(mx - hex.x, my - hex.y) <= hex.radius) {
-                        clickedHex = hex;
-                        break;
-                    }
-                }
-                if (clickedHex && clickedHex.region) {
-                    selectDataMapRegion(clickedHex.region);
-                } else {
-                    isDraggingMap = true;
-                    mapDragStartX = e.clientX - mapPanX;
-                    mapDragStartY = e.clientY - mapPanY;
-                }
-            } else {
-                let hitGeo = null;
-                for (let g of GEOCACHES) {
-                    const gx = g.lon * scaleX;
-                    const gy = -g.lat * scaleY;
-                    if (Math.hypot(mx - gx, my - gy) <= 16) {
-                        hitGeo = g;
-                        break;
-                    }
-                }
+    mCanvas.addEventListener('click', (e) => {
+        const dragDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+        if (dragDist > 6) return;
 
-                if (hitGeo) {
-                    if (onSelectGeocacheCallback) {
-                        onSelectGeocacheCallback({
-                            id: hitGeo.id,
-                            name: hitGeo.name,
-                            tags: ["GEOCACHE", "OFFLINE_VAULT"],
-                            chapters: [
-                                hitGeo.desc,
-                                `Chapter 2: Ground site coordinates confirmed at ${hitGeo.lat.toFixed(2)}° Lat, ${hitGeo.lon.toFixed(2)}° Lon. Vector cartography verified with zero network dependencies.`,
-                                `Chapter 3: Regional communications status: Offline local storage mirror intact.`
-                            ],
-                            connections: ["NEXUS-0"]
-                        });
-                    }
-                } else {
-                    isDraggingMap = true;
-                    mapDragStartX = e.clientX - mapPanX;
-                    mapDragStartY = e.clientY - mapPanY;
+        const rect = mCanvas.getBoundingClientRect();
+        const mx = (e.clientX - rect.left - mapPanX) / mapZoom;
+        const my = (e.clientY - rect.top - mapPanY) / mapZoom;
+
+        if (mapOperatingMode === 'HEXAGON') {
+            let clickedHex = null;
+            for (let hex of hexWorldGrid) {
+                if (Math.hypot(mx - hex.x, my - hex.y) <= hex.radius * 1.3) {
+                    clickedHex = hex;
+                    break;
                 }
+            }
+            if (clickedHex && clickedHex.region) {
+                selectDataMapRegion(clickedHex.region);
+            }
+        } else {
+            let hitGeo = null;
+            for (let g of GEOCACHES) {
+                const gx = g.lon * scaleX;
+                const gy = -g.lat * scaleY;
+                if (Math.hypot(mx - gx, my - gy) <= 16) {
+                    hitGeo = g;
+                    break;
+                }
+            }
+
+            if (hitGeo && onSelectGeocacheCallback) {
+                onSelectGeocacheCallback({
+                    id: hitGeo.id,
+                    name: hitGeo.name,
+                    tags: ["GEOCACHE", "OFFLINE_VAULT"],
+                    chapters: [
+                        hitGeo.desc,
+                        `Chapter 2: Ground site coordinates confirmed at ${hitGeo.lat.toFixed(2)}° Lat, ${hitGeo.lon.toFixed(2)}° Lon. Vector cartography verified with zero network dependencies.`,
+                        `Chapter 3: Regional communications status: Offline local storage mirror intact.`
+                    ],
+                    connections: ["NEXUS-0"]
+                });
             }
         }
     });
@@ -2905,7 +3152,7 @@ function setupMapInteractions() {
             if (mapOperatingMode === 'HEXAGON') {
                 let foundHex = null;
                 for (let hex of hexWorldGrid) {
-                    if (Math.hypot(mx - hex.x, my - hex.y) <= hex.radius) {
+                    if (Math.hypot(mx - hex.x, my - hex.y) <= hex.radius * 1.3) {
                         foundHex = hex;
                         break;
                     }
