@@ -1479,7 +1479,9 @@ export const COUNTRY_DATA = {
     "KR": { id: "KR", name: "South Korea", flag: "🇰🇷", region: "AP", lon: 128, lat: 36, count: "14,000,000", pct: "28.0%", centers: "Seoul Theological Centers, Yanghwajin Martyr Archives", chapters: ["South Korea has an extraordinary history of self-initiated Christian learning in the late 18th century, becoming one of the largest missionary-sending nations in the world."] },
     "JP": { id: "JP", name: "Japan", flag: "🇯🇵", region: "AP", lon: 138, lat: 37, count: "2,000,000", pct: "1.5%", centers: "Nagasaki Kakure Kirishitan Sites, Oura Cathedral", chapters: ["Features the remarkable history of the Hidden Christians (Kakure Kirishitan) who preserved their faith and Latin/Portuguese prayers underground for over 250 years."] },
     "ID": { id: "ID", name: "Indonesia", flag: "🇮🇩", region: "AP", lon: 118, lat: -2, count: "29,000,000", pct: "10.5%", centers: "North Sumatra Batak Church (HKBP), Moluccas Dioceses", chapters: ["Indonesia has a vibrant Christian population exceeding 29 million, with major concentrations in North Sumatra, North Sulawesi, and Papua."] },
-    "AU": { id: "AU", name: "Australia", flag: "🇦🇺", region: "AP", lon: 134, lat: -25, count: "11,000,000", pct: "44.0%", centers: "St. Mary's Cathedral Sydney, Australian Bible Society", chapters: ["Australia maintains extensive Pacific Bible translation archives and historical missionary records across Indigenous and diaspora communities."] }
+    "AU": { id: "AU", name: "Australia", flag: "🇦🇺", region: "AP", lon: 134, lat: -25, count: "11,000,000", pct: "44.0%", centers: "St. Mary's Cathedral Sydney, Australian Bible Society", chapters: ["Australia maintains extensive Pacific Bible translation archives and historical missionary records across Indigenous and diaspora communities."] },
+    "CU": { id: "CU", name: "Cuba & Caribbean", flag: "🇨🇺", region: "NA", lon: -79, lat: 22, count: "6,800,000", pct: "60.0%", centers: "Havana Cathedral Archives, Santiago de Cuba", chapters: ["Cuba preserves early 16th-century Spanish colonial missions and diocesan registries dating back to the bishopric of Baracoa (1518)."] },
+    "GT": { id: "GT", name: "Central America", flag: "🇬🇹", region: "NA", lon: -89, lat: 14.5, count: "42,000,000", pct: "86.0%", centers: "Antigua Guatemala, San Salvador Cathedral", chapters: ["Central America spans historic missionary hubs across Guatemala, Honduras, El Salvador, Nicaragua, Costa Rica, and Panama, retaining extensive colonial manuscripts."] }
 };
 
 export const MAP_HOTSPOTS = {
@@ -1555,45 +1557,79 @@ export function getActiveMapDataset() {
 
 const REGION_POLYGONS = {
     "NA": [
-        [[-168, 65], [-162, 70], [-140, 70], [-130, 70], [-120, 70], [-105, 68], [-90, 70], [-80, 62], [-65, 58], [-55, 48], [-60, 44], [-70, 42], [-75, 38], [-80, 30], [-80, 25], [-82, 24], [-84, 28], [-90, 30], [-97, 26], [-97, 20], [-90, 16], [-84, 9], [-78, 8], [-83, 10], [-87, 14], [-94, 16], [-99, 16], [-105, 20], [-110, 24], [-115, 30], [-120, 34], [-124, 40], [-124, 48], [-130, 54], [-140, 60], [-150, 60], [-160, 58], [-165, 60], [-168, 65]],
-        [[-168, 65], [-155, 66], [-145, 68], [-140, 60], [-150, 57], [-165, 55], [-168, 65]],
+        // North America Main (USA, Canada, Alaska, Northern Mexico)
+        [[-168, 65], [-160, 71], [-140, 70], [-120, 70], [-90, 70], [-80, 62], [-65, 58], [-55, 48], [-65, 44], [-75, 38], [-80, 26], [-82, 24], [-97, 26], [-105, 20], [-90, 16], [-98, 16], [-105, 22], [-115, 30], [-120, 34], [-124, 48], [-130, 54], [-140, 60], [-150, 60], [-165, 60], [-168, 65]],
+        // Central America isthmus
+        [[-92, 16], [-88, 14], [-84, 10], [-77, 8], [-78, 7], [-83, 8], [-87, 13], [-92, 16]],
+        // Cuba
+        [[-85, 21.5], [-74, 20], [-74, 23.5], [-85, 23.5], [-85, 21.5]],
+        // Hispaniola & Puerto Rico
+        [[-74.5, 17.5], [-65, 17.5], [-65, 20.2], [-74.5, 20.2], [-74.5, 17.5]],
+        // Greenland
         [[-55, 60], [-45, 60], [-35, 66], [-20, 75], [-20, 82], [-30, 83], [-55, 83], [-65, 78], [-55, 70], [-55, 60]],
-        [[-125, 70], [-100, 70], [-80, 73], [-70, 78], [-85, 82], [-110, 78], [-125, 74], [-125, 70]],
-        [[-85, 22], [-74, 20], [-66, 18], [-65, 18], [-70, 19], [-85, 23], [-85, 22]]
+        // Arctic Archipelago
+        [[-125, 70], [-100, 70], [-80, 73], [-70, 78], [-85, 82], [-110, 78], [-125, 74], [-125, 70]]
     ],
     "LA": [
+        // South America Main
         [[-78, 8], [-72, 11], [-60, 10], [-50, 0], [-35, -5], [-35, -10], [-38, -18], [-42, -23], [-48, -28], [-53, -33], [-58, -38], [-65, -54], [-70, -55], [-75, -52], [-75, -45], [-72, -35], [-76, -18], [-81, -5], [-80, 2], [-78, 8]],
+        // Tierra del Fuego
         [[-70, -52], [-65, -52], [-65, -55], [-70, -55], [-70, -52]]
     ],
     "EU": [
+        // Western / Central / Eastern Europe
         [[-9, 36], [-9, 43], [-1, 46], [-5, 48], [2, 51], [8, 54], [10, 55], [14, 54], [22, 55], [28, 55], [30, 46], [28, 41], [23, 38], [15, 38], [15, 42], [8, 44], [3, 42], [-5, 36], [-9, 36]],
+        // Scandinavia & Finland
         [[5, 58], [10, 58], [14, 68], [28, 71], [34, 68], [30, 60], [24, 60], [18, 56], [10, 56], [5, 58]],
+        // Great Britain & Ireland
         [[-10, 51], [-6, 51], [-5, 55], [1.5, 52], [0, 58], [-4, 59], [-6, 56], [-10, 54], [-10, 51]],
+        // Iceland
         [[-24, 63], [-14, 63], [-14, 66], [-24, 66], [-24, 63]],
+        // Italy & Sicily
         [[8, 45], [13, 46], [18, 41], [16, 38], [14, 37], [12, 38], [10, 44], [8, 45]],
+        [[12, 36.5], [15.5, 36.5], [15.5, 38.5], [12, 38.5], [12, 36.5]],
+        // Greece & Balkans
         [[19, 42], [28, 42], [28, 36], [23, 36], [20, 39], [19, 42]]
     ],
     "AF": [
+        // Continental Africa
         [[-17, 15], [-12, 28], [-9, 36], [10, 37], [25, 32], [33, 31], [35, 28], [43, 12], [51, 11], [42, -2], [40, -12], [35, -25], [28, -34], [18, -34], [12, -18], [9, -4], [3, 5], [-12, 5], [-17, 15]],
-        [[43, -12], [50, -12], [50, -25], [44, -25], [43, -12]]
+        // Madagascar
+        [[43, -12], [50.5, -12], [50.5, -25.5], [43, -25.5], [43, -12]]
     ],
     "ME": [
+        // Arabian Peninsula & Levant
         [[26, 42], [42, 42], [48, 30], [56, 26], [60, 22], [55, 16], [45, 12], [36, 15], [34, 28], [35, 36], [26, 40], [26, 42]],
+        // Persia & Anatolia / Caucasus
         [[45, 38], [60, 42], [75, 42], [75, 30], [60, 25], [50, 30], [45, 38]]
     ],
     "AP": [
+        // Siberia & East Asia
         [[30, 60], [60, 70], [80, 73], [100, 76], [130, 74], [170, 68], [180, 65], [170, 60], [160, 52], [142, 50], [130, 42], [100, 50], [70, 52], [50, 55], [30, 60]],
-        [[62, 25], [72, 32], [80, 32], [90, 25], [92, 21], [85, 16], [80, 8], [77, 8], [72, 18], [68, 24], [62, 25]],
-        [[80, 6], [82, 6], [82, 10], [80, 10], [80, 6]],
+        // India & subcontinent
+        [[68, 24], [72, 32], [80, 32], [90, 25], [92, 21], [85, 16], [80, 8], [77, 8], [72, 18], [68, 24]],
+        // Sri Lanka
+        [[79.5, 6], [82, 6], [82, 10], [79.5, 10], [79.5, 6]],
+        // China / Central & Eastern Asia
         [[75, 30], [90, 40], [105, 45], [122, 42], [122, 30], [118, 22], [108, 20], [98, 24], [85, 28], [75, 30]],
+        // Korean Peninsula
         [[124, 34], [130, 35], [130, 42], [124, 40], [124, 34]],
-        [[129, 31], [132, 34], [140, 36], [142, 45], [145, 44], [141, 40], [136, 35], [129, 31]],
+        // Japan Archipelago (Honshu, Hokkaido, Kyushu, Shikoku)
+        [[128, 31], [131, 33], [137, 34], [141, 40], [145.5, 44.5], [141, 45.5], [139, 41.5], [136, 36.5], [132, 34.5], [128, 31]],
+        // Taiwan
+        [[120, 21.8], [122.2, 21.8], [122.2, 25.4], [120, 25.4], [120, 21.8]],
+        // Indochina & Southeast Asia
         [[93, 22], [108, 22], [109, 10], [104, 1], [100, 4], [98, 10], [93, 16], [93, 22]],
-        [[95, 5], [106, -6], [116, -8], [125, -8], [141, -2], [150, -5], [141, -9], [120, -10], [100, 0], [95, 5]],
-        [[118, 6], [126, 6], [126, 18], [120, 18], [118, 6]],
-        [[108, 4], [118, 4], [118, -4], [108, -2], [108, 4]],
+        // Indonesia (Sumatra, Java, Borneo, Sulawesi)
+        [[95, 5.5], [106, -6], [116, -8.5], [125, -8.5], [141, -2], [150, -5], [141, -9], [120, -10], [100, 0], [95, 5.5]],
+        [[108, 4], [119, 4], [119, -4.5], [108, -2], [108, 4]],
+        // Philippines
+        [[119, 18.5], [126.5, 18.5], [126.5, 5.5], [121, 5.5], [119, 12], [119, 18.5]],
+        // Australia
         [[113, -22], [120, -14], [135, -12], [142, -11], [146, -18], [153, -28], [150, -38], [140, -38], [130, -32], [116, -35], [113, -26], [113, -22]],
+        // Tasmania
         [[144, -41], [148, -41], [148, -44], [144, -44], [144, -41]],
+        // New Zealand
         [[166, -46], [172, -41], [178, -37], [174, -35], [172, -40], [168, -45], [166, -46]]
     ]
 };
@@ -1614,9 +1650,9 @@ function generateHexWorldGrid() {
     hexWorldGrid = [];
     const scaleX = 2.4;
     const scaleY = 2.4;
-    const dLon = 4.2;
-    const dLat = 3.6;
-    const hexRadius = 5.2;
+    const dLon = 2.1;
+    const dLat = 1.8;
+    const hexRadius = 2.65;
 
     let rowIdx = 0;
     for (let lat = 78; lat >= -56; lat -= dLat) {
@@ -1635,6 +1671,19 @@ function generateHexWorldGrid() {
             }
 
             if (matchedRegion) {
+                // Associate each cell with its nearest country within the region
+                let matchedCountry = null;
+                let minCDist = 9999;
+                for (const c of Object.values(COUNTRY_DATA)) {
+                    if (c.region === matchedRegion) {
+                        const d = Math.hypot(lon - c.lon, (lat - c.lat) * 1.15);
+                        if (d < minCDist) {
+                            minCDist = d;
+                            matchedCountry = c;
+                        }
+                    }
+                }
+
                 const x = lon * scaleX;
                 const y = -lat * scaleY;
                 hexWorldGrid.push({
@@ -1643,7 +1692,8 @@ function generateHexWorldGrid() {
                     x: x,
                     y: y,
                     radius: hexRadius,
-                    region: matchedRegion
+                    region: matchedRegion,
+                    country: matchedCountry ? matchedCountry.id : null
                 });
             }
         }
@@ -2808,7 +2858,14 @@ function renderHexDataMap() {
     hexWorldGrid.forEach(hex => {
         const regData = currDataset.regions[hex.region];
         const isHovered = hoveredHex && Math.hypot(hoveredHex.x - hex.x, hoveredHex.y - hex.y) < 1;
-        const isSelected = selectedMapRegion && selectedMapRegion.id === hex.region;
+        
+        // Single country precision highlight:
+        let isSelected = false;
+        if (selectedCountry) {
+            isSelected = (hex.country === selectedCountry.id);
+        } else if (selectedMapRegion) {
+            isSelected = (hex.region === selectedMapRegion.id);
+        }
 
         let minDist = 999;
         hotspots.forEach(spot => {
@@ -2816,83 +2873,76 @@ function renderHexDataMap() {
             if (d < minDist) minDist = d;
         });
 
-        const proximityBoost = Math.max(0, 1 - minDist / 24);
-        const baseIntensity = regData ? regData.intensity : 0.4;
-        const cellIntensity = Math.min(1.0, baseIntensity * 0.35 + proximityBoost * 0.65);
+        const proximityBoost = Math.max(0, 1 - minDist / 22);
+        const baseIntensity = regData ? regData.intensity : 0.3;
+        const cellIntensity = Math.min(1.0, baseIntensity * 0.3 + proximityBoost * 0.7);
 
         let fillColor = hexBase;
         let strokeColor = hexStroke;
         let glowColor = null;
         let glowBlur = 0;
 
+        // Color Scale: Red = Highest / Most concentrated, Yellow = Medium, White = Least concentrated
         if (isLight) {
-            if (cellIntensity < 0.35) {
-                fillColor = '#cbd5e1';
-                strokeColor = '#94a3b8';
-            } else if (cellIntensity < 0.65) {
-                fillColor = '#38bdf8';
-                strokeColor = '#0284c7';
-            } else if (cellIntensity < 0.85) {
-                fillColor = '#f43f5e';
-                strokeColor = '#be123c';
-            } else {
-                fillColor = '#f59e0b';
-                strokeColor = '#b45309';
-                glowColor = 'rgba(245, 158, 11, 0.4)';
+            if (cellIntensity >= 0.70) {
+                fillColor = '#b91c1c';
+                strokeColor = '#991b1b';
+                glowColor = 'rgba(185, 28, 28, 0.4)';
                 glowBlur = 6;
+            } else if (cellIntensity >= 0.38) {
+                fillColor = '#d97706';
+                strokeColor = '#b45309';
+                glowColor = 'rgba(217, 119, 6, 0.25)';
+                glowBlur = 4;
+            } else {
+                fillColor = '#ffffff';
+                strokeColor = '#cbd5e1';
             }
         } else if (theme === 'synth-magenta') {
-            if (cellIntensity < 0.30) {
-                fillColor = '#121424';
-                strokeColor = '#1e2238';
-            } else if (cellIntensity < 0.60) {
-                fillColor = '#0284c7';
-                strokeColor = '#00f0ff';
-                glowColor = 'rgba(0, 240, 255, 0.4)';
-                glowBlur = 4;
-            } else if (cellIntensity < 0.82) {
-                fillColor = '#db2777';
-                strokeColor = '#ec4899';
-                glowColor = 'rgba(236, 72, 153, 0.6)';
-                glowBlur = 8;
-            } else {
+            if (cellIntensity >= 0.70) {
                 fillColor = '#f43f5e';
-                strokeColor = '#ffffff';
+                strokeColor = '#fda4af';
                 glowColor = 'rgba(244, 63, 94, 0.85)';
-                glowBlur = 12;
+                glowBlur = 10;
+            } else if (cellIntensity >= 0.38) {
+                fillColor = '#fde047';
+                strokeColor = '#fef08a';
+                glowColor = 'rgba(253, 224, 71, 0.55)';
+                glowBlur = 6;
+            } else {
+                fillColor = '#e0f2fe';
+                strokeColor = '#ffffff';
+                glowColor = 'rgba(224, 242, 254, 0.3)';
+                glowBlur = 2;
             }
         } else {
             // Default Midnight Gold & Obsidian Mono
-            if (cellIntensity < 0.30) {
-                fillColor = '#101728';
-                strokeColor = '#1c263e';
-            } else if (cellIntensity < 0.60) {
-                fillColor = '#0369a1';
-                strokeColor = '#38bdf8';
-                glowColor = 'rgba(56, 189, 248, 0.35)';
-                glowBlur = 4;
-            } else if (cellIntensity < 0.82) {
-                fillColor = '#e11d48';
-                strokeColor = '#fb7185';
-                glowColor = 'rgba(225, 29, 72, 0.6)';
-                glowBlur = 8;
-            } else {
-                fillColor = '#f59e0b';
+            if (cellIntensity >= 0.70) {
+                fillColor = '#ef4444';
+                strokeColor = '#f87171';
+                glowColor = 'rgba(239, 68, 68, 0.85)';
+                glowBlur = 10;
+            } else if (cellIntensity >= 0.38) {
+                fillColor = '#eab308';
                 strokeColor = '#fef08a';
-                glowColor = 'rgba(245, 158, 11, 0.85)';
-                glowBlur = 12;
+                glowColor = 'rgba(234, 179, 8, 0.5)';
+                glowBlur = 6;
+            } else {
+                fillColor = '#f1f5f9';
+                strokeColor = '#cbd5e1';
+                glowColor = 'rgba(255, 255, 255, 0.25)';
+                glowBlur = 2;
             }
         }
 
         if (isSelected) {
-            fillColor = accentGold;
+            fillColor = '#06b6d4';
+            strokeColor = '#ffffff';
+            glowColor = '#06b6d4';
+            glowBlur = 12;
+        } else if (isHovered) {
             strokeColor = '#ffffff';
             glowColor = '#ffffff';
-            glowBlur = 10;
-        } else if (isHovered) {
-            fillColor = accentCyan;
-            strokeColor = '#ffffff';
-            glowColor = accentCyan;
             glowBlur = 8;
         }
 
@@ -2910,8 +2960,8 @@ function renderHexDataMap() {
         mCtx.beginPath();
         mCtx.arc(cx, cy, isSel ? 7.5 : (isHov ? 5.5 : 3.5), 0, Math.PI * 2);
         if (isSel) {
-            mCtx.fillStyle = accentGold;
-            mCtx.shadowColor = accentGold;
+            mCtx.fillStyle = '#06b6d4';
+            mCtx.shadowColor = '#06b6d4';
             mCtx.shadowBlur = 14;
             mCtx.fill();
             mCtx.lineWidth = 2;
@@ -2937,7 +2987,7 @@ function renderHexDataMap() {
 
         // Country code label
         mCtx.font = isSel ? 'bold 8.5px "JetBrains Mono", monospace' : 'bold 7px "JetBrains Mono", monospace';
-        mCtx.fillStyle = isSel ? accentGold : (isHov ? accentCyan : (isLight ? '#334155' : 'rgba(255, 255, 255, 0.75)'));
+        mCtx.fillStyle = isSel ? '#06b6d4' : (isHov ? accentCyan : (isLight ? '#334155' : 'rgba(255, 255, 255, 0.75)'));
         mCtx.textAlign = 'center';
         mCtx.fillText(c.id, cx, cy - (isSel ? 10 : 7));
     });
@@ -3303,25 +3353,11 @@ function setupMapInteractions() {
                 }
             }
 
-            if (clickedHex && clickedHex.region) {
-                // find nearest country in that region
-                let nearestCountry = null;
-                let nearestDist = 9999;
-                for (const c of Object.values(COUNTRY_DATA)) {
-                    if (c.region === clickedHex.region) {
-                        const dist = Math.hypot(clickedHex.lon - c.lon, clickedHex.lat - c.lat);
-                        if (dist < nearestDist) {
-                            nearestDist = dist;
-                            nearestCountry = c;
-                        }
-                    }
-                }
-                if (nearestCountry && nearestDist < 30) {
-                    selectCountry(nearestCountry.id);
-                } else {
-                    selectedCountry = null;
-                    selectDataMapRegion(clickedHex.region);
-                }
+            if (clickedHex && clickedHex.country) {
+                selectCountry(clickedHex.country);
+            } else if (clickedHex && clickedHex.region) {
+                selectedCountry = null;
+                selectDataMapRegion(clickedHex.region);
             } else {
                 selectedCountry = null;
                 selectedMapRegion = null;
