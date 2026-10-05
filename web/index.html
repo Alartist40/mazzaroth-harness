@@ -421,11 +421,18 @@
                         <!-- Dataset Switcher (Active in Hexagon Mode) -->
                         <div id="deck-map-dataset-wrap" class="flex flex-col items-center gap-1 w-full">
                             <span class="text-[7px] font-mono uppercase font-bold" style="color: var(--text-muted);">DATASET</span>
-                            <button id="btn-map-dataset" class="w-12 py-1 rounded border text-[7.5px] font-mono font-bold uppercase transition-all"
-                                    style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--accent-secondary);"
-                                    title="Cycle Global Demographics Dataset">
-                                TOTAL
-                            </button>
+                            <div class="flex items-center gap-1">
+                                <button id="btn-map-dataset" class="w-10 py-1 rounded border text-[7px] font-mono font-bold uppercase transition-all"
+                                        style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--accent-secondary);"
+                                        title="Cycle Global Demographics Dataset">
+                                    TOTAL
+                                </button>
+                                <button id="btn-map-add-dataset" class="w-5 py-1 rounded border text-[9px] font-mono font-bold flex items-center justify-center transition-all hover:scale-105"
+                                        style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--accent-primary);"
+                                        title="Create / Add New Custom Geodata Matrix">
+                                    +
+                                </button>
+                            </div>
                         </div>
 
                         <button id="tool-map-download" class="w-9 h-9 rounded-xl border flex items-center justify-center shadow-sm hover:scale-105 transition-transform"
@@ -985,6 +992,186 @@
                 <div class="pt-3 border-t mt-3 flex justify-between items-center text-[10px] font-mono" style="border-color: var(--border-subtle); color: var(--text-muted);">
                     <span>ESC TO CANCEL • ENTER TO JUMP</span>
                     <span>LOCAL INDEXED CACHE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- GEODATA MATRIX CREATOR MODAL -->
+        <div id="modal-data-creator" class="hidden fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="relative w-full max-w-2xl rounded-2xl mono-card p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between pb-3 border-b" style="border-color: var(--border-subtle);">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-base">🌐</span>
+                        <div>
+                            <h3 class="font-bold text-sm tracking-wider uppercase" style="color: var(--text-main);">GEODATA MATRIX BUILDER</h3>
+                            <p class="text-[10px] font-mono" style="color: var(--text-muted);">Design custom demographic layers, heat intensities, and country chapters</p>
+                        </div>
+                    </div>
+                    <button id="btn-close-data-creator" class="p-1.5 rounded-lg border hover:opacity-80 transition-opacity"
+                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Modal Body (Scrollable) -->
+                <div class="overflow-y-auto space-y-4 my-3 pr-1 text-xs font-mono">
+                    <!-- Basic Meta -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[9px] uppercase font-bold" style="color: var(--text-muted);">DATASET ID</label>
+                            <input id="data-creator-id" type="text" placeholder="e.g. MONASTIC" class="px-2.5 py-1.5 rounded-lg border uppercase outline-none"
+                                   style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
+                        </div>
+                        <div class="flex flex-col gap-1 md:col-span-2">
+                            <label class="text-[9px] uppercase font-bold" style="color: var(--text-muted);">DATASET TITLE</label>
+                            <input id="data-creator-title" type="text" placeholder="e.g. EARLY CHRISTIAN MONASTIC ORDERS (~120M)" class="px-2.5 py-1.5 rounded-lg border outline-none"
+                                   style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[9px] uppercase font-bold" style="color: var(--text-muted);">METRIC LABEL / SUBTITLE</label>
+                            <input id="data-creator-metric" type="text" placeholder="e.g. Documented Historical Monasteries" class="px-2.5 py-1.5 rounded-lg border outline-none"
+                                   style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[9px] uppercase font-bold" style="color: var(--text-muted);">HEATMAP COLOR PALETTE</label>
+                            <select id="data-creator-palette" class="px-2.5 py-1.5 rounded-lg border outline-none"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
+                                <option value="adaptive">Theme Adaptive (Recommended)</option>
+                                <option value="crimson">Crimson Heat (Red / Gold / Blue)</option>
+                                <option value="neon">Synth Neon (Fuchsia / Violet / Cyan)</option>
+                                <option value="mono">Obsidian Mono (White / Silver / Charcoal)</option>
+                                <option value="emerald">Emerald Oasis (Green / Lime / Teal)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Regional Heat Distribution Sliders -->
+                    <div class="p-3 rounded-xl border flex flex-col gap-2.5" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--text-main);">REGIONAL DENSITY & HEAT SLIDERS</span>
+                            <span class="text-[9px]" style="color: var(--text-muted);">Controls global hex grid intensity (0% - 100%)</span>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+                            <div>
+                                <div class="flex justify-between text-[9px] mb-1">
+                                    <span style="color: var(--text-secondary);">NORTH AMERICA (NA)</span>
+                                    <span id="label-slider-na" style="color: var(--accent-primary);">40%</span>
+                                </div>
+                                <input id="slider-region-na" type="range" min="0" max="100" value="40" class="w-full accent-amber-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[9px] mb-1">
+                                    <span style="color: var(--text-secondary);">LATIN AMERICA (LA)</span>
+                                    <span id="label-slider-la" style="color: var(--accent-primary);">50%</span>
+                                </div>
+                                <input id="slider-region-la" type="range" min="0" max="100" value="50" class="w-full accent-amber-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[9px] mb-1">
+                                    <span style="color: var(--text-secondary);">EUROPE (EU)</span>
+                                    <span id="label-slider-eu" style="color: var(--accent-primary);">95%</span>
+                                </div>
+                                <input id="slider-region-eu" type="range" min="0" max="100" value="95" class="w-full accent-amber-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[9px] mb-1">
+                                    <span style="color: var(--text-secondary);">AFRICA (AF)</span>
+                                    <span id="label-slider-af" style="color: var(--accent-primary);">80%</span>
+                                </div>
+                                <input id="slider-region-af" type="range" min="0" max="100" value="80" class="w-full accent-amber-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[9px] mb-1">
+                                    <span style="color: var(--text-secondary);">MIDDLE EAST (ME)</span>
+                                    <span id="label-slider-me" style="color: var(--accent-primary);">90%</span>
+                                </div>
+                                <input id="slider-region-me" type="range" min="0" max="100" value="90" class="w-full accent-amber-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[9px] mb-1">
+                                    <span style="color: var(--text-secondary);">ASIA-PACIFIC (AP)</span>
+                                    <span id="label-slider-ap" style="color: var(--accent-primary);">60%</span>
+                                </div>
+                                <input id="slider-region-ap" type="range" min="0" max="100" value="60" class="w-full accent-amber-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Target Country Details & Highlights -->
+                    <div class="p-3 rounded-xl border flex flex-col gap-2.5" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--text-main);">TARGET COUNTRY DOSSIER / OVERRIDE</span>
+                            <span class="text-[9px]" style="color: var(--text-muted);">Attach specific research notes to a key country</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <div class="flex flex-col gap-1">
+                                <label class="text-[9px] uppercase font-bold" style="color: var(--text-muted);">COUNTRY SELECT</label>
+                                <select id="data-creator-country-select" class="px-2.5 py-1.5 rounded-lg border outline-none"
+                                        style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);">
+                                    <option value="JP">🇯🇵 Japan</option>
+                                    <option value="US">🇺🇸 United States</option>
+                                    <option value="EG">🇪🇬 Egypt</option>
+                                    <option value="ET">🇪🇹 Ethiopia</option>
+                                    <option value="GR">🇬🇷 Greece</option>
+                                    <option value="IT">🇮🇹 Italy & Vatican</option>
+                                    <option value="GB">🇬🇧 United Kingdom</option>
+                                    <option value="DE">🇩🇪 Germany</option>
+                                    <option value="FR">🇫🇷 France</option>
+                                    <option value="RU">🇷🇺 Russia & Siberia</option>
+                                    <option value="CN">🇨🇳 China</option>
+                                    <option value="KR">🇰🇷 South Korea</option>
+                                    <option value="IN">🇮🇳 India</option>
+                                    <option value="IL">🇮🇱 Israel & Palestine</option>
+                                    <option value="BR">🇧🇷 Brazil</option>
+                                    <option value="MX">🇲🇽 Mexico</option>
+                                    <option value="NG">🇳🇬 Nigeria</option>
+                                    <option value="CD">🇨🇩 DR Congo</option>
+                                    <option value="ZA">🇿🇦 South Africa</option>
+                                    <option value="PH">🇵🇭 Philippines</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label class="text-[9px] uppercase font-bold" style="color: var(--text-muted);">METRIC VALUE</label>
+                                <input id="data-creator-country-count" type="text" placeholder="e.g. 2,400 Sites" class="px-2.5 py-1.5 rounded-lg border outline-none"
+                                       style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);">
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label class="text-[9px] uppercase font-bold" style="color: var(--text-muted);">SHARE / %</label>
+                                <input id="data-creator-country-pct" type="text" placeholder="e.g. 18.5%" class="px-2.5 py-1.5 rounded-lg border outline-none"
+                                       style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);">
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[9px] uppercase font-bold" style="color: var(--text-muted);">KEY SITES / CENTERS</label>
+                            <input id="data-creator-country-centers" type="text" placeholder="e.g. Nagasaki Historic Sites, Kyoto Heritage Centers" class="px-2.5 py-1.5 rounded-lg border outline-none"
+                                   style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);">
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[9px] uppercase font-bold" style="color: var(--text-muted);">RESEARCH CHAPTER / SUMMARY NOTES</label>
+                            <textarea id="data-creator-country-notes" rows="2" placeholder="Document historical context, archival codices, or distribution records..." class="px-2.5 py-1.5 rounded-lg border outline-none resize-none"
+                                      style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="pt-3 border-t flex items-center justify-between" style="border-color: var(--border-subtle);">
+                    <button id="btn-cancel-data-creator" class="px-3 py-1.5 rounded-xl border text-xs font-mono hover:opacity-80 transition-opacity"
+                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
+                        CANCEL
+                    </button>
+                    <button id="btn-save-data-creator" class="px-4 py-1.5 rounded-xl border text-xs font-mono font-bold tracking-wider uppercase transition-all hover:scale-105 active:scale-95 flex items-center space-x-1.5 shadow-sm"
+                            style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
+                        <span>💾</span>
+                        <span>SAVE & PROJECT TO HEX MATRIX</span>
+                    </button>
                 </div>
             </div>
         </div>

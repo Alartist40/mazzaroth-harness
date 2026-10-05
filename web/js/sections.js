@@ -1478,10 +1478,48 @@ export const COUNTRY_DATA = {
     "IN": { id: "IN", name: "India", flag: "🇮🇳", region: "AP", lon: 79, lat: 21, count: "32,000,000", pct: "2.4%", centers: "St. Thomas Mount (Chennai), Malankara Archives (Kerala)", chapters: ["The St. Thomas Christians of Kerala trace their tradition directly to the Apostle Thomas arriving in Muziris (52 AD), preserving ancient East Syriac and Malayalam manuscripts."] },
     "KR": { id: "KR", name: "South Korea", flag: "🇰🇷", region: "AP", lon: 128, lat: 36, count: "14,000,000", pct: "28.0%", centers: "Seoul Theological Centers, Yanghwajin Martyr Archives", chapters: ["South Korea has an extraordinary history of self-initiated Christian learning in the late 18th century, becoming one of the largest missionary-sending nations in the world."] },
     "JP": { id: "JP", name: "Japan", flag: "🇯🇵", region: "AP", lon: 138, lat: 37, count: "2,000,000", pct: "1.5%", centers: "Nagasaki Kakure Kirishitan Sites, Oura Cathedral", chapters: ["Features the remarkable history of the Hidden Christians (Kakure Kirishitan) who preserved their faith and Latin/Portuguese prayers underground for over 250 years."] },
+    "RU": { id: "RU", name: "Russia & Siberia", flag: "🇷🇺", region: "AP", lon: 95, lat: 60, count: "105,000,000", pct: "71.0%", centers: "Moscow Patriarchate, Trinity Lavra of St. Sergius, St. Petersburg", chapters: ["Houses ancient Slavic uncial manuscripts and historic Eastern Orthodox liturgical traditions spanning Eurasia.", "Chapter 2: The National Library of Russia in St. Petersburg preserves leaves of Codex Sinaiticus, Codex Petropolitanus Purpureus (6th c.), and the Ostromir Gospels (1056 AD)."] },
     "ID": { id: "ID", name: "Indonesia", flag: "🇮🇩", region: "AP", lon: 118, lat: -2, count: "29,000,000", pct: "10.5%", centers: "North Sumatra Batak Church (HKBP), Moluccas Dioceses", chapters: ["Indonesia has a vibrant Christian population exceeding 29 million, with major concentrations in North Sumatra, North Sulawesi, and Papua."] },
     "AU": { id: "AU", name: "Australia", flag: "🇦🇺", region: "AP", lon: 134, lat: -25, count: "11,000,000", pct: "44.0%", centers: "St. Mary's Cathedral Sydney, Australian Bible Society", chapters: ["Australia maintains extensive Pacific Bible translation archives and historical missionary records across Indigenous and diaspora communities."] },
     "CU": { id: "CU", name: "Cuba & Caribbean", flag: "🇨🇺", region: "NA", lon: -79, lat: 22, count: "6,800,000", pct: "60.0%", centers: "Havana Cathedral Archives, Santiago de Cuba", chapters: ["Cuba preserves early 16th-century Spanish colonial missions and diocesan registries dating back to the bishopric of Baracoa (1518)."] },
     "GT": { id: "GT", name: "Central America", flag: "🇬🇹", region: "NA", lon: -89, lat: 14.5, count: "42,000,000", pct: "86.0%", centers: "Antigua Guatemala, San Salvador Cathedral", chapters: ["Central America spans historic missionary hubs across Guatemala, Honduras, El Salvador, Nicaragua, Costa Rica, and Panama, retaining extensive colonial manuscripts."] }
+};
+
+export const COUNTRY_BOUNDS = {
+    "JP": { minLon: 127.5, maxLon: 147.0, minLat: 30.0, maxLat: 46.0 },
+    "KR": { minLon: 124.0, maxLon: 131.0, minLat: 33.0, maxLat: 42.0 },
+    "CN": { minLon: 73.0, maxLon: 135.0, minLat: 18.0, maxLat: 49.0 },
+    "RU": { minLon: 25.0, maxLon: 180.0, minLat: 48.0, maxLat: 78.0 },
+    "PH": { minLon: 117.0, maxLon: 128.0, minLat: 5.0, maxLat: 20.0 },
+    "ID": { minLon: 95.0, maxLon: 142.0, minLat: -11.0, maxLat: 6.0 },
+    "IN": { minLon: 68.0, maxLon: 93.0, minLat: 6.0, maxLat: 36.0 },
+    "AU": { minLon: 112.0, maxLon: 155.0, minLat: -45.0, maxLat: -10.0 },
+    "GB": { minLon: -11.0, maxLon: 2.0, minLat: 49.0, maxLat: 61.0 },
+    "FR": { minLon: -5.5, maxLon: 9.5, minLat: 41.0, maxLat: 51.5 },
+    "DE": { minLon: 5.5, maxLon: 15.5, minLat: 47.0, maxLat: 55.5 },
+    "IT": { minLon: 6.5, maxLon: 19.0, minLat: 36.0, maxLat: 47.5 },
+    "ES": { minLon: -10.0, maxLon: 4.0, minLat: 35.5, maxLat: 44.0 },
+    "PL": { minLon: 14.0, maxLon: 24.5, minLat: 49.0, maxLat: 55.0 },
+    "GR": { minLon: 19.0, maxLon: 28.5, minLat: 34.5, maxLat: 42.0 },
+    "UA": { minLon: 22.0, maxLon: 40.5, minLat: 44.0, maxLat: 53.0 },
+    "US": { minLon: -125.0, maxLon: -66.0, minLat: 24.5, maxLat: 50.0 },
+    "CA": { minLon: -141.0, maxLon: -52.0, minLat: 50.0, maxLat: 75.0 },
+    "MX": { minLon: -118.0, maxLon: -86.0, minLat: 14.0, maxLat: 33.0 },
+    "GT": { minLon: -92.5, maxLon: -77.0, minLat: 7.0, maxLat: 18.0 },
+    "CU": { minLon: -85.0, maxLon: -64.0, minLat: 17.0, maxLat: 24.0 },
+    "BR": { minLon: -74.0, maxLon: -34.0, minLat: -34.0, maxLat: 5.0 },
+    "CO": { minLon: -79.0, maxLon: -66.0, minLat: -4.5, maxLat: 13.5 },
+    "AR": { minLon: -74.0, maxLon: -53.0, minLat: -56.0, maxLat: -21.5 },
+    "EG": { minLon: 24.0, maxLon: 37.0, minLat: 21.5, maxLat: 32.0 },
+    "NG": { minLon: 2.5, maxLon: 15.0, minLat: 4.0, maxLat: 14.0 },
+    "CD": { minLon: 12.0, maxLon: 31.5, minLat: -13.5, maxLat: 5.5 },
+    "ET": { minLon: 33.0, maxLon: 48.0, minLat: 3.0, maxLat: 15.0 },
+    "KE": { minLon: 33.5, maxLon: 42.0, minLat: -5.0, maxLat: 5.5 },
+    "ZA": { minLon: 16.0, maxLon: 33.0, minLat: -35.0, maxLat: -22.0 },
+    "IL": { minLon: 34.0, maxLon: 36.0, minLat: 29.0, maxLat: 33.5 },
+    "LB": { minLon: 35.0, maxLon: 42.5, minLat: 32.5, maxLat: 37.5 },
+    "TR": { minLon: 25.5, maxLon: 45.0, minLat: 35.5, maxLat: 42.5 },
+    "SA": { minLon: 34.5, maxLon: 60.0, minLat: 12.0, maxLat: 32.5 }
 };
 
 export const MAP_HOTSPOTS = {
@@ -1503,6 +1541,7 @@ export const MAP_HOTSPOTS = {
         { lon: 35.2, lat: 31.8, code: "IL", weight: 1.0 },
         { lon: 122.0, lat: 13.0, code: "PH", weight: 1.0 },
         { lon: 104.0, lat: 35.0, code: "CN", weight: 0.90 },
+        { lon: 95.0, lat: 60.0, code: "RU", weight: 0.92 },
         { lon: 79.0, lat: 21.0, code: "IN", weight: 0.88 },
         { lon: 128.0, lat: 36.0, code: "KR", weight: 0.92 },
         { lon: 138.0, lat: 37.0, code: "JP", weight: 0.80 },
@@ -1527,6 +1566,7 @@ export const MAP_HOTSPOTS = {
     ],
     "ORTHODOX": [
         { lon: 22.0, lat: 39.0, code: "GR", weight: 1.0 },
+        { lon: 95.0, lat: 60.0, code: "RU", weight: 0.98 },
         { lon: 39.0, lat: 9.0, code: "ET", weight: 1.0 },
         { lon: 30.0, lat: 27.0, code: "EG", weight: 0.95 },
         { lon: 31.0, lat: 49.0, code: "UA", weight: 0.92 },
@@ -1671,15 +1711,30 @@ function generateHexWorldGrid() {
             }
 
             if (matchedRegion) {
-                // Associate each cell with its nearest country within the region
+                // Associate each cell with its strict bounding country, falling back to nearest within region
                 let matchedCountry = null;
                 let minCDist = 9999;
                 for (const c of Object.values(COUNTRY_DATA)) {
                     if (c.region === matchedRegion) {
-                        const d = Math.hypot(lon - c.lon, (lat - c.lat) * 1.15);
-                        if (d < minCDist) {
-                            minCDist = d;
-                            matchedCountry = c;
+                        const bounds = COUNTRY_BOUNDS[c.id];
+                        const inBounds = bounds ? (lon >= bounds.minLon && lon <= bounds.maxLon && lat >= bounds.minLat && lat <= bounds.maxLat) : true;
+                        if (inBounds) {
+                            const d = Math.hypot(lon - c.lon, (lat - c.lat) * 1.15);
+                            if (d < minCDist) {
+                                minCDist = d;
+                                matchedCountry = c;
+                            }
+                        }
+                    }
+                }
+                if (!matchedCountry) {
+                    for (const c of Object.values(COUNTRY_DATA)) {
+                        if (c.region === matchedRegion) {
+                            const d = Math.hypot(lon - c.lon, (lat - c.lat) * 1.15);
+                            if (d < minCDist) {
+                                minCDist = d;
+                                matchedCountry = c;
+                            }
                         }
                     }
                 }
@@ -1725,6 +1780,8 @@ export function initMap(canvas, onSelectGeocache) {
     mCtx = mCanvas.getContext('2d', { alpha: false });
     onSelectGeocacheCallback = onSelectGeocache;
 
+    loadSavedCustomDatasets();
+    setupDataMatrixModal();
     generateHexWorldGrid();
     setupMapInteractions();
     resizeMap();
@@ -2874,37 +2931,72 @@ function renderHexDataMap() {
         let fillColor = hexBase;
         let strokeColor = hexStroke;
 
-        // Color Gradient: Red (Hot) -> Yellow (Warm) -> Light Blue (Cool) -> Dark Blue / Slate (Base)
-        if (isLight) {
+        const currDataset = MAP_DATASETS[activeMapDatasetKey] || MAP_DATASETS["TOTAL"];
+        const preset = currDataset?.colorPreset || 'adaptive';
+
+        // Precise Color Grading Translation Across Themes and Custom Presets
+        if (preset === 'mono' || (preset === 'adaptive' && (theme === 'obsidian-mono' || theme === 'dark'))) {
+            // Obsidian Mono: Pure Luminous White -> Silver Light Gray -> Mid Slate Gray -> Charcoal Obsidian Base
             if (cellIntensity >= 0.75) {
-                fillColor = '#b91c1c';
-                strokeColor = '#991b1b';
+                fillColor = '#ffffff';
+                strokeColor = '#f8fafc';
             } else if (cellIntensity >= 0.52) {
-                fillColor = '#d97706';
-                strokeColor = '#b45309';
+                fillColor = '#cbd5e1';
+                strokeColor = '#e2e8f0';
             } else if (cellIntensity >= 0.30) {
-                fillColor = '#0284c7';
-                strokeColor = '#0369a1';
+                fillColor = '#64748b';
+                strokeColor = '#94a3b8';
             } else {
-                fillColor = '#e2e8f0';
-                strokeColor = '#cbd5e1';
+                fillColor = '#18181b';
+                strokeColor = '#27272a';
             }
-        } else if (theme === 'synth-magenta') {
+        } else if (preset === 'neon' || (preset === 'adaptive' && theme === 'synth-magenta')) {
+            // Synth Magenta: Hot Neon Pink/Fuchsia -> Electric Neon Magenta -> Neon Cyan -> Deep Synth Void
             if (cellIntensity >= 0.75) {
-                fillColor = '#f43f5e';
-                strokeColor = '#fda4af';
+                fillColor = '#ff007f';
+                strokeColor = '#ff77c6';
             } else if (cellIntensity >= 0.52) {
-                fillColor = '#fde047';
-                strokeColor = '#fef08a';
+                fillColor = '#d946ef';
+                strokeColor = '#f472b6';
             } else if (cellIntensity >= 0.30) {
-                fillColor = '#0284c7';
-                strokeColor = '#00f0ff';
+                fillColor = '#00f0ff';
+                strokeColor = '#67e8f9';
             } else {
                 fillColor = '#121424';
                 strokeColor = '#1e2238';
             }
+        } else if (preset === 'emerald') {
+            // Emerald Oasis: Vibrant Emerald -> Leaf Lime -> Deep Teal -> Dark Pine
+            if (cellIntensity >= 0.75) {
+                fillColor = '#059669';
+                strokeColor = '#34d399';
+            } else if (cellIntensity >= 0.52) {
+                fillColor = '#84cc16';
+                strokeColor = '#a3e635';
+            } else if (cellIntensity >= 0.30) {
+                fillColor = '#0d9488';
+                strokeColor = '#2dd4bf';
+            } else {
+                fillColor = '#06281e';
+                strokeColor = '#0f3d2f';
+            }
+        } else if (isLight || (preset === 'adaptive' && theme === 'technical-paper')) {
+            // Technical Paper: Dark Crimson Red -> Warm Sepia Ochre -> Steel Drafting Blue -> Crisp Vellum Linen
+            if (cellIntensity >= 0.75) {
+                fillColor = '#991b1b';
+                strokeColor = '#b91c1c';
+            } else if (cellIntensity >= 0.52) {
+                fillColor = '#b45309';
+                strokeColor = '#d97706';
+            } else if (cellIntensity >= 0.30) {
+                fillColor = '#0369a1';
+                strokeColor = '#0284c7';
+            } else {
+                fillColor = '#e2e8f0';
+                strokeColor = '#cbd5e1';
+            }
         } else {
-            // Default Midnight Gold & Obsidian Mono
+            // Midnight Gold & Crimson Heat: Crimson Red -> Amber Gold -> Cyan Blue -> Deep Midnight Slate
             if (cellIntensity >= 0.75) {
                 fillColor = '#e11d48';
                 strokeColor = '#fb7185';
@@ -2921,8 +3013,19 @@ function renderHexDataMap() {
         }
 
         if (isSelected) {
-            fillColor = '#38bdf8';
-            strokeColor = '#ffffff';
+            if (theme === 'obsidian-mono' || theme === 'dark') {
+                fillColor = '#ffffff';
+                strokeColor = '#94a3b8';
+            } else if (theme === 'synth-magenta') {
+                fillColor = '#00f0ff';
+                strokeColor = '#ff007f';
+            } else if (isLight || theme === 'technical-paper') {
+                fillColor = '#0369a1';
+                strokeColor = '#0f172a';
+            } else {
+                fillColor = '#38bdf8';
+                strokeColor = '#ffffff';
+            }
         } else if (isHovered) {
             strokeColor = '#ffffff';
         }
@@ -2993,6 +3096,12 @@ function updateMapFloatingBadges() {
     // 1. Single on-demand detail card if a Country is selected
     if (selectedCountry) {
         const c = selectedCountry;
+        const override = currDataset.countryOverrides && currDataset.countryOverrides[c.id];
+        const displayCount = (override && override.count) || c.count;
+        const displayPct = (override && override.pct) || c.pct;
+        const displayCenters = (override && override.centers) || c.centers;
+        const displayChapters = (override && override.chapters) || c.chapters;
+
         const screenX = mapPanX + c.lon * scaleX * mapZoom;
         const screenY = mapPanY - c.lat * scaleY * mapZoom;
 
@@ -3020,21 +3129,21 @@ function updateMapFloatingBadges() {
             <div class="flex items-baseline justify-between py-1 px-2.5 rounded-lg" style="background-color: var(--panel-bg-subtle);">
                 <div class="flex flex-col">
                     <span class="text-[9px] uppercase tracking-wider" style="color: var(--text-muted);">${currDataset.metricLabel}</span>
-                    <span class="font-extrabold text-base tracking-tight" style="color: var(--accent-primary);">${c.count}</span>
+                    <span class="font-extrabold text-base tracking-tight" style="color: var(--accent-primary);">${displayCount}</span>
                 </div>
-                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded" style="background-color: var(--panel-border); color: var(--accent-secondary);">${c.pct}</span>
+                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded" style="background-color: var(--panel-border); color: var(--accent-secondary);">${displayPct}</span>
             </div>
 
-            ${c.centers ? `
+            ${displayCenters ? `
             <div class="text-[10px] leading-relaxed">
                 <span class="font-bold uppercase tracking-wider" style="color: var(--text-secondary);">Centers: </span>
-                <span style="color: var(--text-muted);">${c.centers}</span>
+                <span style="color: var(--text-muted);">${displayCenters}</span>
             </div>
             ` : ''}
 
-            ${c.chapters && c.chapters.length > 0 ? `
+            ${displayChapters && displayChapters.length > 0 ? `
             <div class="text-[10.5px] leading-relaxed line-clamp-3 p-2 rounded border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
-                ${c.chapters[0]}
+                ${displayChapters[0]}
             </div>
             ` : ''}
 
@@ -3137,14 +3246,20 @@ export function selectCountry(code) {
 
     if (onSelectGeocacheCallback) {
         const dataset = MAP_DATASETS[activeMapDatasetKey] || MAP_DATASETS["TOTAL"];
+        const override = dataset.countryOverrides && dataset.countryOverrides[country.id];
+        const displayCount = (override && override.count) || country.count;
+        const displayPct = (override && override.pct) || country.pct;
+        const displayCenters = (override && override.centers) || country.centers;
+        const displayChapters = (override && override.chapters) || country.chapters;
+
         onSelectGeocacheCallback({
             id: `GEO-${country.id}`,
             name: `${country.flag || '📍'} ${country.name} — ${dataset.title}`,
             tags: ["NATION_DATA", country.region, country.id, activeMapDatasetKey],
             chapters: [
-                `Metric: ${country.count} (${country.pct} demographic presence) — ${dataset.metricLabel}`,
-                ...(country.centers ? [`Key Centers: ${country.centers}`] : []),
-                ...(country.chapters || [
+                `Metric: ${displayCount} (${displayPct} demographic presence) — ${dataset.metricLabel}`,
+                ...(displayCenters ? [`Key Centers: ${displayCenters}`] : []),
+                ...(displayChapters || [
                     `${country.name} represents a foundational repository of sovereign data and demographic distribution in the offline index.`
                 ])
             ],
@@ -3622,6 +3737,186 @@ function escapeHtml(text) {
     div.innerText = text || '';
     return div.innerHTML;
 }
+
+// ---------------------------------------------------------------------------
+// Custom Geodata Matrix Creator Modal & Persistence Engine
+// ---------------------------------------------------------------------------
+
+export function loadSavedCustomDatasets() {
+    try {
+        const saved = JSON.parse(localStorage.getItem('mazzaroth:customDatasets') || '{}');
+        for (const [k, d] of Object.entries(saved)) {
+            if (d && d.id) {
+                MAP_DATASETS[d.id] = d;
+                const hotspots = [];
+                for (const c of Object.values(COUNTRY_DATA)) {
+                    const regData = d.regions ? d.regions[c.region] : null;
+                    const intensity = regData ? regData.intensity : 0.5;
+                    if (intensity >= 0.5 || (d.countryOverrides && d.countryOverrides[c.id])) {
+                        hotspots.push({
+                            lon: c.lon,
+                            lat: c.lat,
+                            code: c.id,
+                            weight: Math.min(1.0, intensity * 1.1)
+                        });
+                    }
+                }
+                MAP_HOTSPOTS[d.id] = hotspots;
+            }
+        }
+    } catch (e) {
+        console.warn('Error loading custom datasets from storage:', e);
+    }
+}
+
+export function openDataMatrixModal() {
+    const modal = document.getElementById('modal-data-creator');
+    if (!modal) return;
+
+    const idInput = document.getElementById('data-creator-id');
+    const titleInput = document.getElementById('data-creator-title');
+    const metricInput = document.getElementById('data-creator-metric');
+
+    if (idInput && !idInput.value) {
+        idInput.value = `CUSTOM_${Math.floor(Math.random() * 900 + 100)}`;
+    }
+    if (titleInput && !titleInput.value) {
+        titleInput.value = "CUSTOM RESEARCH GEODATA MATRIX";
+    }
+    if (metricInput && !metricInput.value) {
+        metricInput.value = "Documented Research Entries";
+    }
+
+    modal.classList.remove('hidden');
+}
+
+export function closeDataMatrixModal() {
+    const modal = document.getElementById('modal-data-creator');
+    if (modal) modal.classList.add('hidden');
+}
+
+export function saveCustomMapDataset(dataset) {
+    if (!dataset || !dataset.id) return;
+
+    MAP_DATASETS[dataset.id] = dataset;
+
+    const hotspots = [];
+    for (const c of Object.values(COUNTRY_DATA)) {
+        const regData = dataset.regions ? dataset.regions[c.region] : null;
+        const intensity = regData ? regData.intensity : 0.5;
+        if (intensity >= 0.5 || (dataset.countryOverrides && dataset.countryOverrides[c.id])) {
+            hotspots.push({
+                lon: c.lon,
+                lat: c.lat,
+                code: c.id,
+                weight: Math.min(1.0, intensity * 1.1)
+            });
+        }
+    }
+    MAP_HOTSPOTS[dataset.id] = hotspots;
+
+    try {
+        let saved = JSON.parse(localStorage.getItem('mazzaroth:customDatasets') || '{}');
+        saved[dataset.id] = dataset;
+        localStorage.setItem('mazzaroth:customDatasets', JSON.stringify(saved));
+    } catch (e) {
+        console.warn('Could not persist custom dataset:', e);
+    }
+
+    activeMapDatasetKey = dataset.id;
+    const datasetLabel = document.getElementById('map-dataset-label');
+    const datasetBtn = document.getElementById('btn-map-dataset');
+    if (datasetLabel) datasetLabel.innerText = dataset.title;
+    if (datasetBtn) datasetBtn.innerText = dataset.id;
+
+    recomputeHexIntensities();
+    renderMap();
+
+    const t = document.getElementById('toast-text');
+    const tm = document.getElementById('toast-message');
+    if (t && tm) {
+        t.innerText = `Dataset '${dataset.title}' projected to hex grid`;
+        tm.classList.remove('opacity-0', 'translate-y-3');
+        setTimeout(() => tm.classList.add('opacity-0', 'translate-y-3'), 2800);
+    }
+}
+
+let dataMatrixModalBound = false;
+export function setupDataMatrixModal() {
+    if (dataMatrixModalBound) return;
+    dataMatrixModalBound = true;
+
+    const closeBtn = document.getElementById('btn-close-data-creator');
+    const cancelBtn = document.getElementById('btn-cancel-data-creator');
+    const saveBtn = document.getElementById('btn-save-data-creator');
+    const addDatasetBtn = document.getElementById('btn-map-add-dataset');
+
+    if (closeBtn) closeBtn.addEventListener('click', closeDataMatrixModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeDataMatrixModal);
+    if (addDatasetBtn) addDatasetBtn.addEventListener('click', openDataMatrixModal);
+
+    ['na', 'la', 'eu', 'af', 'me', 'ap'].forEach(reg => {
+        const slider = document.getElementById(`slider-region-${reg}`);
+        const label = document.getElementById(`label-slider-${reg}`);
+        if (slider && label) {
+            slider.addEventListener('input', () => {
+                label.textContent = `${slider.value}%`;
+            });
+        }
+    });
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            const rawId = (document.getElementById('data-creator-id')?.value || '').trim();
+            const id = rawId ? rawId.toUpperCase().replace(/[^A-Z0-9_]/g, '') : `CUSTOM_${Date.now() % 10000}`;
+            const title = (document.getElementById('data-creator-title')?.value || '').trim() || 'CUSTOM GEODATA MATRIX';
+            const metric = (document.getElementById('data-creator-metric')?.value || '').trim() || 'Recorded Entries';
+            const palette = document.getElementById('data-creator-palette')?.value || 'adaptive';
+
+            const naVal = Number(document.getElementById('slider-region-na')?.value || 40) / 100;
+            const laVal = Number(document.getElementById('slider-region-la')?.value || 50) / 100;
+            const euVal = Number(document.getElementById('slider-region-eu')?.value || 95) / 100;
+            const afVal = Number(document.getElementById('slider-region-af')?.value || 80) / 100;
+            const meVal = Number(document.getElementById('slider-region-me')?.value || 90) / 100;
+            const apVal = Number(document.getElementById('slider-region-ap')?.value || 60) / 100;
+
+            const countryCode = document.getElementById('data-creator-country-select')?.value || 'JP';
+            const countryCount = (document.getElementById('data-creator-country-count')?.value || '').trim();
+            const countryPct = (document.getElementById('data-creator-country-pct')?.value || '').trim();
+            const countryCenters = (document.getElementById('data-creator-country-centers')?.value || '').trim();
+            const countryNotes = (document.getElementById('data-creator-country-notes')?.value || '').trim();
+
+            const customDataset = {
+                id: id,
+                title: title,
+                metricLabel: metric,
+                colorPreset: palette,
+                regions: {
+                    "NA": { name: "North America", count: `${Math.round(naVal * 100 * 2.5)}M`, pct: `${Math.round(naVal * 100)}%`, intensity: naVal, chapters: [`Custom regional density for North America set to ${Math.round(naVal * 100)}%.`] },
+                    "LA": { name: "Latin America", count: `${Math.round(laVal * 100 * 2.2)}M`, pct: `${Math.round(laVal * 100)}%`, intensity: laVal, chapters: [`Custom regional density for Latin America set to ${Math.round(laVal * 100)}%.`] },
+                    "EU": { name: "Europe", count: `${Math.round(euVal * 100 * 3.1)}M`, pct: `${Math.round(euVal * 100)}%`, intensity: euVal, chapters: [`Custom regional density for Europe set to ${Math.round(euVal * 100)}%.`] },
+                    "AF": { name: "Sub-Saharan Africa", count: `${Math.round(afVal * 100 * 2.8)}M`, pct: `${Math.round(afVal * 100)}%`, intensity: afVal, chapters: [`Custom regional density for Africa set to ${Math.round(afVal * 100)}%.`] },
+                    "ME": { name: "Middle East & Levant", count: `${Math.round(meVal * 100 * 1.5)}M`, pct: `${Math.round(meVal * 100)}%`, intensity: meVal, chapters: [`Custom regional density for Middle East set to ${Math.round(meVal * 100)}%.`] },
+                    "AP": { name: "Asia-Pacific", count: `${Math.round(apVal * 100 * 3.5)}M`, pct: `${Math.round(apVal * 100)}%`, intensity: apVal, chapters: [`Custom regional density for Asia-Pacific set to ${Math.round(apVal * 100)}%.`] }
+                },
+                countryOverrides: {}
+            };
+
+            if (countryCode && (countryCount || countryPct || countryCenters || countryNotes)) {
+                customDataset.countryOverrides[countryCode] = {
+                    count: countryCount || undefined,
+                    pct: countryPct || undefined,
+                    centers: countryCenters || undefined,
+                    chapters: countryNotes ? [countryNotes] : undefined
+                };
+            }
+
+            saveCustomMapDataset(customDataset);
+            closeDataMatrixModal();
+        });
+    }
+}
+
 
 
 

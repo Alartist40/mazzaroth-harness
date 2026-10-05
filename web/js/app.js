@@ -49,7 +49,8 @@ import {
     startSelectedDownload,
     setMapMode,
     cycleMapMode,
-    cycleMapDataset
+    cycleMapDataset,
+    openDataMatrixModal
 } from './sections.js';
 
 let activeView = 'galaxy';
@@ -1929,12 +1930,17 @@ function setupSearchModal() {
     }
 }
 
-// Add Memory Action (Truthful Toast)
+// Add Memory Action (Truthful Toast / Data Matrix Builder in Map Mode)
 function setupAddMemory() {
     const btn = document.getElementById('btn-add-memory');
     const pillAdd = document.getElementById('pill-quick-add');
 
     const handleAdd = async () => {
+        if (activeView === 'map') {
+            openDataMatrixModal();
+            return;
+        }
+
         const label = prompt("Enter Memory Star Name:");
         if (!label || !label.trim()) return;
 
