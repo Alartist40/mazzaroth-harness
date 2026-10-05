@@ -1486,40 +1486,40 @@ export const COUNTRY_DATA = {
 };
 
 export const COUNTRY_BOUNDS = {
-    "JP": { minLon: 127.5, maxLon: 147.0, minLat: 30.0, maxLat: 46.0 },
-    "KR": { minLon: 124.0, maxLon: 131.0, minLat: 33.0, maxLat: 42.0 },
-    "CN": { minLon: 73.0, maxLon: 135.0, minLat: 18.0, maxLat: 49.0 },
-    "RU": { minLon: 25.0, maxLon: 180.0, minLat: 48.0, maxLat: 78.0 },
-    "PH": { minLon: 117.0, maxLon: 128.0, minLat: 5.0, maxLat: 20.0 },
-    "ID": { minLon: 95.0, maxLon: 142.0, minLat: -11.0, maxLat: 6.0 },
-    "IN": { minLon: 68.0, maxLon: 93.0, minLat: 6.0, maxLat: 36.0 },
-    "AU": { minLon: 112.0, maxLon: 155.0, minLat: -45.0, maxLat: -10.0 },
-    "GB": { minLon: -11.0, maxLon: 2.0, minLat: 49.0, maxLat: 61.0 },
-    "FR": { minLon: -5.5, maxLon: 9.5, minLat: 41.0, maxLat: 51.5 },
-    "DE": { minLon: 5.5, maxLon: 15.5, minLat: 47.0, maxLat: 55.5 },
-    "IT": { minLon: 6.5, maxLon: 19.0, minLat: 36.0, maxLat: 47.5 },
-    "ES": { minLon: -10.0, maxLon: 4.0, minLat: 35.5, maxLat: 44.0 },
-    "PL": { minLon: 14.0, maxLon: 24.5, minLat: 49.0, maxLat: 55.0 },
-    "GR": { minLon: 19.0, maxLon: 28.5, minLat: 34.5, maxLat: 42.0 },
-    "UA": { minLon: 22.0, maxLon: 40.5, minLat: 44.0, maxLat: 53.0 },
-    "US": { minLon: -125.0, maxLon: -66.0, minLat: 24.5, maxLat: 50.0 },
-    "CA": { minLon: -141.0, maxLon: -52.0, minLat: 50.0, maxLat: 75.0 },
-    "MX": { minLon: -118.0, maxLon: -86.0, minLat: 14.0, maxLat: 33.0 },
-    "GT": { minLon: -92.5, maxLon: -77.0, minLat: 7.0, maxLat: 18.0 },
-    "CU": { minLon: -85.0, maxLon: -64.0, minLat: 17.0, maxLat: 24.0 },
-    "BR": { minLon: -74.0, maxLon: -34.0, minLat: -34.0, maxLat: 5.0 },
-    "CO": { minLon: -79.0, maxLon: -66.0, minLat: -4.5, maxLat: 13.5 },
-    "AR": { minLon: -74.0, maxLon: -53.0, minLat: -56.0, maxLat: -21.5 },
-    "EG": { minLon: 24.0, maxLon: 37.0, minLat: 21.5, maxLat: 32.0 },
-    "NG": { minLon: 2.5, maxLon: 15.0, minLat: 4.0, maxLat: 14.0 },
-    "CD": { minLon: 12.0, maxLon: 31.5, minLat: -13.5, maxLat: 5.5 },
-    "ET": { minLon: 33.0, maxLon: 48.0, minLat: 3.0, maxLat: 15.0 },
-    "KE": { minLon: 33.5, maxLon: 42.0, minLat: -5.0, maxLat: 5.5 },
-    "ZA": { minLon: 16.0, maxLon: 33.0, minLat: -35.0, maxLat: -22.0 },
-    "IL": { minLon: 34.0, maxLon: 36.0, minLat: 29.0, maxLat: 33.5 },
-    "LB": { minLon: 35.0, maxLon: 42.5, minLat: 32.5, maxLat: 37.5 },
-    "TR": { minLon: 25.5, maxLon: 45.0, minLat: 35.5, maxLat: 42.5 },
-    "SA": { minLon: 34.5, maxLon: 60.0, minLat: 12.0, maxLat: 32.5 }
+    "JP": { minLon: 128.0, maxLon: 146.0, minLat: 30.5, maxLat: 45.6 },
+    "KR": { minLon: 124.3, maxLon: 130.9, minLat: 33.1, maxLat: 38.7 },
+    "CN": { minLon: 73.4, maxLon: 135.1, minLat: 18.0, maxLat: 49.0 },
+    "RU": { minLon: 28.0, maxLon: 180.0, minLat: 50.0, maxLat: 77.7 },
+    "PH": { minLon: 116.9, maxLon: 126.6, minLat: 4.6, maxLat: 21.2 },
+    "ID": { minLon: 95.0, maxLon: 141.1, minLat: -11.1, maxLat: 6.0 },
+    "IN": { minLon: 68.1, maxLon: 97.4, minLat: 6.7, maxLat: 35.5 },
+    "AU": { minLon: 112.9, maxLon: 153.7, minLat: -43.7, maxLat: -10.0 },
+    "GB": { minLon: -8.8, maxLon: 1.8, minLat: 49.9, maxLat: 60.9 },
+    "FR": { minLon: -5.0, maxLon: 8.5, minLat: 42.3, maxLat: 51.1 },
+    "DE": { minLon: 5.8, maxLon: 15.1, minLat: 47.2, maxLat: 55.1 },
+    "IT": { minLon: 6.6, maxLon: 18.6, minLat: 36.6, maxLat: 47.1 },
+    "ES": { minLon: -9.5, maxLon: 3.4, minLat: 36.0, maxLat: 43.8 },
+    "PL": { minLon: 14.1, maxLon: 24.2, minLat: 49.0, maxLat: 54.9 },
+    "GR": { minLon: 19.3, maxLon: 28.5, minLat: 34.7, maxLat: 41.8 },
+    "UA": { minLon: 22.1, maxLon: 40.3, minLat: 44.3, maxLat: 52.4 },
+    "US": { minLon: -125.0, maxLon: -66.9, minLat: 24.5, maxLat: 49.4 },
+    "CA": { minLon: -141.0, maxLon: -52.6, minLat: 49.5, maxLat: 72.0 },
+    "MX": { minLon: -117.5, maxLon: -86.7, minLat: 14.5, maxLat: 32.7 },
+    "GT": { minLon: -92.3, maxLon: -77.2, minLat: 7.2, maxLat: 18.0 },
+    "CU": { minLon: -85.0, maxLon: -74.1, minLat: 19.8, maxLat: 23.4 },
+    "BR": { minLon: -74.0, maxLon: -34.7, minLat: -33.8, maxLat: 5.3 },
+    "CO": { minLon: -79.1, maxLon: -66.9, minLat: -4.3, maxLat: 13.4 },
+    "AR": { minLon: -73.6, maxLon: -53.6, minLat: -55.1, maxLat: -21.8 },
+    "EG": { minLon: 24.7, maxLon: 36.9, minLat: 22.0, maxLat: 31.7 },
+    "NG": { minLon: 2.6, maxLon: 14.7, minLat: 4.2, maxLat: 13.9 },
+    "CD": { minLon: 12.2, maxLon: 31.3, minLat: -13.5, maxLat: 5.4 },
+    "ET": { minLon: 33.0, maxLon: 48.0, minLat: 3.4, maxLat: 14.9 },
+    "KE": { minLon: 33.9, maxLon: 41.9, minLat: -4.7, maxLat: 5.1 },
+    "ZA": { minLon: 16.4, maxLon: 32.9, minLat: -34.9, maxLat: -22.1 },
+    "IL": { minLon: 34.2, maxLon: 35.9, minLat: 29.4, maxLat: 33.3 },
+    "LB": { minLon: 35.1, maxLon: 42.4, minLat: 32.5, maxLat: 37.3 },
+    "TR": { minLon: 25.6, maxLon: 44.9, minLat: 35.8, maxLat: 42.2 },
+    "SA": { minLon: 34.5, maxLon: 55.7, minLat: 16.3, maxLat: 32.2 }
 };
 
 export const MAP_HOTSPOTS = {
@@ -1711,25 +1711,13 @@ function generateHexWorldGrid() {
             }
 
             if (matchedRegion) {
-                // Associate each cell with its strict bounding country, falling back to nearest within region
+                // Associate each cell with its strict bounding country (no cross-border continent spillover)
                 let matchedCountry = null;
                 let minCDist = 9999;
                 for (const c of Object.values(COUNTRY_DATA)) {
                     if (c.region === matchedRegion) {
                         const bounds = COUNTRY_BOUNDS[c.id];
-                        const inBounds = bounds ? (lon >= bounds.minLon && lon <= bounds.maxLon && lat >= bounds.minLat && lat <= bounds.maxLat) : true;
-                        if (inBounds) {
-                            const d = Math.hypot(lon - c.lon, (lat - c.lat) * 1.15);
-                            if (d < minCDist) {
-                                minCDist = d;
-                                matchedCountry = c;
-                            }
-                        }
-                    }
-                }
-                if (!matchedCountry) {
-                    for (const c of Object.values(COUNTRY_DATA)) {
-                        if (c.region === matchedRegion) {
+                        if (bounds && lon >= bounds.minLon && lon <= bounds.maxLon && lat >= bounds.minLat && lat <= bounds.maxLat) {
                             const d = Math.hypot(lon - c.lon, (lat - c.lat) * 1.15);
                             if (d < minCDist) {
                                 minCDist = d;
@@ -3241,7 +3229,7 @@ export function selectCountry(code) {
     const country = COUNTRY_DATA[code];
     if (!country) return;
     selectedCountry = country;
-    selectedMapRegion = { id: country.region, name: country.name };
+    selectedMapRegion = null;
     renderMap();
 
     if (onSelectGeocacheCallback) {
@@ -3447,9 +3435,6 @@ function setupMapInteractions() {
 
             if (clickedHex && clickedHex.country) {
                 selectCountry(clickedHex.country);
-            } else if (clickedHex && clickedHex.region) {
-                selectedCountry = null;
-                selectDataMapRegion(clickedHex.region);
             } else {
                 selectedCountry = null;
                 selectedMapRegion = null;
