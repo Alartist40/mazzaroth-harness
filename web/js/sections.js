@@ -1698,6 +1698,26 @@ function generateHexWorldGrid() {
             }
         }
     }
+    recomputeHexIntensities();
+}
+
+function recomputeHexIntensities() {
+    const currDataset = MAP_DATASETS[activeMapDatasetKey] || MAP_DATASETS["TOTAL"];
+    const hotspots = MAP_HOTSPOTS[activeMapDatasetKey] || MAP_HOTSPOTS["TOTAL"] || [];
+
+    for (let i = 0; i < hexWorldGrid.length; i++) {
+        const hex = hexWorldGrid[i];
+        const regData = currDataset.regions[hex.region];
+        let minDist = 999;
+        for (let j = 0; j < hotspots.length; j++) {
+            const spot = hotspots[j];
+            const d = Math.hypot(hex.lon - spot.lon, (hex.lat - spot.lat) * 1.15);
+            if (d < minDist) minDist = d;
+        }
+        const proximityBoost = Math.max(0, 1 - minDist / 22);
+        const baseIntensity = regData ? regData.intensity : 0.25;
+        hex.intensity = Math.min(1.0, baseIntensity * 0.3 + proximityBoost * 0.7);
+    }
 }
 
 export function initMap(canvas, onSelectGeocache) {
@@ -2786,7 +2806,7 @@ export function renderMap() {
     mCtx.restore();
 }
 
-function drawHexagon(ctx, x, y, r, fill, stroke, glowColor, glowBlur) {
+function drawHexagon(ctx, x, y, r, fill, stroke) {
     ctx.beginPath();
     for (let i = 0; i < 6; i++) {
         const angle = (Math.PI / 3) * i;
@@ -2796,21 +2816,10 @@ function drawHexagon(ctx, x, y, r, fill, stroke, glowColor, glowBlur) {
         else ctx.lineTo(hx, hy);
     }
     ctx.closePath();
-
-    if (glowColor && glowBlur > 0) {
-        ctx.save();
-        ctx.shadowColor = glowColor;
-        ctx.shadowBlur = glowBlur;
-        ctx.fillStyle = fill;
-        ctx.fill();
-        ctx.restore();
-    } else {
-        ctx.fillStyle = fill;
-        ctx.fill();
-    }
-
+    ctx.fillStyle = fill;
+    ctx.fill();
     if (stroke) {
-        ctx.lineWidth = 0.75;
+        ctx.lineWidth = 0.55;
         ctx.strokeStyle = stroke;
         ctx.stroke();
     }
@@ -2823,7 +2832,6 @@ function renderHexDataMap() {
     const bg = colors.bg;
     const hexBase = colors.hexBase;
     const hexStroke = colors.hexStroke;
-    const accentGold = colors.accentPrimary;
     const accentCyan = colors.accentSecondary;
     const theme = document.documentElement.getAttribute('data-theme') || 'midnight-gold';
     const isLight = theme === 'technical-paper' || theme === 'light';
@@ -2850,16 +2858,12 @@ function renderHexDataMap() {
         }
     }
 
-    // 2. Active Dataset & Hotspot Proximity
-    const currDataset = MAP_DATASETS[activeMapDatasetKey] || MAP_DATASETS["TOTAL"];
-    const hotspots = MAP_HOTSPOTS[activeMapDatasetKey] || MAP_HOTSPOTS["TOTAL"] || [];
-
-    // 3. Render High-Detail Continent Hexagon Cells with Heatmap Glow
-    hexWorldGrid.forEach(hex => {
-        const regData = currDataset.regions[hex.region];
-        const isHovered = hoveredHex && Math.hypot(hoveredHex.x - hex.x, hoveredHex.y - hex.y) < 1;
+    // 2. Ultra-Fast High-Density Hexagons (Read precomputed intensity, zero expensive shadowBlur)
+    for (let i = 0; i < hexWorldGrid.length; i++) {
+        const hex = hexWorldGrid[i];
+        const cellIntensity = hex.intensity || 0.2;
+        const isHovered = hoveredHex && Math.abs(hoveredHex.x - hex.x) < 1 && Math.abs(hoveredHex.y - hex.y) < 1;
         
-        // Single country precision highlight:
         let isSelected = false;
         if (selectedCountry) {
             isSelected = (hex.country === selectedCountry.id);
@@ -2867,130 +2871,99 @@ function renderHexDataMap() {
             isSelected = (hex.region === selectedMapRegion.id);
         }
 
-        let minDist = 999;
-        hotspots.forEach(spot => {
-            const d = Math.hypot(hex.lon - spot.lon, (hex.lat - spot.lat) * 1.15);
-            if (d < minDist) minDist = d;
-        });
-
-        const proximityBoost = Math.max(0, 1 - minDist / 22);
-        const baseIntensity = regData ? regData.intensity : 0.3;
-        const cellIntensity = Math.min(1.0, baseIntensity * 0.3 + proximityBoost * 0.7);
-
         let fillColor = hexBase;
         let strokeColor = hexStroke;
-        let glowColor = null;
-        let glowBlur = 0;
 
-        // Color Scale: Red = Highest / Most concentrated, Yellow = Medium, White = Least concentrated
+        // Color Gradient: Red (Hot) -> Yellow (Warm) -> Light Blue (Cool) -> Dark Blue / Slate (Base)
         if (isLight) {
-            if (cellIntensity >= 0.70) {
+            if (cellIntensity >= 0.75) {
                 fillColor = '#b91c1c';
                 strokeColor = '#991b1b';
-                glowColor = 'rgba(185, 28, 28, 0.4)';
-                glowBlur = 6;
-            } else if (cellIntensity >= 0.38) {
+            } else if (cellIntensity >= 0.52) {
                 fillColor = '#d97706';
                 strokeColor = '#b45309';
-                glowColor = 'rgba(217, 119, 6, 0.25)';
-                glowBlur = 4;
+            } else if (cellIntensity >= 0.30) {
+                fillColor = '#0284c7';
+                strokeColor = '#0369a1';
             } else {
-                fillColor = '#ffffff';
+                fillColor = '#e2e8f0';
                 strokeColor = '#cbd5e1';
             }
         } else if (theme === 'synth-magenta') {
-            if (cellIntensity >= 0.70) {
+            if (cellIntensity >= 0.75) {
                 fillColor = '#f43f5e';
                 strokeColor = '#fda4af';
-                glowColor = 'rgba(244, 63, 94, 0.85)';
-                glowBlur = 10;
-            } else if (cellIntensity >= 0.38) {
+            } else if (cellIntensity >= 0.52) {
                 fillColor = '#fde047';
                 strokeColor = '#fef08a';
-                glowColor = 'rgba(253, 224, 71, 0.55)';
-                glowBlur = 6;
+            } else if (cellIntensity >= 0.30) {
+                fillColor = '#0284c7';
+                strokeColor = '#00f0ff';
             } else {
-                fillColor = '#e0f2fe';
-                strokeColor = '#ffffff';
-                glowColor = 'rgba(224, 242, 254, 0.3)';
-                glowBlur = 2;
+                fillColor = '#121424';
+                strokeColor = '#1e2238';
             }
         } else {
             // Default Midnight Gold & Obsidian Mono
-            if (cellIntensity >= 0.70) {
-                fillColor = '#ef4444';
-                strokeColor = '#f87171';
-                glowColor = 'rgba(239, 68, 68, 0.85)';
-                glowBlur = 10;
-            } else if (cellIntensity >= 0.38) {
-                fillColor = '#eab308';
+            if (cellIntensity >= 0.75) {
+                fillColor = '#e11d48';
+                strokeColor = '#fb7185';
+            } else if (cellIntensity >= 0.52) {
+                fillColor = '#f59e0b';
                 strokeColor = '#fef08a';
-                glowColor = 'rgba(234, 179, 8, 0.5)';
-                glowBlur = 6;
+            } else if (cellIntensity >= 0.30) {
+                fillColor = '#0284c7';
+                strokeColor = '#38bdf8';
             } else {
-                fillColor = '#f1f5f9';
-                strokeColor = '#cbd5e1';
-                glowColor = 'rgba(255, 255, 255, 0.25)';
-                glowBlur = 2;
+                fillColor = '#0f172a';
+                strokeColor = '#1e293b';
             }
         }
 
         if (isSelected) {
-            fillColor = '#06b6d4';
+            fillColor = '#38bdf8';
             strokeColor = '#ffffff';
-            glowColor = '#06b6d4';
-            glowBlur = 12;
         } else if (isHovered) {
             strokeColor = '#ffffff';
-            glowColor = '#ffffff';
-            glowBlur = 8;
         }
 
-        drawHexagon(mCtx, hex.x, hex.y, hex.radius, fillColor, strokeColor, glowColor, glowBlur);
-    });
+        drawHexagon(mCtx, hex.x, hex.y, hex.radius, fillColor, strokeColor);
+    }
 
-    // 4. Country Beacons & Regional Nodes
-    Object.values(COUNTRY_DATA).forEach(c => {
+    // 3. Country Beacons & Regional Nodes
+    for (const c of Object.values(COUNTRY_DATA)) {
         const cx = c.lon * scaleX;
         const cy = -c.lat * scaleY;
         const isSel = selectedCountry && selectedCountry.id === c.id;
         const isHov = hoveredCountry && hoveredCountry.id === c.id;
 
-        // Outer glow/ring
         mCtx.beginPath();
-        mCtx.arc(cx, cy, isSel ? 7.5 : (isHov ? 5.5 : 3.5), 0, Math.PI * 2);
+        mCtx.arc(cx, cy, isSel ? 7 : (isHov ? 5 : 3.2), 0, Math.PI * 2);
         if (isSel) {
-            mCtx.fillStyle = '#06b6d4';
-            mCtx.shadowColor = '#06b6d4';
-            mCtx.shadowBlur = 14;
+            mCtx.fillStyle = '#38bdf8';
             mCtx.fill();
-            mCtx.lineWidth = 2;
+            mCtx.lineWidth = 1.8;
             mCtx.strokeStyle = '#ffffff';
             mCtx.stroke();
-            mCtx.shadowBlur = 0;
         } else if (isHov) {
             mCtx.fillStyle = accentCyan;
-            mCtx.shadowColor = accentCyan;
-            mCtx.shadowBlur = 8;
             mCtx.fill();
-            mCtx.lineWidth = 1.5;
+            mCtx.lineWidth = 1.4;
             mCtx.strokeStyle = '#ffffff';
             mCtx.stroke();
-            mCtx.shadowBlur = 0;
         } else {
             mCtx.fillStyle = isLight ? '#0284c7' : '#ffffff';
             mCtx.fill();
-            mCtx.lineWidth = 0.8;
-            mCtx.strokeStyle = isLight ? '#0369a1' : 'rgba(255, 255, 255, 0.6)';
+            mCtx.lineWidth = 0.7;
+            mCtx.strokeStyle = isLight ? '#0369a1' : 'rgba(255, 255, 255, 0.5)';
             mCtx.stroke();
         }
 
-        // Country code label
         mCtx.font = isSel ? 'bold 8.5px "JetBrains Mono", monospace' : 'bold 7px "JetBrains Mono", monospace';
-        mCtx.fillStyle = isSel ? '#06b6d4' : (isHov ? accentCyan : (isLight ? '#334155' : 'rgba(255, 255, 255, 0.75)'));
+        mCtx.fillStyle = isSel ? '#38bdf8' : (isHov ? accentCyan : (isLight ? '#334155' : 'rgba(255, 255, 255, 0.75)'));
         mCtx.textAlign = 'center';
-        mCtx.fillText(c.id, cx, cy - (isSel ? 10 : 7));
-    });
+        mCtx.fillText(c.id, cx, cy - (isSel ? 9 : 6));
+    }
 
     mCtx.restore();
     updateMapFloatingBadges();
@@ -3298,6 +3271,7 @@ export function cycleMapDataset() {
     if (datasetLabel) datasetLabel.innerText = dataset.title;
     if (datasetBtn) datasetBtn.innerText = dataset.id;
 
+    recomputeHexIntensities();
     renderMap();
     return activeMapDatasetKey;
 }
@@ -3309,6 +3283,8 @@ function setupMapInteractions() {
     const scaleX = 2.4;
     const scaleY = 2.4;
     let pointerDownPos = { x: 0, y: 0 };
+    let mouseMovePending = false;
+    let lastMouseMoveEv = null;
 
     mCanvas.addEventListener('mousedown', (e) => {
         if (e.button === 0) {
@@ -3346,7 +3322,8 @@ function setupMapInteractions() {
 
             // Check hex cell click
             let clickedHex = null;
-            for (let hex of hexWorldGrid) {
+            for (let i = 0; i < hexWorldGrid.length; i++) {
+                const hex = hexWorldGrid[i];
                 if (Math.hypot(mx - hex.x, my - hex.y) <= hex.radius * 1.3) {
                     clickedHex = hex;
                     break;
@@ -3392,59 +3369,72 @@ function setupMapInteractions() {
 
     window.addEventListener('mousemove', (e) => {
         if (mapOperatingMode === 'OFFLINE' && maplibreActive) return;
-        if (isDraggingMap) {
-            mapPanX = e.clientX - mapDragStartX;
-            mapPanY = e.clientY - mapDragStartY;
-            renderMap();
-        } else if (mCanvas && mCanvas.offsetParent !== null) {
-            const rect = mCanvas.getBoundingClientRect();
-            if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
-                if (hoveredHex || hoveredCountry) {
-                    hoveredHex = null;
-                    hoveredCountry = null;
-                    if (mapOperatingMode === 'HEXAGON') renderMap();
-                }
-                return;
-            }
-            const mx = (e.clientX - rect.left - mapPanX) / mapZoom;
-            const my = (e.clientY - rect.top - mapPanY) / mapZoom;
+        lastMouseMoveEv = e;
+        if (!mouseMovePending) {
+            mouseMovePending = true;
+            requestAnimationFrame(() => {
+                mouseMovePending = false;
+                if (!lastMouseMoveEv) return;
+                const ev = lastMouseMoveEv;
 
-            if (mapOperatingMode === 'HEXAGON') {
-                let foundHex = null;
-                for (let hex of hexWorldGrid) {
-                    if (Math.hypot(mx - hex.x, my - hex.y) <= hex.radius * 1.3) {
-                        foundHex = hex;
-                        break;
-                    }
-                }
-
-                let foundCountry = null;
-                for (const c of Object.values(COUNTRY_DATA)) {
-                    const cx = c.lon * scaleX;
-                    const cy = -c.lat * scaleY;
-                    if (Math.hypot(mx - cx, my - cy) <= 12) {
-                        foundCountry = c;
-                        break;
-                    }
-                }
-
-                if (foundHex !== hoveredHex || foundCountry !== hoveredCountry) {
-                    hoveredHex = foundHex;
-                    hoveredCountry = foundCountry;
+                if (isDraggingMap) {
+                    mapPanX = ev.clientX - mapDragStartX;
+                    mapPanY = ev.clientY - mapDragStartY;
                     renderMap();
+                    return;
                 }
-            } else {
-                const lon = (mx / scaleX).toFixed(2);
-                const lat = (-my / scaleY).toFixed(2);
-                const coordsEl = document.getElementById('map-cursor-coords');
-                if (coordsEl) {
-                    const latNum = parseFloat(lat);
-                    const lonNum = parseFloat(lon);
-                    if (Math.abs(latNum) <= 90 && Math.abs(lonNum) <= 180) {
-                        coordsEl.innerText = `${Math.abs(latNum).toFixed(2)}° ${latNum >= 0 ? 'N' : 'S'}, ${Math.abs(lonNum).toFixed(2)}° ${lonNum >= 0 ? 'E' : 'W'}`;
+                
+                if (!mCanvas || mCanvas.offsetParent === null) return;
+                const rect = mCanvas.getBoundingClientRect();
+                if (ev.clientX < rect.left || ev.clientX > rect.right || ev.clientY < rect.top || ev.clientY > rect.bottom) {
+                    if (hoveredHex || hoveredCountry) {
+                        hoveredHex = null;
+                        hoveredCountry = null;
+                        if (mapOperatingMode === 'HEXAGON') renderMap();
+                    }
+                    return;
+                }
+                const mx = (ev.clientX - rect.left - mapPanX) / mapZoom;
+                const my = (ev.clientY - rect.top - mapPanY) / mapZoom;
+
+                if (mapOperatingMode === 'HEXAGON') {
+                    let foundHex = null;
+                    for (let i = 0; i < hexWorldGrid.length; i++) {
+                        const hex = hexWorldGrid[i];
+                        if (Math.abs(mx - hex.x) <= hex.radius * 1.2 && Math.abs(my - hex.y) <= hex.radius * 1.2) {
+                            foundHex = hex;
+                            break;
+                        }
+                    }
+
+                    let foundCountry = null;
+                    for (const c of Object.values(COUNTRY_DATA)) {
+                        const cx = c.lon * scaleX;
+                        const cy = -c.lat * scaleY;
+                        if (Math.abs(mx - cx) <= 8 && Math.abs(my - cy) <= 8) {
+                            foundCountry = c;
+                            break;
+                        }
+                    }
+
+                    if (foundHex !== hoveredHex || foundCountry !== hoveredCountry) {
+                        hoveredHex = foundHex;
+                        hoveredCountry = foundCountry;
+                        renderMap();
+                    }
+                } else {
+                    const lon = (mx / scaleX).toFixed(2);
+                    const lat = (-my / scaleY).toFixed(2);
+                    const coordsEl = document.getElementById('map-cursor-coords');
+                    if (coordsEl) {
+                        const latNum = parseFloat(lat);
+                        const lonNum = parseFloat(lon);
+                        if (Math.abs(latNum) <= 90 && Math.abs(lonNum) <= 180) {
+                            coordsEl.innerText = `${Math.abs(latNum).toFixed(2)}° ${latNum >= 0 ? 'N' : 'S'}, ${Math.abs(lonNum).toFixed(2)}° ${lonNum >= 0 ? 'E' : 'W'}`;
+                        }
                     }
                 }
-            }
+            });
         }
     });
 
