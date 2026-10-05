@@ -36,6 +36,38 @@ export function initGalaxy(canvas, onSelectNode) {
     startAnimationLoop();
 }
 
+function getThemeInfo() {
+    const theme = document.documentElement.getAttribute('data-theme') || 'midnight-gold';
+    const isLight = theme === 'technical-paper' || theme === 'light';
+    const rootStyle = getComputedStyle(document.documentElement);
+    const bgStr = rootStyle.getPropertyValue('--bg-canvas').trim() || (isLight ? '#dce1e6' : '#07111e');
+    const accentPrimary = rootStyle.getPropertyValue('--accent-primary').trim() || '#f59e0b';
+    const accentSecondary = rootStyle.getPropertyValue('--accent-secondary').trim() || '#38bdf8';
+    const particleRgb = rootStyle.getPropertyValue('--particle-rgb').trim() || (isLight ? '11, 13, 17' : '147, 180, 222');
+    const coreStroke = rootStyle.getPropertyValue('--core-disc-stroke').trim() || accentPrimary;
+
+    const parseColor = (str, fallback = 0xffffff) => {
+        try {
+            if (str.startsWith('#')) return parseInt(str.slice(1), 16);
+            const rgbMatch = str.match(/(\d+),\s*(\d+),\s*(\d+)/);
+            if (rgbMatch) {
+                return (parseInt(rgbMatch[1]) << 16) | (parseInt(rgbMatch[2]) << 8) | parseInt(rgbMatch[3]);
+            }
+        } catch (e) {}
+        return fallback;
+    };
+
+    return {
+        theme,
+        isDark: !isLight,
+        bgColor: parseColor(bgStr, isLight ? 0xdce1e6 : 0x07111e),
+        accentPrimary: parseColor(accentPrimary, 0xf59e0b),
+        accentSecondary: parseColor(accentSecondary, 0x38bdf8),
+        particleColor: parseColor(`rgb(${particleRgb})`, isLight ? 0x14171d : 0x93b4de),
+        coreColor: parseColor(coreStroke, isLight ? 0x0b0d11 : 0xf59e0b)
+    };
+}
+
 function initThree() {
     if (!gCanvas || typeof THREE === 'undefined') return;
 
@@ -43,11 +75,10 @@ function initThree() {
     const w = rect.width || window.innerWidth * 0.6;
     const h = rect.height || window.innerHeight * 0.8;
 
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const bgColor = isDark ? 0x08090c : 0xdce1e6;
+    const themeInfo = getThemeInfo();
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(bgColor);
+    scene.background = new THREE.Color(themeInfo.bgColor);
 
     camera = new THREE.PerspectiveCamera(46, w / h, 1, 10000);
     camera.position.set(0, 380, 500);
@@ -138,8 +169,8 @@ function buildCore() {
         coreMesh = null;
     }
 
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const coreColor = isDark ? 0xffffff : 0x0a0a0c;
+    const themeInfo = getThemeInfo();
+    const coreColor = themeInfo.coreColor;
 
     // Smooth central nucleus sphere without ring
     const coreGeo = new THREE.SphereGeometry(12, 32, 32);
@@ -159,10 +190,10 @@ function buildParticleDisc() {
     const count = densitySetting === 'high' ? 16000 : (densitySetting === 'med' ? 9000 : 4500);
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const themeInfo = getThemeInfo();
 
-    const baseColor = new THREE.Color(isDark ? 0xeef2f6 : 0x14171d);
-    const coreColor = new THREE.Color(isDark ? 0xffffff : 0x000000);
+    const baseColor = new THREE.Color(themeInfo.particleColor);
+    const coreColor = new THREE.Color(themeInfo.accentPrimary);
 
     for (let i = 0; i < count; i++) {
         // High central density bias
@@ -202,8 +233,8 @@ function buildParticleDisc() {
         vertexColors: true,
         map: createGlowTexture(false),
         transparent: true,
-        opacity: isDark ? 0.9 : 0.8,
-        blending: isDark ? THREE.AdditiveBlending : THREE.NormalBlending,
+        opacity: themeInfo.isDark ? 0.9 : 0.8,
+        blending: themeInfo.isDark ? THREE.AdditiveBlending : THREE.NormalBlending,
         depthWrite: false
     });
 
@@ -354,7 +385,7 @@ function updateStarsGeometry() {
         starsMesh = null;
     }
 
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const themeInfo = getThemeInfo();
     const count = interactiveStars.length;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
@@ -366,7 +397,7 @@ function updateStarsGeometry() {
         positions[i * 3 + 1] = s.y;
         positions[i * 3 + 2] = s.z;
 
-        const c = getDomainColorObj(s.domain, isDark);
+        const c = getDomainColorObj(s.domain, themeInfo.isDark);
         colors[i * 3] = c.r;
         colors[i * 3 + 1] = c.g;
         colors[i * 3 + 2] = c.b;
@@ -383,8 +414,8 @@ function updateStarsGeometry() {
         vertexColors: true,
         map: createGlowTexture(true),
         transparent: true,
-        opacity: isDark ? 0.95 : 0.85,
-        blending: isDark ? THREE.AdditiveBlending : THREE.NormalBlending,
+        opacity: themeInfo.isDark ? 0.95 : 0.85,
+        blending: themeInfo.isDark ? THREE.AdditiveBlending : THREE.NormalBlending,
         depthWrite: false
     });
 
@@ -400,7 +431,7 @@ function rebuildSynapseLines() {
     }
     if (!showSynapseLines || !selectedNode) return;
 
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const themeInfo = getThemeInfo();
     const coords = [];
 
     const conns = selectedNode.connections || [];
@@ -419,9 +450,9 @@ function rebuildSynapseLines() {
         const geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.Float32BufferAttribute(coords, 3));
         const mat = new THREE.LineBasicMaterial({
-            color: isDark ? 0xffffff : 0x000000,
+            color: themeInfo.accentPrimary,
             transparent: true,
-            opacity: 0.35,
+            opacity: 0.45,
             linewidth: 1
         });
         linesMesh = new THREE.LineSegments(geo, mat);
@@ -632,9 +663,8 @@ function startAnimationLoop() {
 export function renderGalaxy() {
     if (!renderer || !scene || !camera) return;
 
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const bgColor = isDark ? 0x08090c : 0xdce1e6;
-    scene.background.set(bgColor);
+    const themeInfo = getThemeInfo();
+    scene.background.set(themeInfo.bgColor);
 
     buildCore();
     buildParticleDisc();

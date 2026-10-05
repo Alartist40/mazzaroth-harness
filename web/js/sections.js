@@ -1354,14 +1354,182 @@ let showGraticule = true;
 let onSelectGeocacheCallback = null;
 let mapEventsBound = false;
 
+// Dual-Mode Map Operating State
+let mapOperatingMode = 'HEXAGON'; // 'HEXAGON' | 'OFFLINE'
+let activeMapDatasetKey = 'TOTAL';
+let hoveredHex = null;
+let selectedMapRegion = null;
+let hexWorldGrid = [];
+
+export const MAP_DATASETS = {
+    "TOTAL": {
+        id: "TOTAL",
+        title: "TOTAL CHRISTIAN POPULATION (~2.42B)",
+        metricLabel: "Adherents Worldwide",
+        regions: {
+            "NA": { name: "North America", count: "260,000,000", pct: "70.2%", intensity: 0.78, chapters: ["North America contains approximately 260M Christian adherents across the United States and Canada, representing an influential history of Protestant, Evangelical, and Catholic settlement.", "Chapter 2: Major manuscript holding centers include the Smithsonian collections, Princeton Theological Seminary archives, and Harvard Houghton codices."] },
+            "LA": { name: "Latin America", count: "592,000,000", pct: "83.4%", intensity: 0.95, chapters: ["Latin America holds the largest contiguous concentration of Christian believers on Earth, exceeding 592M adherents across Brazil, Mexico, Colombia, and Argentina.", "Chapter 2: Primarily Roman Catholic (approx 70%) with a surging Evangelical and Pentecostal demographic expanding across urban coastal corridors."] },
+            "EU": { name: "Europe", count: "540,000,000", pct: "72.1%", intensity: 0.82, chapters: ["Europe represents the historic cradle of both Western Catholic and Eastern Orthodox traditions, accounting for approximately 540M adherents.", "Chapter 2: Contains foundational archival centers: the Vatican Apostolic Library (Rome), Mt. Athos monasteries (Greece), and the British Library (London)."] },
+            "AF": { name: "Sub-Saharan Africa", count: "685,000,000", pct: "62.8%", intensity: 0.98, chapters: ["Sub-Saharan Africa is currently the global epicentre of numerical Christian growth, with over 685M believers across Nigeria, DRC, Ethiopia, Kenya, and South Africa.", "Chapter 2: Features ancient continuous Christian heritage in the Ethiopian Orthodox Tewahedo Church dating back to the 4th century Axumite Kingdom."] },
+            "ME": { name: "Middle East & Levant", count: "18,500,000", pct: "3.2%", intensity: 0.40, chapters: ["The geographic birthplace of the faith, retaining ancient Apostolic communities: Syriac, Coptic, Armenian, Maronite, and Melkite churches.", "Chapter 2: Anchors of early Christian literature: St. Catherine's Monastery (Sinai Codex Sinaiticus), the Patriarchate of Jerusalem, and Antioch."] },
+            "AP": { name: "Asia-Pacific", count: "380,000,000", pct: "8.9%", intensity: 0.55, chapters: ["Asia-Pacific hosts approximately 380M Christians, with massive concentrations in the Philippines (~90M, 85%), China (est. 60-80M), South Korea (~14M, 28%), and India (~32M).", "Chapter 2: Dynamic diversity between ancient St. Thomas Christian communities in Kerala and vibrant house church networks across East Asia."] }
+        }
+    },
+    "CATHOLIC": {
+        id: "CATHOLIC",
+        title: "ROMAN CATHOLIC CHURCH (~1.38B)",
+        metricLabel: "Catholic Baptized Population",
+        regions: {
+            "NA": { name: "North America", count: "82,000,000", pct: "22.1%", intensity: 0.60, chapters: ["North American Catholicism comprises approximately 72M in the US and 10M in Canada, concentrated in historic urban dioceses and Hispanic populations."] },
+            "LA": { name: "Latin America", count: "480,000,000", pct: "67.5%", intensity: 0.96, chapters: ["Home to nearly 39% of the world's Catholic population. Brazil is the largest single Catholic nation with over 120M baptized adherents."] },
+            "EU": { name: "Europe", count: "260,000,000", pct: "34.8%", intensity: 0.85, chapters: ["Centered at the Holy See in Vatican City, with high historical density in Italy, Spain, France, Poland, Portugal, and Ireland."] },
+            "AF": { name: "Sub-Saharan Africa", count: "240,000,000", pct: "22.0%", intensity: 0.88, chapters: ["Rapidly expanding dioceses across the Democratic Republic of Congo, Nigeria, Uganda, and Tanzania, supplying global missionary vocations."] },
+            "ME": { name: "Middle East & Levant", count: "3,800,000", pct: "0.8%", intensity: 0.35, chapters: ["Eastern Rite Catholic jurisdictions including the Maronite Church of Lebanon, the Melkite Greek Catholic Church, and the Chaldean Catholic Church."] },
+            "AP": { name: "Asia-Pacific", count: "145,000,000", pct: "3.4%", intensity: 0.65, chapters: ["Predominant in the Philippines (85M, third largest in world), Timor-Leste (98%), with significant communities in Vietnam and South Korea."] }
+        }
+    },
+    "PROTESTANT": {
+        id: "PROTESTANT",
+        title: "PROTESTANT & EVANGELICAL (~900M)",
+        metricLabel: "Protestant & Independent Adherents",
+        regions: {
+            "NA": { name: "North America", count: "165,000,000", pct: "44.6%", intensity: 0.90, chapters: ["Broad historic spectrum of Reformed, Baptist, Methodist, Lutheran, and modern non-denominational evangelical movements."] },
+            "LA": { name: "Latin America", count: "105,000,000", pct: "14.8%", intensity: 0.70, chapters: ["Remarkable demographic expansion over the last four decades, particularly strong in Brazil, Guatemala, and urban hubs."] },
+            "EU": { name: "Europe", count: "95,000,000", pct: "12.7%", intensity: 0.65, chapters: ["Historic cradle of the Protestant Reformation: Lutheran Nordic nations, Anglican British Isles, and Reformed Germanic cantons."] },
+            "AF": { name: "Sub-Saharan Africa", count: "390,000,000", pct: "35.7%", intensity: 0.98, chapters: ["The largest continental population of Protestants globally, characterized by dynamic Anglican, Methodist, and Pentecostal assemblies."] },
+            "ME": { name: "Middle East & Levant", count: "1,200,000", pct: "0.2%", intensity: 0.20, chapters: ["Small historical missionary communities and modern expatriate fellowships in the Persian Gulf."] },
+            "AP": { name: "Asia-Pacific", count: "144,000,000", pct: "3.4%", intensity: 0.60, chapters: ["Prominent Presbyterian and Methodist heritages in South Korea, alongside massive independent and house church networks in mainland China."] }
+        }
+    },
+    "ORTHODOX": {
+        id: "ORTHODOX",
+        title: "EASTERN & ORIENTAL ORTHODOXY (~300M)",
+        metricLabel: "Orthodox Communion Adherents",
+        regions: {
+            "NA": { name: "North America", count: "6,500,000", pct: "1.7%", intensity: 0.35, chapters: ["Immigrant diaspora dioceses (Greek, Russian, Antiochian, Coptic) preserving ancient Byzantine and Oriental liturgies."] },
+            "LA": { name: "Latin America", count: "1,500,000", pct: "0.2%", intensity: 0.20, chapters: ["Orthodox parish communities established primarily in São Paulo, Buenos Aires, and Mexico City."] },
+            "EU": { name: "Europe", count: "185,000,000", pct: "24.7%", intensity: 0.95, chapters: ["Heartland of Eastern Orthodoxy: Russia, Greece, Romania, Serbia, Bulgaria, Ukraine, and Georgia. Governed by autocephalous synods."] },
+            "AF": { name: "Sub-Saharan Africa", count: "55,000,000", pct: "5.0%", intensity: 0.85, chapters: ["Dominated by the ancient Ethiopian Orthodox Tewahedo Church (approx 45M) and Eritrean Church, preserving Ge'ez liturgical manuscripts."] },
+            "ME": { name: "Middle East & Levant", count: "13,500,000", pct: "2.3%", intensity: 0.75, chapters: ["The historic Coptic Orthodox Church of Egypt (approx 10M), the Greek Orthodox Patriarchate of Antioch, and the Armenian Apostolic Church."] },
+            "AP": { name: "Asia-Pacific", count: "38,500,000", pct: "0.9%", intensity: 0.40, chapters: ["The ancient St. Thomas Christians of the Malankara Orthodox Syrian Church in Kerala, India (dating traditionally to 52 AD)."] }
+        }
+    },
+    "MANUSCRIPTS": {
+        id: "MANUSCRIPTS",
+        title: "ANCIENT BIBLICAL CODICES & REPOSITORIES",
+        metricLabel: "Primary Manuscript Hubs",
+        regions: {
+            "ME": { name: "Sinai & Levant Hubs", count: "St. Catherine's & Jerusalem", pct: "4th-10th Cent.", intensity: 1.0, chapters: ["Sinai holds Codex Sinaiticus (c. 330-360 AD), the Syriac Sinaiticus, and thousands of intact uncial fragments. The Dead Sea Scrolls are preserved in Jerusalem."] },
+            "EU": { name: "Vatican, London & Athos", count: "Codex Vaticanus & Alexandrinus", pct: "Primary Uncials", intensity: 0.98, chapters: ["The Vatican Apostolic Library houses Codex Vaticanus B (c. 325 AD). The British Library preserves Codex Alexandrinus and Sinaiticus leaves."] },
+            "AF": { name: "Alexandria & Lake Tana", count: "Coptic & Ge'ez Codices", pct: "3rd-14th Cent.", intensity: 0.90, chapters: ["The Coptic Museum and monastery archives of Wadi El Natrun preserve Sahidic and Bohairic papyri. Lake Tana island monasteries house illuminated Ge'ez Gospels."] },
+            "NA": { name: "Smithsonian & Chester Beatty", count: "Papyrus 45, 46, 47", pct: "2nd-3rd Cent.", intensity: 0.70, chapters: ["North American and Dublin collections host the earliest known Pauline epistles and Gospel papyri fragments, demonstrating extraordinary textual reliability."] },
+            "LA": { name: "Colonial Cathedrals", count: "Polyglot Bibles", pct: "16th Cent.", intensity: 0.40, chapters: ["Puebla and Lima archives maintain Antwerp and London Polyglot editions utilized for missionary translation work."] },
+            "AP": { name: "Kerala Nasrani Archives", count: "Peshitta Papyri", pct: "Early Syriac", intensity: 0.55, chapters: ["Palm-leaf manuscripts and copper plate charters preserving the East Syriac Peshitta tradition in south India."] }
+        }
+    }
+};
+
+export const MAP_BADGE_COORDINATES = [
+    { regionId: "NA", label: "NORTH AMERICA", gx: -140, gy: -70 },
+    { regionId: "LA", label: "LATIN AMERICA", gx: -90, gy: 50 },
+    { regionId: "EU", label: "EUROPE", gx: 30, gy: -80 },
+    { regionId: "AF", label: "SUB-SAHARAN AFRICA", gx: 40, gy: 30 },
+    { regionId: "ME", label: "MIDDLE EAST", gx: 90, gy: -30 },
+    { regionId: "AP", label: "ASIA-PACIFIC", gx: 200, gy: 20 }
+];
+
+export function registerMapDataset(key, data) {
+    if (!key || !data) return;
+    MAP_DATASETS[key] = data;
+}
+
+export function getMapOperatingMode() {
+    return mapOperatingMode;
+}
+
+export function getActiveMapDataset() {
+    return MAP_DATASETS[activeMapDatasetKey];
+}
+
+function generateHexWorldGrid() {
+    hexWorldGrid = [];
+    const hexR = 8.5; // Radius of each hexagon
+    const cols = 58;
+    const rows = 32;
+    const hDist = hexR * 1.5;
+    const vDist = hexR * Math.sqrt(3);
+
+    function getRegionForCell(c, r) {
+        // North America
+        if (c >= 6 && c <= 20 && r >= 4 && r <= 13) {
+            if (c > 17 && r > 11) return null;
+            if (c < 9 && r < 6) return null;
+            return "NA";
+        }
+        // Latin America (Central + South America)
+        if (c >= 12 && c <= 24 && r >= 14 && r <= 28) {
+            if (c < 15 && r > 17) return null;
+            if (c > 22 && r > 25) return null;
+            return "LA";
+        }
+        // Europe
+        if (c >= 25 && c <= 35 && r >= 4 && r <= 11) {
+            if (c > 33 && r < 6) return null;
+            return "EU";
+        }
+        // Sub-Saharan Africa
+        if (c >= 25 && c <= 37 && r >= 14 && r <= 26) {
+            if (c > 35 && r > 24) return null;
+            if (c < 27 && r > 23) return null;
+            return "AF";
+        }
+        // Middle East & Levant
+        if (c >= 26 && c <= 37 && r >= 11 && r <= 14) {
+            return "ME";
+        }
+        // Asia-Pacific & East Asia
+        if (c >= 36 && c <= 54 && r >= 4 && r <= 18) {
+            if (c > 50 && r > 14) return null;
+            if (c < 40 && r < 6) return null;
+            return "AP";
+        }
+        // Australia / Oceania
+        if (c >= 45 && c <= 55 && r >= 20 && r <= 28) {
+            if (c < 47 && r > 25) return null;
+            return "AP";
+        }
+        return null;
+    }
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const reg = getRegionForCell(c, r);
+            if (reg) {
+                const x = (c - cols / 2) * hDist;
+                const y = (r - rows / 2) * vDist + ((c % 2) ? vDist / 2 : 0);
+                hexWorldGrid.push({
+                    col: c,
+                    row: r,
+                    x: x,
+                    y: y,
+                    radius: hexR,
+                    region: reg
+                });
+            }
+        }
+    }
+}
+
 export function initMap(canvas, onSelectGeocache) {
     mCanvas = canvas;
     mCtx = mCanvas.getContext('2d', { alpha: false });
     onSelectGeocacheCallback = onSelectGeocache;
 
+    generateHexWorldGrid();
     setupMapInteractions();
     resizeMap();
     bootMapLibre();
+    setMapMode('HEXAGON');
 }
 
 let maplibreActive = false;
@@ -1373,11 +1541,16 @@ let mapMarkers = [];
 
 function mapThemeColors() {
     const rootStyle = getComputedStyle(document.documentElement);
-    const light = document.documentElement.getAttribute('data-theme') === 'light';
+    const theme = document.documentElement.getAttribute('data-theme') || 'midnight-gold';
+    const light = theme === 'technical-paper' || theme === 'light';
     return {
-        bg: rootStyle.getPropertyValue('--bg-canvas').trim() || (light ? '#f4f6f8' : '#0b0d11'),
-        ink: rootStyle.getPropertyValue('--contrast-ink').trim() || (light ? '#0b0d17' : '#ffffff'),
-        land: light ? '#dfe3e8' : '#171c24'
+        bg: rootStyle.getPropertyValue('--bg-canvas').trim() || (light ? '#f4f6f8' : '#07111e'),
+        ink: rootStyle.getPropertyValue('--contrast-ink').trim() || (light ? '#0b0d17' : '#f59e0b'),
+        land: light ? '#dfe3e8' : '#10243d',
+        accentPrimary: rootStyle.getPropertyValue('--accent-primary').trim() || '#f59e0b',
+        accentSecondary: rootStyle.getPropertyValue('--accent-secondary').trim() || '#38bdf8',
+        hexBase: rootStyle.getPropertyValue('--hex-base').trim() || '#10243d',
+        hexStroke: rootStyle.getPropertyValue('--hex-stroke').trim() || '#1a3960'
     };
 }
 
@@ -2251,6 +2424,11 @@ export function resizeMap() {
 }
 
 export function renderMap() {
+    if (mapOperatingMode === 'HEXAGON') {
+        renderHexDataMap();
+        return;
+    }
+
     if (maplibreActive) {
         applyMapLibreTheme();
         return;
@@ -2262,7 +2440,7 @@ export function renderMap() {
     const strokeColor = rootStyle.getPropertyValue('--contrast-ink').trim() || '#ffffff';
     const textMain = rootStyle.getPropertyValue('--text-main').trim() || '#ffffff';
     const textMuted = rootStyle.getPropertyValue('--text-muted').trim() || '#71717a';
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'technical-paper' && document.documentElement.getAttribute('data-theme') !== 'light';
 
     mCtx.fillStyle = bg;
     mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
@@ -2420,6 +2598,230 @@ export function renderMap() {
     mCtx.restore();
 }
 
+function drawHexagon(ctx, x, y, r, fill, stroke) {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i;
+        const hx = x + r * Math.cos(angle);
+        const hy = y + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(hx, hy);
+        else ctx.lineTo(hx, hy);
+    }
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.lineWidth = 0.8;
+    ctx.strokeStyle = stroke;
+    ctx.stroke();
+}
+
+function renderHexDataMap() {
+    if (!mCanvas || !mCtx) return;
+
+    const colors = mapThemeColors();
+    const bg = colors.bg;
+    const hexBase = colors.hexBase;
+    const hexStroke = colors.hexStroke;
+    const accentGold = colors.accentPrimary;
+    const accentCyan = colors.accentSecondary;
+    const theme = document.documentElement.getAttribute('data-theme') || 'midnight-gold';
+
+    mCtx.fillStyle = bg;
+    mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
+
+    mCtx.save();
+    mCtx.translate(mapPanX, mapPanY);
+    mCtx.scale(mapZoom, mapZoom);
+
+    const currDataset = MAP_DATASETS[activeMapDatasetKey] || MAP_DATASETS["TOTAL"];
+
+    hexWorldGrid.forEach(hex => {
+        const regData = currDataset.regions[hex.region];
+        const isHovered = hoveredHex && hoveredHex.col === hex.col && hoveredHex.row === hex.row;
+        const isSelected = selectedMapRegion && selectedMapRegion.id === hex.region;
+
+        let fillColor = hexBase;
+        let strokeColor = hexStroke;
+        let glowIntensity = regData ? regData.intensity : 0.2;
+
+        if (regData) {
+            if (theme === 'synth-magenta') {
+                fillColor = `rgba(236, 72, 153, ${0.15 + glowIntensity * 0.75})`;
+                strokeColor = `rgba(0, 240, 255, ${0.25 + glowIntensity * 0.5})`;
+            } else if (theme === 'midnight-gold') {
+                fillColor = `rgba(245, 158, 11, ${0.12 + glowIntensity * 0.72})`;
+                strokeColor = `rgba(56, 189, 248, ${0.2 + glowIntensity * 0.5})`;
+            } else if (theme === 'technical-paper' || theme === 'light') {
+                fillColor = `rgba(11, 13, 17, ${0.1 + glowIntensity * 0.75})`;
+                strokeColor = '#14171d';
+            } else {
+                fillColor = `rgba(255, 255, 255, ${0.1 + glowIntensity * 0.75})`;
+                strokeColor = 'rgba(255, 255, 255, 0.3)';
+            }
+        }
+
+        if (isSelected) {
+            fillColor = accentGold;
+            strokeColor = '#ffffff';
+        } else if (isHovered) {
+            fillColor = accentCyan;
+            strokeColor = '#ffffff';
+        }
+
+        drawHexagon(mCtx, hex.x, hex.y, hex.radius - 0.75, fillColor, strokeColor);
+    });
+
+    mCtx.restore();
+    updateMapFloatingBadges();
+}
+
+function updateMapFloatingBadges() {
+    const container = document.getElementById('map-floating-badges');
+    if (!container) return;
+    if (mapOperatingMode !== 'HEXAGON') {
+        container.innerHTML = '';
+        return;
+    }
+
+    const currDataset = MAP_DATASETS[activeMapDatasetKey];
+    if (!currDataset) {
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = '';
+
+    MAP_BADGE_COORDINATES.forEach(badge => {
+        const regData = currDataset.regions[badge.regionId];
+        if (!regData) return;
+
+        const screenX = mapPanX + badge.gx * mapZoom;
+        const screenY = mapPanY + badge.gy * mapZoom;
+
+        const el = document.createElement('div');
+        el.className = "absolute pointer-events-auto cursor-pointer p-2 rounded-xl mono-card shadow-2xl transition-transform hover:scale-105 active:scale-95 text-xs font-mono select-none";
+        el.style.left = `${screenX - 70}px`;
+        el.style.top = `${screenY - 24}px`;
+        el.style.borderColor = (selectedMapRegion && selectedMapRegion.id === badge.regionId) ? "var(--accent-primary)" : "var(--panel-border)";
+
+        el.innerHTML = `
+            <div class="flex items-center space-x-1.5">
+                <span class="w-2 h-2 rounded-full inline-block" style="background-color: var(--accent-primary);"></span>
+                <span class="font-bold text-[10px]" style="color: var(--text-main);">${badge.label}</span>
+            </div>
+            <div class="font-bold text-xs mt-0.5" style="color: var(--accent-secondary);">${regData.count}</div>
+            <div class="text-[9px]" style="color: var(--text-muted);">${regData.pct} share</div>
+        `;
+
+        el.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            selectDataMapRegion(badge.regionId);
+        });
+
+        container.appendChild(el);
+    });
+}
+
+export function selectDataMapRegion(regionId) {
+    const dataset = MAP_DATASETS[activeMapDatasetKey];
+    if (!dataset) return;
+    const regData = dataset.regions[regionId];
+    if (!regData) return;
+
+    selectedMapRegion = { id: regionId, ...regData };
+    renderMap();
+
+    if (onSelectGeocacheCallback) {
+        onSelectGeocacheCallback({
+            id: `GEO-DATA-${regionId}`,
+            name: `${regData.name} — ${dataset.title}`,
+            tags: ["GEODEMOGRAPHIC", regionId, activeMapDatasetKey],
+            chapters: [
+                `Metric: ${regData.count} (${regData.pct} regional share) — ${dataset.metricLabel}`,
+                ...(regData.chapters || [
+                    `${regData.name} demonstrates a vital presence within the ${dataset.title} global matrix.`,
+                    `Regional distributions are preserved locally in the offline knowledge archive.`
+                ])
+            ],
+            connections: ["NEXUS-0"]
+        });
+    }
+}
+
+export function setMapMode(mode) {
+    mapOperatingMode = mode;
+    const isHex = mapOperatingMode === 'HEXAGON';
+    const container = document.getElementById('maplibre-container');
+    const badgeContainer = document.getElementById('map-floating-badges');
+    const modeLabel = document.getElementById('map-active-mode-label');
+    const datasetHud = document.getElementById('map-dataset-hud');
+    const datasetWrap = document.getElementById('deck-map-dataset-wrap');
+    const modeBtn = document.getElementById('btn-map-mode');
+    const legendText = document.getElementById('map-legend-text');
+
+    if (modeBtn) {
+        modeBtn.innerText = isHex ? 'HEXAGON' : 'OFFLINE';
+    }
+    if (datasetWrap) {
+        datasetWrap.classList.toggle('hidden', !isHex);
+    }
+    if (modeLabel) {
+        modeLabel.innerText = isHex ? 'HEXAGONAL DATA MATRIX' : 'OFFLINE VECTOR BASEMAP';
+    }
+    if (datasetHud) {
+        datasetHud.classList.toggle('hidden', !isHex);
+    }
+    if (legendText) {
+        legendText.innerText = isHex 
+            ? 'DRAG: PAN • SCROLL: ZOOM • CLICK FLOATING BADGE / CELL TO READ RECORD'
+            : 'DRAG: PAN • SCROLL OR +/−: ZOOM • CLICK GEOCACHE PIN TO READ';
+    }
+
+    if (isHex) {
+        if (container) container.classList.add('hidden');
+        if (mCanvas) mCanvas.classList.remove('hidden');
+        if (badgeContainer) badgeContainer.classList.remove('hidden');
+        renderMap();
+    } else {
+        if (badgeContainer) {
+            badgeContainer.innerHTML = '';
+            badgeContainer.classList.add('hidden');
+        }
+        if (maplibreActive && container) {
+            container.classList.remove('hidden');
+            if (mCanvas) mCanvas.classList.add('hidden');
+            applyMapLibreTheme();
+        } else {
+            if (container) container.classList.add('hidden');
+            if (mCanvas) mCanvas.classList.remove('hidden');
+            renderMap();
+        }
+    }
+}
+
+export function cycleMapMode() {
+    const next = mapOperatingMode === 'HEXAGON' ? 'OFFLINE' : 'HEXAGON';
+    setMapMode(next);
+    return next;
+}
+
+export function cycleMapDataset() {
+    const keys = Object.keys(MAP_DATASETS);
+    if (keys.length === 0) return;
+    const currIdx = keys.indexOf(activeMapDatasetKey);
+    const nextIdx = (currIdx + 1) % keys.length;
+    activeMapDatasetKey = keys[nextIdx];
+    
+    const dataset = MAP_DATASETS[activeMapDatasetKey];
+    const datasetLabel = document.getElementById('map-dataset-label');
+    const datasetBtn = document.getElementById('btn-map-dataset');
+    if (datasetLabel) datasetLabel.innerText = dataset.title;
+    if (datasetBtn) datasetBtn.innerText = dataset.id;
+
+    renderMap();
+    return activeMapDatasetKey;
+}
+
 function setupMapInteractions() {
     if (mapEventsBound || !mCanvas) return;
     mapEventsBound = true;
@@ -2433,57 +2835,95 @@ function setupMapInteractions() {
             const mx = (e.clientX - rect.left - mapPanX) / mapZoom;
             const my = (e.clientY - rect.top - mapPanY) / mapZoom;
 
-            let hitGeo = null;
-            for (let g of GEOCACHES) {
-                const gx = g.lon * scaleX;
-                const gy = -g.lat * scaleY;
-                if (Math.hypot(mx - gx, my - gy) <= 16) {
-                    hitGeo = g;
-                    break;
+            if (mapOperatingMode === 'HEXAGON') {
+                let clickedHex = null;
+                for (let hex of hexWorldGrid) {
+                    if (Math.hypot(mx - hex.x, my - hex.y) <= hex.radius) {
+                        clickedHex = hex;
+                        break;
+                    }
                 }
-            }
-
-            if (hitGeo) {
-                if (onSelectGeocacheCallback) {
-                    onSelectGeocacheCallback({
-                        id: hitGeo.id,
-                        name: hitGeo.name,
-                        tags: ["GEOCACHE", "OFFLINE_VAULT"],
-                        chapters: [
-                            hitGeo.desc,
-                            `Chapter 2: Ground site coordinates confirmed at ${hitGeo.lat.toFixed(2)}° Lat, ${hitGeo.lon.toFixed(2)}° Lon. Vector cartography verified with zero network dependencies.`,
-                            `Chapter 3: Regional communications status: Offline local storage mirror intact.`
-                        ],
-                        connections: ["NEXUS-0"]
-                    });
+                if (clickedHex && clickedHex.region) {
+                    selectDataMapRegion(clickedHex.region);
+                } else {
+                    isDraggingMap = true;
+                    mapDragStartX = e.clientX - mapPanX;
+                    mapDragStartY = e.clientY - mapPanY;
                 }
             } else {
-                isDraggingMap = true;
-                mapDragStartX = e.clientX - mapPanX;
-                mapDragStartY = e.clientY - mapPanY;
+                let hitGeo = null;
+                for (let g of GEOCACHES) {
+                    const gx = g.lon * scaleX;
+                    const gy = -g.lat * scaleY;
+                    if (Math.hypot(mx - gx, my - gy) <= 16) {
+                        hitGeo = g;
+                        break;
+                    }
+                }
+
+                if (hitGeo) {
+                    if (onSelectGeocacheCallback) {
+                        onSelectGeocacheCallback({
+                            id: hitGeo.id,
+                            name: hitGeo.name,
+                            tags: ["GEOCACHE", "OFFLINE_VAULT"],
+                            chapters: [
+                                hitGeo.desc,
+                                `Chapter 2: Ground site coordinates confirmed at ${hitGeo.lat.toFixed(2)}° Lat, ${hitGeo.lon.toFixed(2)}° Lon. Vector cartography verified with zero network dependencies.`,
+                                `Chapter 3: Regional communications status: Offline local storage mirror intact.`
+                            ],
+                            connections: ["NEXUS-0"]
+                        });
+                    }
+                } else {
+                    isDraggingMap = true;
+                    mapDragStartX = e.clientX - mapPanX;
+                    mapDragStartY = e.clientY - mapPanY;
+                }
             }
         }
     });
 
     window.addEventListener('mousemove', (e) => {
-        if (maplibreActive) return;
+        if (mapOperatingMode === 'OFFLINE' && maplibreActive) return;
         if (isDraggingMap) {
             mapPanX = e.clientX - mapDragStartX;
             mapPanY = e.clientY - mapDragStartY;
             renderMap();
         } else if (mCanvas && mCanvas.offsetParent !== null) {
             const rect = mCanvas.getBoundingClientRect();
-            if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) return;
+            if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+                if (hoveredHex) {
+                    hoveredHex = null;
+                    if (mapOperatingMode === 'HEXAGON') renderMap();
+                }
+                return;
+            }
             const mx = (e.clientX - rect.left - mapPanX) / mapZoom;
             const my = (e.clientY - rect.top - mapPanY) / mapZoom;
-            const lon = (mx / scaleX).toFixed(2);
-            const lat = (-my / scaleY).toFixed(2);
-            const coordsEl = document.getElementById('map-cursor-coords');
-            if (coordsEl) {
-                const latNum = parseFloat(lat);
-                const lonNum = parseFloat(lon);
-                if (Math.abs(latNum) <= 90 && Math.abs(lonNum) <= 180) {
-                    coordsEl.innerText = `${Math.abs(latNum).toFixed(2)}° ${latNum >= 0 ? 'N' : 'S'}, ${Math.abs(lonNum).toFixed(2)}° ${lonNum >= 0 ? 'E' : 'W'}`;
+
+            if (mapOperatingMode === 'HEXAGON') {
+                let foundHex = null;
+                for (let hex of hexWorldGrid) {
+                    if (Math.hypot(mx - hex.x, my - hex.y) <= hex.radius) {
+                        foundHex = hex;
+                        break;
+                    }
+                }
+                if (foundHex !== hoveredHex) {
+                    hoveredHex = foundHex;
+                    renderMap();
+                }
+            } else {
+                const lon = (mx / scaleX).toFixed(2);
+                const lat = (-my / scaleY).toFixed(2);
+                const coordsEl = document.getElementById('map-cursor-coords');
+                if (coordsEl) {
+                    const latNum = parseFloat(lat);
+                    const lonNum = parseFloat(lon);
+                    if (Math.abs(latNum) <= 90 && Math.abs(lonNum) <= 180) {
+                        coordsEl.innerText = `${Math.abs(latNum).toFixed(2)}° ${latNum >= 0 ? 'N' : 'S'}, ${Math.abs(lonNum).toFixed(2)}° ${lonNum >= 0 ? 'E' : 'W'}`;
+                    }
                 }
             }
         }

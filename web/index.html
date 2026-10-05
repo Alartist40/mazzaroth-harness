@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="midnight-gold">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,46 +13,6 @@
     <script src="/vendor/maplibre-gl.js"></script>
     <script src="/vendor/pmtiles.js"></script>
     <style>
-        :root {
-            /* Light Mode: Technical Paper Grey and Charcoal Ink */
-            --bg-canvas: #dce1e6;
-            --bg-shell: #e4e8ec;
-            --panel-bg: #ffffff;
-            --panel-bg-subtle: #f4f6f8;
-            --panel-border: #14171d;
-            --border-subtle: #ccd1d9;
-            --text-main: #0b0d11;
-            --text-secondary: #58606f;
-            --text-muted: #8c94a2;
-            --contrast-ink: #000000;
-            --contrast-paper: #ffffff;
-            --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-            --particle-rgb: 11, 13, 17;
-            --line-synapse: rgba(11, 13, 17, 0.4);
-            --core-disc-fill: #ffffff;
-            --core-disc-stroke: #0b0d11;
-        }
-
-        [data-theme="dark"] {
-            /* Dark Mode: Matte Obsidian and Silver Stipple */
-            --bg-canvas: #08090c;
-            --bg-shell: #0e1014;
-            --panel-bg: #13161d;
-            --panel-bg-subtle: #1a1e27;
-            --panel-border: #eef2f6;
-            --border-subtle: #272d38;
-            --text-main: #eef2f6;
-            --text-secondary: #9da6b5;
-            --text-muted: #5f6775;
-            --contrast-ink: #ffffff;
-            --contrast-paper: #08090c;
-            --card-shadow: 0 10px 32px rgba(0, 0, 0, 0.6);
-            --particle-rgb: 238, 242, 246;
-            --line-synapse: rgba(238, 242, 246, 0.4);
-            --core-disc-fill: #08090c;
-            --core-stroke: #eef2f6;
-        }
-
         * {
             box-sizing: border-box;
             user-select: none;
@@ -165,23 +125,49 @@
             </div>
 
             <!-- Top Controls: Theme Switcher & Wireframe Guide -->
-            <div class="flex items-center space-x-3">
-                <!-- Theme Toggle Button -->
-                <button id="theme-toggle-btn" class="flex items-center space-x-1.5 px-3 py-1 rounded-full border text-[11px] font-mono transition-all hover:opacity-80 active:scale-95"
-                        style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
-                    <svg id="theme-icon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="5"></circle>
-                        <line x1="12" y1="1" x2="12" y2="3"></line>
-                        <line x1="12" y1="21" x2="12" y2="23"></line>
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                        <line x1="1" y1="12" x2="3" y2="12"></line>
-                        <line x1="21" y1="12" x2="23" y2="12"></line>
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                    </svg>
-                    <span id="theme-label" class="font-semibold">LIGHT MODE</span>
-                </button>
+                <!-- Theme Palette Dropdown Button -->
+                <div class="relative">
+                    <button id="theme-menu-btn" class="flex items-center space-x-2 px-3 py-1 rounded-full border text-[11px] font-mono transition-all hover:opacity-90 active:scale-95"
+                            style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
+                        <span id="theme-active-dot" class="w-2 h-2 rounded-full inline-block" style="background-color: var(--accent-primary);"></span>
+                        <span id="theme-active-label" class="font-bold uppercase">MIDNIGHT GOLD</span>
+                        <svg class="w-3 h-3 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+
+                    <!-- Themes Popover -->
+                    <div id="theme-dropdown" class="hidden absolute right-0 mt-1.5 w-56 rounded-xl border mono-card p-1.5 shadow-2xl z-50 flex flex-col gap-1">
+                        <button data-set-theme="midnight-gold" class="theme-option px-3 py-1.5 rounded-lg text-left text-xs font-mono flex items-center justify-between hover:opacity-80 transition-opacity">
+                            <span class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                <span>Midnight Gold</span>
+                            </span>
+                            <span class="text-[9px] text-gray-400">Navy/Gold</span>
+                        </button>
+                        <button data-set-theme="synth-magenta" class="theme-option px-3 py-1.5 rounded-lg text-left text-xs font-mono flex items-center justify-between hover:opacity-80 transition-opacity">
+                            <span class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span>
+                                <span>Synth Magenta</span>
+                            </span>
+                            <span class="text-[9px] text-gray-400">Cyan/Pink</span>
+                        </button>
+                        <button data-set-theme="obsidian-mono" class="theme-option px-3 py-1.5 rounded-lg text-left text-xs font-mono flex items-center justify-between hover:opacity-80 transition-opacity">
+                            <span class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-gray-200"></span>
+                                <span>Obsidian Mono</span>
+                            </span>
+                            <span class="text-[9px] text-gray-400">Dark Matte</span>
+                        </button>
+                        <button data-set-theme="technical-paper" class="theme-option px-3 py-1.5 rounded-lg text-left text-xs font-mono flex items-center justify-between hover:opacity-80 transition-opacity">
+                            <span class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-gray-800"></span>
+                                <span>Technical Paper</span>
+                            </span>
+                            <span class="text-[9px] text-gray-400">Light Print</span>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- Wireframe Presentation Overlay Toggle -->
                 <button id="wireframe-toggle-btn" class="flex items-center space-x-1.5 px-3 py-1 rounded-full border text-[11px] font-mono transition-all hover:opacity-80 active:scale-95"
@@ -419,8 +405,28 @@
                         </button>
                     </div>
 
-                    <!-- 4. MAP TOOLS -->
-                    <div id="tools-map" class="tool-deck hidden flex-col items-center gap-3">
+                    <!-- 4. ADVANCED MAP TOOLS (OFFLINE VECTOR & HEXAGON DATA-MAP) -->
+                    <div id="tools-map" class="tool-deck hidden flex-col items-center gap-2.5 w-full px-1">
+                        <!-- Mode: Hex Grid vs Offline Vector -->
+                        <div class="flex flex-col items-center gap-1 w-full">
+                            <span class="text-[7px] font-mono uppercase font-bold" style="color: var(--text-muted);">LAYER</span>
+                            <button id="btn-map-mode" class="w-12 py-1 rounded border text-[7.5px] font-mono font-bold uppercase transition-all"
+                                    style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--accent-primary);"
+                                    title="Switch Map Mode: Hexagonal Data vs Offline Vector">
+                                HEXAGON
+                            </button>
+                        </div>
+
+                        <!-- Dataset Switcher (Active in Hexagon Mode) -->
+                        <div id="deck-map-dataset-wrap" class="flex flex-col items-center gap-1 w-full">
+                            <span class="text-[7px] font-mono uppercase font-bold" style="color: var(--text-muted);">DATASET</span>
+                            <button id="btn-map-dataset" class="w-12 py-1 rounded border text-[7.5px] font-mono font-bold uppercase transition-all"
+                                    style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--accent-secondary);"
+                                    title="Cycle Global Demographics Dataset">
+                                TOTAL
+                            </button>
+                        </div>
+
                         <button id="tool-map-download" class="w-9 h-9 rounded-xl border flex items-center justify-center shadow-sm hover:scale-105 transition-transform"
                                 style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);"
                                 title="Download a Region Pack (countries)">
@@ -651,22 +657,32 @@
                     </div>
                 </div>
 
-                <!-- VIEW D: MAP VIEWPORT -->
+                <!-- VIEW D: MAP VIEWPORT (DUAL MODE: OFFLINE PMTILES & HEXAGON DATA-MAP) -->
                 <div id="view-map" class="view-panel relative w-full h-full hidden">
                     <div id="maplibre-container" class="absolute inset-0 z-10 hidden"></div>
-                    <canvas id="map-canvas" class="w-full h-full cursor-crosshair block"></canvas>
+                    <canvas id="map-canvas" class="w-full h-full cursor-crosshair block relative z-10"></canvas>
+                    <div id="map-floating-badges" class="absolute inset-0 z-20 pointer-events-none overflow-hidden"></div>
+
+                    <!-- Top Map HUD -->
+                    <div id="map-hud-panel" class="absolute top-4 left-4 z-20 flex flex-col gap-1.5 font-mono text-[10px] pointer-events-none">
+                        <div class="px-2.5 py-1 rounded-md border flex items-center space-x-2"
+                             style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);">
+                            <span class="w-1.5 h-1.5 rounded-full inline-block" style="background-color: var(--accent-primary);"></span>
+                            <span>MODE: <strong id="map-active-mode-label">HEXAGONAL DATA MATRIX</strong></span>
+                        </div>
+                        <div id="map-dataset-hud" class="px-2.5 py-1 rounded-md border flex items-center space-x-2"
+                             style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
+                            <span class="w-1.5 h-1.5 rounded-full inline-block" style="background-color: var(--accent-secondary);"></span>
+                            <span id="map-dataset-label">TOTAL CHRISTIAN POPULATION (~2.42B)</span>
+                        </div>
+                    </div>
 
                     <div id="maplibre-status" class="hidden absolute top-4 right-4 z-20 pointer-events-none font-mono text-[10px] px-3 py-1.5 rounded-lg border shadow-sm"
                          style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-secondary);"></div>
-                    
-                    <div class="absolute top-4 left-4 z-20 pointer-events-none font-mono text-[10px] px-3 py-1.5 rounded-lg border shadow-sm"
-                         style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);">
-                        <span>COORDINATES: <strong id="map-cursor-coords">0.00° N, 0.00° E</strong></span>
-                    </div>
 
                     <div class="absolute bottom-5 left-5 z-20 pointer-events-none font-mono text-[10px] px-3 py-1.5 rounded-lg border shadow-sm"
                          style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-secondary);">
-                        DRAG: PAN • SCROLL OR +/−: ZOOM • CLICK GEOCACHE PIN TO READ
+                        <span id="map-legend-text">DRAG: PAN • SCROLL: ZOOM • CLICK FLOATING BADGE / CELL TO READ RECORD</span>
                     </div>
 
                     <div id="map-download-panel" class="hidden absolute top-14 left-4 z-30 w-72 rounded-xl border shadow-lg p-3.5 font-mono text-[11px]"

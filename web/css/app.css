@@ -1,25 +1,61 @@
-:root {
-    /* Light Mode: Technical Paper Grey and Charcoal Ink */
-    --bg-canvas: #dce1e6;
-    --bg-shell: #e4e8ec;
-    --panel-bg: #ffffff;
-    --panel-bg-subtle: #f4f6f8;
-    --panel-border: #14171d;
-    --border-subtle: #ccd1d9;
-    --text-main: #0b0d11;
-    --text-secondary: #58606f;
-    --text-muted: #8c94a2;
-    --contrast-ink: #000000;
-    --contrast-paper: #ffffff;
-    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    --particle-rgb: 11, 13, 17;
-    --line-synapse: rgba(11, 13, 17, 0.4);
-    --core-disc-fill: #ffffff;
-    --core-disc-stroke: #0b0d11;
+/* =========================================================================
+ * THEME 1: MIDNIGHT GOLD (Default - Navy & Golden Warm Glow)
+ * ========================================================================= */
+:root, [data-theme="midnight-gold"] {
+    --bg-canvas: #07111e;
+    --bg-shell: #091728;
+    --panel-bg: #0d1e34;
+    --panel-bg-subtle: #132742;
+    --panel-border: #233e63;
+    --border-subtle: #183152;
+    --text-main: #f0f6fc;
+    --text-secondary: #93a8c7;
+    --text-muted: #577399;
+    --accent-primary: #f59e0b;      /* Warm Golden Amber */
+    --accent-secondary: #38bdf8;    /* River Cyan */
+    --accent-glow: rgba(245, 158, 11, 0.35);
+    --contrast-ink: #f59e0b;
+    --contrast-paper: #07111e;
+    --card-shadow: 0 10px 32px rgba(3, 8, 15, 0.75);
+    --particle-rgb: 147, 180, 222;
+    --line-synapse: rgba(245, 158, 11, 0.45);
+    --core-disc-fill: #07111e;
+    --core-disc-stroke: #f59e0b;
+    --hex-base: #10243d;
+    --hex-stroke: #1a3960;
 }
 
-[data-theme="dark"] {
-    /* Dark Mode: Matte Obsidian and Silver Stipple */
+/* =========================================================================
+ * THEME 2: SYNTH MAGENTA (Cyan & Magenta Noir)
+ * ========================================================================= */
+[data-theme="synth-magenta"] {
+    --bg-canvas: #06070e;
+    --bg-shell: #0c0e18;
+    --panel-bg: #111422;
+    --panel-bg-subtle: #181d30;
+    --panel-border: #2e3352;
+    --border-subtle: #1e2238;
+    --text-main: #ffffff;
+    --text-secondary: #a7b0cf;
+    --text-muted: #646c8d;
+    --accent-primary: #ec4899;      /* Neon Magenta */
+    --accent-secondary: #00f0ff;    /* Electric Cyan */
+    --accent-glow: rgba(236, 72, 153, 0.35);
+    --contrast-ink: #00f0ff;
+    --contrast-paper: #06070e;
+    --card-shadow: 0 10px 32px rgba(0, 0, 0, 0.85);
+    --particle-rgb: 0, 240, 255;
+    --line-synapse: rgba(236, 72, 153, 0.45);
+    --core-disc-fill: #06070e;
+    --core-disc-stroke: #00f0ff;
+    --hex-base: #141728;
+    --hex-stroke: #222744;
+}
+
+/* =========================================================================
+ * THEME 3: OBSIDIAN MONO (Clean Matte Black & White)
+ * ========================================================================= */
+[data-theme="obsidian-mono"], [data-theme="dark"] {
     --bg-canvas: #08090c;
     --bg-shell: #0e1014;
     --panel-bg: #13161d;
@@ -29,13 +65,45 @@
     --text-main: #eef2f6;
     --text-secondary: #9da6b5;
     --text-muted: #5f6775;
+    --accent-primary: #ffffff;
+    --accent-secondary: #9da6b5;
+    --accent-glow: rgba(255, 255, 255, 0.25);
     --contrast-ink: #ffffff;
     --contrast-paper: #08090c;
-    --card-shadow: 0 10px 32px rgba(0, 0, 0, 0.6);
+    --card-shadow: 0 10px 32px rgba(0, 0, 0, 0.7);
     --particle-rgb: 238, 242, 246;
-    --line-synapse: rgba(238, 242, 246, 0.4);
+    --line-synapse: rgba(238, 242, 246, 0.35);
     --core-disc-fill: #08090c;
-    --core-stroke: #eef2f6;
+    --core-disc-stroke: #eef2f6;
+    --hex-base: #161a22;
+    --hex-stroke: #252c3a;
+}
+
+/* =========================================================================
+ * THEME 4: TECHNICAL PAPER (Light Architectural Blueprint)
+ * ========================================================================= */
+[data-theme="technical-paper"], [data-theme="light"] {
+    --bg-canvas: #dce1e6;
+    --bg-shell: #e4e8ec;
+    --panel-bg: #ffffff;
+    --panel-bg-subtle: #f4f6f8;
+    --panel-border: #14171d;
+    --border-subtle: #ccd1d9;
+    --text-main: #0b0d11;
+    --text-secondary: #58606f;
+    --text-muted: #8c94a2;
+    --accent-primary: #0b0d11;
+    --accent-secondary: #3b82f6;
+    --accent-glow: rgba(0, 0, 0, 0.15);
+    --contrast-ink: #000000;
+    --contrast-paper: #ffffff;
+    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --particle-rgb: 11, 13, 17;
+    --line-synapse: rgba(11, 13, 17, 0.4);
+    --core-disc-fill: #ffffff;
+    --core-disc-stroke: #0b0d11;
+    --hex-base: #cbd3dc;
+    --hex-stroke: #b0bac7;
 }
 
 * {

@@ -46,11 +46,14 @@ import {
     zoomMapIn,
     zoomMapOut,
     toggleDownloadPanel,
-    startSelectedDownload
+    startSelectedDownload,
+    setMapMode,
+    cycleMapMode,
+    cycleMapDataset
 } from './sections.js';
 
 let activeView = 'galaxy';
-let currentTheme = 'light';
+let currentTheme = 'midnight-gold';
 let isWireframeActive = false;
 let currentNode = null;
 let currentChapterIndex = 0;
@@ -123,15 +126,44 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('MAZZAROTH Sovereign Vault Online');
 });
 
+const THEME_NAMES = {
+    'midnight-gold': 'MIDNIGHT GOLD',
+    'synth-magenta': 'SYNTH MAGENTA',
+    'obsidian-mono': 'OBSIDIAN MONO',
+    'technical-paper': 'TECHNICAL PAPER',
+    'dark': 'OBSIDIAN MONO',
+    'light': 'TECHNICAL PAPER'
+};
+
 function initTheme() {
-    const saved = localStorage.getItem('mazzaroth-theme') || 'dark';
+    const saved = localStorage.getItem('mazzaroth-theme') || 'midnight-gold';
     applyTheme(saved);
 
-    if (themeBtn) {
-        themeBtn.addEventListener('click', () => {
-            const next = currentTheme === 'light' ? 'dark' : 'light';
-            applyTheme(next);
-            showToast(`Theme: ${next.toUpperCase()}`);
+    const themeMenuBtn = document.getElementById('theme-menu-btn');
+    const themeDropdown = document.getElementById('theme-dropdown');
+
+    if (themeMenuBtn && themeDropdown) {
+        themeMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            themeDropdown.classList.toggle('hidden');
+        });
+
+        document.querySelectorAll('.theme-option').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const chosen = btn.getAttribute('data-set-theme');
+                if (chosen) {
+                    applyTheme(chosen);
+                    themeDropdown.classList.add('hidden');
+                    showToast(`Theme: ${THEME_NAMES[chosen] || chosen.toUpperCase()}`);
+                }
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!themeDropdown.classList.contains('hidden') && !themeDropdown.contains(e.target) && !themeMenuBtn.contains(e.target)) {
+                themeDropdown.classList.add('hidden');
+            }
         });
     }
 }
@@ -141,27 +173,22 @@ function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('mazzaroth-theme', theme);
 
-    if (themeLabel) {
-        themeLabel.innerText = theme === 'light' ? 'LIGHT MODE' : 'DARK MODE';
+    const activeLabel = document.getElementById('theme-active-label');
+    if (activeLabel) {
+        activeLabel.innerText = THEME_NAMES[theme] || theme.toUpperCase();
     }
 
-    const icon = document.getElementById('theme-icon');
-    if (icon) {
-        if (theme === 'dark') {
-            icon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
-        } else {
-            icon.innerHTML = `
-                <circle cx="12" cy="12" r="5"></circle>
-                <line x1="12" y1="1" x2="12" y2="3"></line>
-                <line x1="12" y1="21" x2="12" y2="23"></line>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                <line x1="1" y1="12" x2="3" y2="12"></line>
-                <line x1="21" y1="12" x2="23" y2="12"></line>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-            `;
-        }
+    const activeDot = document.getElementById('theme-active-dot');
+    if (activeDot) {
+        const dotColors = {
+            'midnight-gold': '#f59e0b',
+            'synth-magenta': '#ec4899',
+            'obsidian-mono': '#eef2f6',
+            'technical-paper': '#0b0d11',
+            'dark': '#eef2f6',
+            'light': '#0b0d11'
+        };
+        activeDot.style.backgroundColor = dotColors[theme] || '#f59e0b';
     }
 
     renderGalaxy();
@@ -1665,6 +1692,22 @@ function setupToolbars() {
         hierarchyBtn.addEventListener('click', () => {
             showHierarchyRoot();
             showToast('Knowledge Themes Opened');
+        });
+    }
+
+    const mapModeBtn = document.getElementById('btn-map-mode');
+    if (mapModeBtn) {
+        mapModeBtn.addEventListener('click', () => {
+            const nextMode = cycleMapMode();
+            showToast(`Map Mode: ${nextMode === 'HEXAGON' ? 'HEXAGONAL MATRIX' : 'OFFLINE VECTOR'}`);
+        });
+    }
+
+    const mapDatasetBtn = document.getElementById('btn-map-dataset');
+    if (mapDatasetBtn) {
+        mapDatasetBtn.addEventListener('click', () => {
+            const nextDs = cycleMapDataset();
+            showToast(`Map Dataset: ${nextDs}`);
         });
     }
 
