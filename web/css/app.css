@@ -184,4 +184,58 @@ body, html {
     border-color: var(--panel-border);
     outline: none;
 }
+/* Text selection for reading surfaces */
+#reader-content-box,
+#reader-content-box *,
+#librarian-chat-log,
+#librarian-chat-log *,
+.selectable-text,
+input,
+textarea {
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+/* Responsive Viewport Layout */
+@media (max-width: 1024px) {
+    #right-column {
+        width: 320px;
+    }
+}
+
+@media (max-width: 768px) {
+    body, html {
+        overflow: auto;
+    }
+    main {
+        flex-direction: column !important;
+        overflow-y: auto !important;
+        height: auto !important;
+        min-height: 100vh;
+    }
+    #zone-yellow {
+        width: 100% !important;
+        height: auto !important;
+        flex-direction: row !important;
+        justify-content: space-between;
+        padding: 8px 12px !important;
+    }
+    #zone-red {
+        width: 100% !important;
+        height: 55vh !important;
+        min-height: 360px;
+    }
+    #right-column {
+        width: 100% !important;
+        height: auto !important;
+    }
+    #zone-green {
+        height: auto !important;
+        min-height: 140px;
+    }
+    #zone-blue {
+        height: auto !important;
+        min-height: 320px;
+    }
+}
 

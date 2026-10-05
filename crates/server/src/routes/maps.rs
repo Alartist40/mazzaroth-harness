@@ -6,8 +6,9 @@ use axum::http::header::{ACCEPT_RANGES, CONTENT_LENGTH, CONTENT_RANGE, CONTENT_T
 use axum::http::{HeaderMap, Response, StatusCode};
 use axum::response::Json;
 use serde::Serialize;
-use std::fs::File;
-use std::io::{Read, Seek, SeekFrom};
+use tokio::fs::File;
+use tokio::io::{AsyncReadExt, AsyncSeekExt, SeekFrom};
+use tokio_util::io::ReaderStream;
 
 #[derive(Debug, Serialize)]
 pub struct MapRegion {
@@ -53,66 +54,88 @@ pub async fn handle_serve_pmtiles(
         return Err(StatusCode::NOT_FOUND);
     }
 
-    let mut file = File::open(&file_path).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    let total_len = file
+    let mut file = File::open(&file_path)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let metadata = file
         .metadata()
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-        .len();
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let total_len = metadata.len();
 
     // Check for HTTP Range header
     if let Some(range_header) = headers.get(RANGE) {
         if let Ok(range_str) = range_header.to_str() {
             if let Some(range_val) = range_str.strip_prefix("bytes=") {
-                let parts: Vec<&str> = range_val.split('-').collect();
-                let start: u64 = parts[0].parse().unwrap_or(0);
-                let end: u64 = if parts.len() > 1 && !parts[1].is_empty() {
-                    parts[1].parse().unwrap_or(total_len - 1)
-                } else {
-                    total_len - 1
-                };
-
-                let end = end.min(total_len - 1);
-                if start > end || start >= total_len {
+                if total_len == 0 {
                     return Ok(Response::builder()
                         .status(StatusCode::RANGE_NOT_SATISFIABLE)
-                        .header(CONTENT_RANGE, format!("bytes */{}", total_len))
+                        .header(CONTENT_RANGE, "bytes */0")
                         .body(Body::empty())
                         .unwrap());
                 }
 
-                let length = (end - start + 1) as usize;
-                let mut buffer = vec![0u8; length];
-                file.seek(SeekFrom::Start(start))
-                    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-                file.read_exact(&mut buffer)
-                    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+                // Range specification: "start-end", "start-", or "-suffix"
+                let parts: Vec<&str> = range_val.split('-').collect();
+                if parts.len() == 2 {
+                    let (start_opt, end_opt) = (
+                        if parts[0].is_empty() { None } else { parts[0].parse::<u64>().ok() },
+                        if parts[1].is_empty() { None } else { parts[1].parse::<u64>().ok() },
+                    );
 
-                return Ok(Response::builder()
-                    .status(StatusCode::PARTIAL_CONTENT)
-                    .header(ACCEPT_RANGES, "bytes")
-                    .header(CONTENT_TYPE, "application/octet-stream")
-                    .header(CONTENT_LENGTH, length.to_string())
-                    .header(
-                        CONTENT_RANGE,
-                        format!("bytes {}-{}/{}", start, end, total_len),
-                    )
-                    .body(Body::from(buffer))
-                    .unwrap());
+                    let (start, end) = match (start_opt, end_opt) {
+                        (Some(s), Some(e)) => (s, e),
+                        (Some(s), None) => (s, total_len.saturating_sub(1)),
+                        (None, Some(suffix)) => {
+                            let s = total_len.saturating_sub(suffix);
+                            (s, total_len.saturating_sub(1))
+                        }
+                        (None, None) => (0, total_len.saturating_sub(1)),
+                    };
+
+                    let end = end.min(total_len.saturating_sub(1));
+                    if start > end || start >= total_len {
+                        return Ok(Response::builder()
+                            .status(StatusCode::RANGE_NOT_SATISFIABLE)
+                            .header(CONTENT_RANGE, format!("bytes */{}", total_len))
+                            .body(Body::empty())
+                            .unwrap());
+                    }
+
+                    let length = end - start + 1;
+                    file.seek(SeekFrom::Start(start))
+                        .await
+                        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+                    let stream = ReaderStream::new(file.take(length));
+                    let body = Body::from_stream(stream);
+
+                    return Ok(Response::builder()
+                        .status(StatusCode::PARTIAL_CONTENT)
+                        .header(ACCEPT_RANGES, "bytes")
+                        .header(CONTENT_TYPE, "application/octet-stream")
+                        .header(CONTENT_LENGTH, length.to_string())
+                        .header(
+                            CONTENT_RANGE,
+                            format!("bytes {}-{}/{}", start, end, total_len),
+                        )
+                        .body(body)
+                        .unwrap());
+                }
             }
         }
     }
 
-    // Full file response
-    let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    // Full file streaming response
+    let stream = ReaderStream::new(file);
+    let body = Body::from_stream(stream);
 
     Ok(Response::builder()
         .status(StatusCode::OK)
         .header(ACCEPT_RANGES, "bytes")
         .header(CONTENT_TYPE, "application/octet-stream")
         .header(CONTENT_LENGTH, total_len.to_string())
-        .body(Body::from(buffer))
+        .body(body)
         .unwrap())
 }
 

@@ -605,7 +605,10 @@ export function stepSkyHour(delta) {
     refreshSkyData();
 }
 
+let skyRefreshSequenceId = 0;
+
 export async function refreshSkyData() {
+    const seqId = ++skyRefreshSequenceId;
     try {
         const timeIso = skyDateTime.toISOString();
         const data = await getSkyProjection({
@@ -614,6 +617,7 @@ export async function refreshSkyData() {
             time: timeIso,
             radius: skyDomeRadius
         });
+        if (seqId !== skyRefreshSequenceId) return;
         skyProjection = data;
 
         const lstEl = document.getElementById('const-lst-display');
@@ -1189,6 +1193,7 @@ function handleConstHover(e) {
         }
     }
 
+    const prevStar = hoveredSkyStar;
     hoveredSkyStar = closest;
 
     if (closest && tooltip) {
@@ -1197,19 +1202,32 @@ function handleConstHover(e) {
         tooltip.style.top = `${e.clientY - 10}px`;
         tooltip.innerHTML = `
             <div class="font-bold">${escapeHtml(closest.name)}</div>
-            <div class="text-[9px] opacity-80">${escapeHtml(closest.constellation)} • Mag ${closest.magnitude.toFixed(2)}</div>
-            <div class="text-[8px] opacity-75">Alt: ${closest.alt_deg.toFixed(1)}° • Az: ${closest.az_deg.toFixed(1)}°</div>
+            <div class="text-[9px] opacity-80">${escapeHtml(closest.constellation)} • Mag ${(closest.magnitude || 0).toFixed(2)}</div>
+            <div class="text-[8px] opacity-75">Alt: ${(closest.alt_deg || 0).toFixed(1)}° • Az: ${(closest.az_deg || 0).toFixed(1)}°</div>
         `;
     } else if (tooltip && !tooltip.classList.contains('hidden')) {
         tooltip.classList.add('hidden');
     }
 
-    renderConstellations();
+    if (prevStar !== closest) {
+        renderConstellations();
+    }
+}
+
+let constHoverRafId = null;
+function handleConstHover(e) {
+    if (constHoverRafId) return;
+    constHoverRafId = requestAnimationFrame(() => {
+        constHoverRafId = null;
+        performConstHover(e);
+    });
 }
 
 function setupConstInteractions() {
     if (constEventsBound || !cCanvas) return;
     constEventsBound = true;
+
+    let constPointerDown = { x: 0, y: 0 };
 
     cCanvas.addEventListener('mouseleave', () => {
         hoveredSkyStar = null;
@@ -1220,70 +1238,74 @@ function setupConstInteractions() {
 
     cCanvas.addEventListener('mousedown', (e) => {
         if (e.button === 0) {
-            const rect = cCanvas.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            const cx = cCanvas.width / (2 * dpr);
-            const cy = cCanvas.height / (2 * dpr);
-
-            if (constLayoutMode === 'DOME') {
-                if (hoveredSkyStar && onSelectConstCallback) {
-                    const starDoc = {
-                        id: `STAR-${hoveredSkyStar.name.toUpperCase().replace(/\s+/g, '-')}`,
-                        doc_id: 'star-navigation-handbook',
-                        name: `${hoveredSkyStar.name} (${hoveredSkyStar.constellation})`,
-                        category: 'ASTRONOMY',
-                        tags: ['CELESTIAL', 'NAV-STAR', hoveredSkyStar.constellation.toUpperCase()],
-                        chapters: [
-                            `Celestial Navigational Star: ${hoveredSkyStar.name}\nConstellation: ${hoveredSkyStar.constellation}\nApparent Magnitude: ${hoveredSkyStar.magnitude.toFixed(2)}\nAltitude: ${hoveredSkyStar.alt_deg.toFixed(1)}°\nAzimuth: ${hoveredSkyStar.az_deg.toFixed(1)}°\n\nPart of the sovereign Star Navigation & Celestial Lore Handbook. This bright beacon provides azimuth alignment and celestial wayfinding across navigational corridors.`,
-                            `Astrometry & Equatorial Coordinates:\nRight Ascension / Declination converted via local sidereal time (LST) and terrestrial latitude.\nObserved from Lat ${skyLat.toFixed(2)}°, Lon ${skyLon.toFixed(2)}°.`
-                        ],
-                        provenance: {
-                            source: "Mazzaroth Astrometry Engine",
-                            publisher: "Public Domain Astronomy Collective",
-                            license: "public-domain",
-                            retrieved_date: "2026-09-30"
-                        }
-                    };
-                    onSelectConstCallback(starDoc);
-                    return;
-                }
-            } else {
-                const mx = (e.clientX - rect.left - cx - constPanX) / constZoom;
-                const my = (e.clientY - rect.top - cy - constPanY) / constZoom;
-
-                let hit = null;
-                for (let c of CONSTELLATIONS_CATALOG) {
-                    const rx = c._renderX || 0;
-                    const ry = c._renderY || 0;
-                    if (Math.abs(mx - rx) < 60 && Math.abs(my - ry) < 50) {
-                        hit = c;
-                        break;
-                    }
-                }
-
-                if (hit) {
-                    selectedConstellation = hit;
-                    if (onSelectConstCallback) {
-                        onSelectConstCallback({
-                            id: hit.id,
-                            name: `${hit.name} (${hit.category})`,
-                            tags: [hit.season, hit.direction, "CONSTELLATION"],
-                            chapters: [
-                                hit.desc,
-                                `Chapter 2: Celestial Astrometry catalog registers ${hit.stars.length} principal stars anchored in celestial quadrant ${hit.direction}. Optimal observation zenith aligns with the ${hit.season} sky.`,
-                                `Chapter 3: Star catalog identifiers: ${hit.stars.map(s => s.name).join(', ')}.`
-                            ],
-                            connections: ["NEXUS-0"]
-                        });
-                    }
-                    renderConstellations();
-                    return;
-                }
-            }
-
+            constPointerDown = { x: e.clientX, y: e.clientY };
             isDraggingConst = true;
             constDragStartX = e.clientX - constPanX;
             constDragStartY = e.clientY - constPanY;
+        }
+    });
+
+    cCanvas.addEventListener('click', (e) => {
+        const dragDist = Math.hypot(e.clientX - constPointerDown.x, e.clientY - constPointerDown.y);
+        if (dragDist > 6) return;
+
+        const rect = cCanvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const cx = cCanvas.width / (2 * dpr);
+        const cy = cCanvas.height / (2 * dpr);
+
+        if (constLayoutMode === 'DOME') {
+            if (hoveredSkyStar && onSelectConstCallback) {
+                const starDoc = {
+                    id: `STAR-${hoveredSkyStar.name.toUpperCase().replace(/\s+/g, '-')}`,
+                    doc_id: 'star-navigation-handbook',
+                    name: `${hoveredSkyStar.name} (${hoveredSkyStar.constellation})`,
+                    category: 'ASTRONOMY',
+                    tags: ['CELESTIAL', 'NAV-STAR', hoveredSkyStar.constellation.toUpperCase()],
+                    chapters: [
+                        `Celestial Navigational Star: ${hoveredSkyStar.name}\nConstellation: ${hoveredSkyStar.constellation}\nApparent Magnitude: ${(hoveredSkyStar.magnitude || 0).toFixed(2)}\nAltitude: ${(hoveredSkyStar.alt_deg || 0).toFixed(1)}°\nAzimuth: ${(hoveredSkyStar.az_deg || 0).toFixed(1)}°\n\nPart of the sovereign Star Navigation & Celestial Lore Handbook. This bright beacon provides azimuth alignment and celestial wayfinding across navigational corridors.`,
+                        `Astrometry & Equatorial Coordinates:\nRight Ascension / Declination converted via local sidereal time (LST) and terrestrial latitude.\nObserved from Lat ${skyLat.toFixed(2)}°, Lon ${skyLon.toFixed(2)}°.`
+                    ],
+                    provenance: {
+                        source: "Mazzaroth Astrometry Engine",
+                        publisher: "Public Domain Astronomy Collective",
+                        license: "public-domain",
+                        retrieved_date: "2026-09-30"
+                    }
+                };
+                onSelectConstCallback(starDoc);
+            }
+        } else {
+            const mx = (e.clientX - rect.left - cx - constPanX) / constZoom;
+            const my = (e.clientY - rect.top - cy - constPanY) / constZoom;
+
+            let hit = null;
+            for (let c of CONSTELLATIONS_CATALOG) {
+                const rx = c._renderX || 0;
+                const ry = c._renderY || 0;
+                if (Math.abs(mx - rx) < 60 && Math.abs(my - ry) < 50) {
+                    hit = c;
+                    break;
+                }
+            }
+
+            if (hit) {
+                selectedConstellation = hit;
+                if (onSelectConstCallback) {
+                    onSelectConstCallback({
+                        id: hit.id,
+                        name: `${hit.name} (${hit.category})`,
+                        tags: [hit.season, hit.direction, "CONSTELLATION"],
+                        chapters: [
+                            hit.desc,
+                            `Chapter 2: Celestial Astrometry catalog registers ${hit.stars.length} principal stars anchored in celestial quadrant ${hit.direction}. Optimal observation zenith aligns with the ${hit.season} sky.`,
+                            `Chapter 3: Star catalog identifiers: ${hit.stars.map(s => s.name).join(', ')}.`
+                        ],
+                        connections: ["NEXUS-0"]
+                    });
+                }
+                renderConstellations();
+            }
         }
     });
 
@@ -1913,6 +1935,9 @@ function teardownMapLibre() {
     maplibreInstance = null;
     maplibreActive = false;
     window.__maplibre = null;
+    const cont = document.getElementById('maplibre-container');
+    if (cont) cont.classList.add('hidden');
+    if (mCanvas) mCanvas.classList.remove('hidden');
     const attr = document.getElementById('map-attribution');
     if (attr) attr.classList.add('hidden');
 }
@@ -2147,7 +2172,11 @@ async function mountMapLibre(file) {
         window.__maplibre = null;
         maplibreActive = false;
         activeRegion = null;
+        const cont = document.getElementById('maplibre-container');
+        if (cont) cont.classList.add('hidden');
+        if (mCanvas) mCanvas.classList.remove('hidden');
         renderRegionList();
+        renderMap();
     }
 }
 

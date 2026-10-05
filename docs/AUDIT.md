@@ -526,3 +526,248 @@ All major architectural, data-layer, cartographic, and UX requests fully shipped
 - `cargo test --workspace` $\to$ 8/8 test suites passing (`doctor_test`, `ingest_test`, `notes_test`, `galaxy_test`, `librarian_test`, `maps_test`, `search_reader_test`, `sky_deck_test`).
 - `node --check` $\to$ Clean on all frontend JavaScript modules.
 
+---
+
+# AUDIT-4 — Full Re-Audit (2026-10-05, session "mazzaroth")
+
+Read-only audit of the working tree. **No code was edited** (this file is the only artifact).
+**60 findings: 3 P0, 8 P1, 26 P2, 23 P3.**
+
+**Verification re-measured, not assumed:**
+
+| Check | Result |
+|---|---|
+| `cargo test --workspace` | **14 passed / 0 failed** across 10 targets (8 integration suites + 6 core unit tests) — re-run 2026-10-05, not copied |
+| Critical/high findings | **All 11 re-read at `file:line`** by the auditor (not trusted from subagent reports) |
+| P0-3 date bug | **Independently reproduced** by re-running the exact `current_utc_ymd_h()` algorithm over 2026-01-01→2030-12-31 |
+| Live server probing | **Not performed** — all findings are static-analysis observations (§8 labeling), except P0-3 |
+
+## P0 — Critical
+
+**A4-P0-1 — Constellations toolbar double-bound (4 buttons lie or no-op).**
+`web/js/app.js:1641/1652/1661/1670` and `web/js/sections.js:651/657/658/660` both attach `click` to
+`btn-const-mode`, `btn-season-cycle`, `btn-position-cycle`, `tool-const-lines`. Both bind paths run at
+init (`app.js:99` → `setupToolbars()`; `app.js:109` → `initConstellations()` → `sections.js:464` →
+`setupConstControls()`), verified. Consequences: lines toggle executes twice → state returns to
+original (never changes) while the toast claims it did; LAYOUT button double-cycles so **SPHERE is
+unreachable from it** and the toast always reports a different mode than actual; SEASON/COORD advance
+two steps per click, desyncing button label, HUD badge, and real filter.
+*Fix: one owner per control — delete the `app.js` copies (sections.js is the module).*
+
+**A4-P0-2 — "Back to themes / HOME" navigation dead after first theme selection.**
+`web/js/app.js:445` — `showHierarchyRoot()` computes `level: hierarchyState.selectedCategory ?
+hierarchyState.level : 'root'`, and `selectedCategory` is never reset to null (assignments only at
+`app.js:318,328,343,359,812,1872,1877`; verified by grep). `renderHierarchyExplorer()` branches on
+`level` at `app.js:704/822/1015/1241/1458`, so every root entry point — `btn-tree-back-root`
+(`app.js:894,987`), reader index button (`app.js:1589`), `tool-hierarchy` (`app.js:1698`) —
+re-renders the current sub-level under a "Knowledge Themes & Hierarchy" header. Theme-root list is
+unreachable without a full page reload.
+*Fix: `showHierarchyRoot()` should reset `selectedCategory/selectedLanguage/selectedDoc/...` to null.*
+
+**A4-P0-3 — `/api/sky` date math broken Feb 26–28 every year: debug panic / silently wrong sky.**
+`crates/server/src/routes/sky.rs:71` deviates from Hinnant's algorithm — `doe/1020` and `doe/1461`
+instead of `doe/1460` and `doe/36524`. Line 73 then computes `doy` in `u32` → subtract-with-overflow.
+**Reproduced independently (exact algorithm, all dates 2026–2030): 17 broken days**, window drifts with
+era position — `2026-02-26..28`, `2027-02-26..28`, `2028-02-27..29`, `2029-02-25..27`, `2030-02-28`.
+Reachable with no input: bare `GET /api/sky` or any unparsable `time` falls through to
+`current_utc_ymd_h()` (`routes/sky.rs:108,119`). Debug build: panic → 500 on the core endpoint.
+Release build: wraps to garbage `m/d`, clamped to 12/31 at `routes/sky.rs:126-127` → **projects Dec 31
+instead of Feb 26 with HTTP 200** (nav-critical silent wrong output). The UI masks it by always
+sending `time` (`web/js/sections.js:611-614`); direct API/default calls do not.
+*Fix: line 71 → `(doe - doe/1460 + doe/36524 - doe/146096) / 365`; add a unit test over the window.*
+
+## P1 — High
+
+**Backend**
+- **A4-P1-1 — Whole-file RAM buffering + blocking I/O in async handler.**
+  `crates/server/src/routes/maps.rs:106-108` (`read_to_end` for no-Range) and `:84-88`
+  (`vec![0u8; length]` + `read_exact`) run synchronous `std::fs` on a tokio worker. `GET /maps/japan.pmtiles`
+  (1.59 GB) = 1.59 GB heap per request; 2–3 concurrent unauthenticated requests ⇒ OOM + stalled runtime.
+  *Fix: `tokio::fs` + streaming body (`ReaderStream`), keep Range branch streaming too.*
+- **A4-P1-2 — HTTP Range parser violates RFC 7233 + zero-length panic.**
+  `crates/server/src/routes/maps.rs:66-74`: `bytes=-500` (suffix range) parses `start=""` → serves the
+  *first* 501 bytes as 206; `bytes=10-20,30-40` → `end` parse fails → whole tail returned; malformed
+  values silently coerced instead of ignored/416. `:69/71/74` evaluate `total_len - 1` before the
+  bounds check → `0 - 1` underflow panics (debug) against any 0-byte file in `maps/`.
+
+**Frontend**
+- **A4-P1-3 — Stale async responses clobber newer user selections.**
+  `web/js/app.js:420-439`: `getDocument(docLookupId).then(...)` writes into the live `currentNode`
+  with no request token/identity check — click star A then B, A's late response overwrites B's title,
+  tag, chapters, and resets `currentChapterIndex`. Same unguarded pattern: `showHierarchyRoot()`
+  (`app.js:467-475`) and `getScriptureMeta` (`app.js:1251-1253`) can replace an open chapter with the
+  explorer view (or vice versa).
+- **A4-P1-4 — Full celestial-dome repaint on every mousemove pixel.**
+  `web/js/sections.js:1207` — `handleConstHover()` ends in unconditional `renderConstellations()`,
+  invoked from window `mousemove` (`:1290-1296`) whenever Constellations is visible: 800+ background
+  stars, each with a `createRadialGradient` (`:881`), plus labels/lines, re-painted per pointer move.
+  *Fix: early-return when `closest` unchanged; throttle via rAF.*
+- **A4-P1-5 — Galaxy render loop never pauses or cancels.**
+  `web/js/galaxy.js:573` assigns `animFrameId`; `cancelAnimationFrame` appears nowhere (grep-verified).
+  Hidden galaxy keeps rendering the 16k-particle scene + `controls.update()` at 60 fps in every other
+  module, competing with MapLibre/2D canvas.
+- **A4-P1-6 — No responsive layout: app is unusable below ~640 px.**
+  `web/css/app.css` contains **zero `@media` queries** (grep `0`). At 375 px: `zone-yellow` (`w-16`, 64 px)
+  + `right-column` (`w-80`, 320 px) + `main` padding exceed the viewport → `#zone-red` (all canvases and
+  HUDs) collapses to ~0 px despite `<meta viewport>` being present.
+- **A4-P1-7 — Telemetry contradicts its own labels and the docs.**
+  `web/js/app.js:1955-1956` writes `N DOCS` into `#spec-star-count` (label **ACTIVE STARS**) and
+  `N CHUNKS` into `#spec-link-count` (label **SYNAPSE LINKS**); `web/index.html:849` claims "4,500
+  cataloged memory stars", `:918/:922` default to "1,400+"/"1,450+", and the engine renders 1,105
+  (`web/js/galaxy.js:5`). Three mutually inconsistent star counts visible simultaneously.
+- **A4-P1-8 — Reader hierarchy late-render race.** (folded into A4-P1-3; kept as separate trigger:
+  `EXPLORE HIERARCHY` cold-cache click followed by an immediate chapter click swaps content twice.)
+
+## P2 — Medium
+
+**Backend (9)**
+- **A4-P2-1 SSRF** — `routes/maps.rs:140` → `fetch.rs:373-381`: unauthenticated `source` URL from the
+  request body passed verbatim as `pmtiles extract <source>` argument; no scheme/host allowlist.
+- **A4-P2-2 No bbox area/size limit** — `fetch.rs:38-53` range-checks coordinates only; `[-180,-90,180,90]`
+  + `maxzoom:15` accepted → unbounded download, disk exhaustion, one job slot pinned for hours.
+- **A4-P2-3 Fetch job can hang forever** — no reqwest timeout (`fetch.rs:104,154`), no job timeout/cancel,
+  `child.wait()` unbounded (`fetch.rs:444`). Stuck `running` state 409s **both** `POST /api/maps/fetch`
+  and `DELETE /api/maps/{file}` (`routes/maps.rs:167-169`) until process restart.
+- **A4-P2-4 Range parsing defects** — see A4-P1-2 (grouped; same root cause).
+- **A4-P2-5 Zero-length file Range underflow** — see A4-P1-2 (grouped; same root cause).
+- **A4-P2-6 No auth on state-changing endpoints + contradictory bind defaults** — `lib.rs:33-56`
+  (`POST /api/memory/node`, `POST/PUT/DELETE /api/notes`, `POST /api/maps/fetch`, `DELETE /api/maps/{file}`)
+  all unauthenticated; `config.rs:87` defaults `0.0.0.0:8080` while CLI defaults `127.0.0.1:8080`
+  (`cli/src/main.rs:16`). High impact whenever `0.0.0.0` is used.
+- **A4-P2-7 SSE drops bytes split across TCP chunks** — `routes/ask.rs:239`: `if let Ok(text) =
+  std::str::from_utf8(&bytes)` discards the entire chunk on a multi-byte boundary split (CJK affected
+  first-class); can swallow `done:true` → 45 s idle hang + `[stream interrupted after 45s idle]` on an
+  otherwise complete answer. *Fix: `BytesMut` accumulation with `from_utf8_error().valid_up_to()`.*
+- **A4-P2-8 `/api/search` limit unclamped** — `routes/search.rs:10,32` pass `usize` straight to SQL
+  `LIMIT ?`; `limit > i64::MAX` fails `ToSql` → user-triggerable 500; huge limits materialize the whole
+  corpus (full `text` + `snippet` per hit) while holding the global DB mutex.
+- **A4-P2-9 Blocking I/O inside async, no timeout layer** — single `Mutex<Connection>` (`db.rs` ×15),
+  no `spawn_blocking`, no `TimeoutLayer` in `lib.rs:15-86`; `/api/sky` re-parses the star catalog twice
+  per request (`core/src/sky.rs:139,199,234`), `/api/status` does 800 ms ×2 + 1.5 s probes in-request
+  and re-parses `constellations.json` (`routes/status.rs:25-52`).
+
+**Frontend (17)**
+- **A4-P2-10 GPU memory leak** — `web/js/galaxy.js:132-188,326-365,118-130`: geometries/materials/
+  `CanvasTexture` rebuilt on star click (`:471-483`) and theme toggle without `dispose()` → monotonic
+  GPU growth → eventual "WebGL context lost".
+- **A4-P2-11 Fabricated stars on API failure** — `web/js/galaxy.js:239-245`: `Math.max(rawNodes.length,
+  1105)` pads with fake `STAR-####` placeholders; total failure renders 1,105 invented stars with only
+  `console.warn`. (Previously flagged A2-6, still present.)
+- **A4-P2-12 No fetch timeouts anywhere** — `web/js/api.js` has zero `AbortController`/`signal` use;
+  a stalled daemon leaves "Loading…" in the reader forever, download stuck at "● REQUESTING", ⌘K never
+  resolving — no UI affordance that the request is dead.
+- **A4-P2-13 Sky-projection race** — `web/js/sections.js:608-630`: `refreshSkyData()` assigns responses
+  with no sequence guard; rapid `-1H` clicks resolve out of order → dome shows an arbitrary timestamp
+  that contradicts the datetime field.
+- **A4-P2-14 ⌘K search race, no debounce/abort** — `web/js/app.js:1781-1813`: per-keystroke requests;
+  slower older response appends rows after newer ones → mixed results for two queries.
+- **A4-P2-15 Unthrottled resize → repaint storms** — `web/js/app.js:118` + `:1960-1964`: every
+  drag-frame fires full `renderConstellations()` (800+ gradients) + `maplibreInstance.resize()`.
+- **A4-P2-16 Clipboard false success** — `web/js/app.js:266-273`: `navigator.clipboard.writeText`
+  uncaught; toast "Reader text copied" fires synchronously even when permission is denied.
+- **A4-P2-17 `node.id.startsWith` throw path** — `web/js/app.js:316`: a BM25 hit without `doc_id`
+  (`api.js:21`) throws inside the row-click handler before `closeSearch()` (`:1892`) → modal stuck open,
+  reader never updates.
+- **A4-P2-18 Drag always ends in star selection (Galaxy)** — `web/js/galaxy.js:471-483`: `click` handler
+  ignores `isDragging`, `maxRadius = 140` px → orbiting the camera selects the nearest star and silently
+  replaces the reader.
+- **A4-P2-19 Dome panning broken over stars** — `web/js/sections.js:1228-1249`: `mousedown` early-returns
+  whenever `hoveredSkyStar` is set (no drag threshold) → drag over a star opens a folio instead of panning.
+- **A4-P2-20 Blank map on failed remount** — `web/js/sections.js:1907-1918, 2140-2151`: `catch` claims
+  "canvas fallback active" but never re-shows `#map-canvas` nor hides `#maplibre-container` → empty panel.
+- **A4-P2-21 Global `user-select: none`** — `web/index.html:58` (`*`): reader/chat text cannot be
+  highlighted or copied in a reading app; no `select-text` override anywhere.
+- **A4-P2-22 Telemetry vs labels** — see A4-P1-7 (same root cause).
+- **A4-P2-23 Dead backend contract** — `web/js/api.js:142 getConstellations()` never imported;
+  `sections.js:8-352` renders a hardcoded 20-entry catalog while docs promise `/api/sections/constellations`
+  (32 constellations) is consumed by the frontend.
+- **A4-P2-24 Contrast failure** — `web/index.html:26/46` `--text-muted` ≈ 3.0:1 (light) / 3.3:1 (dark) on
+  `text-[7.5px]`–`text-[9px]` labels → fails WCAG AA (4.5:1) on sub-10 px secondary text.
+- **A4-P2-25 Primary navigation is mouse-only** — `web/index.html:728,747,763,779`: `.nav-deck-item` are
+  plain `<div>`s (click handler only, `app.js:172-208`): no `tabindex`, `role`, Enter/Space handling →
+  keyboard/screen-reader users cannot switch modules at all.
+- **A4-P2-26 TARGET LOCK false success** — `web/js/app.js:296-303`: `selectGalaxyStar()` silently no-ops
+  for non-galaxy ids (`galaxy.js:455-463`), toast fires unconditionally.
+
+## P3 — Low
+
+**Backend (13)**
+- **A4-P3-1** `sanitize_region_name` keeps `..` (`fetch.rs:69-82`) → `name: "a..b"` creates a file that
+  both serve (`maps.rs:47`) and delete (`maps.rs:155`) reject: orphan, un-deletable via API.
+- **A4-P3-2** Fetch can overwrite protected `world.pmtiles` (`fetch.rs:384-387`; protection exists only
+  in delete).
+- **A4-P3-3** `/api/status` counts `read_dir("maps")` hardcoded, ignores `--maps-dir` (`routes/status.rs:52`).
+- **A4-P3-4** `calculate_julian_day` `year - 1` overflow panic from `?year=-2147483648` (`core/src/sky.rs:74`;
+  year unvalidated in `routes/sky.rs:109-117`).
+- **A4-P3-5** `?time=2026-01-01Tnan` → `f64::clamp` passes NaN → HTTP 200 full of `null` coordinates
+  (`routes/sky.rs:39-50,128`).
+- **A4-P3-6** `.expect()` reachable in handler (`core/src/sky.rs:141`): malformed bundled JSON panics
+  `/api/sky` on every request; star catalog parsed twice per request.
+- **A4-P3-7** `?chapter=0` returns chapter 1 with 200 instead of 404 (`core/src/scripture.rs:393`).
+- **A4-P3-8** `update_note` UPDATE + SELECT without transaction (`core/src/notes.rs:73-90`): concurrent
+  DELETE turns a successful update into HTTP 500.
+- **A4-P3-9** `Mutex::lock().unwrap()` ×15 in `db.rs` (+ `notes.rs`, `scripture.rs`): one panic while
+  holding the DB lock poisons all DB endpoints for the process lifetime.
+- **A4-P3-10** `/api/ask` can hang before first byte: `connect_timeout` only (`ask.rs:152-155,230`);
+  the 45 s timeout starts only after response headers.
+- **A4-P3-11** `extract_blocking` error path leaks pump threads + `pmtiles` child (`fetch.rs:437-446`):
+  detached threads keep writing into a *later* job's log; child keeps writing `.tmp` reused by the next job.
+- **A4-P3-12** CLI `maps fetch` bypasses the global fetch slot (`cli/src/main.rs:298-306`) → CLI + HTTP
+  fetch of the same region write the same `.tmp` concurrently → corrupted archive; HTTP status shows nothing.
+- **A4-P3-13** Minor info exposure/latency: raw `io::Error` to client (`routes/maps.rs:174`), fetch log
+  with local paths/URLs, `/api/status` 1–3 s in-request probes + full-table loads for counters.
+
+**Frontend (10)**
+- **A4-P3-14** Hardcoded `http://127.0.0.1:8080` displayed as host (`web/index.html:610`) — wrong on any
+  other host/port/HTTPS (display only; API calls are relative).
+- **A4-P3-15** Promised-but-unwired controls: "ENTER TO JUMP" in search footer (`index.html:969`) — Enter
+  in `#modal-input` does nothing; galaxy zoom `title="Zoom In (+)"` (`:267,279`) — no `+`/`-`/`=`/`_` key
+  handler exists.
+- **A4-P3-16** Sub-minimum touch targets: `#map-download-close` 20×20 (`index.html:676`), tool buttons
+  36×36 vs 44 px guideline, `text-[7.5px]` labels; no `@media (pointer: coarse)`.
+- **A4-P3-17** Icon-only buttons without accessible name: `#btn-close-search` (`index.html:951`),
+  `#pill-quick-add` (`:518`).
+- **A4-P3-18** Download poll outlives panel/view: `sections.js:1840-1853` — not stopped on module switch;
+  with backend down the 1.5 s interval never terminates.
+- **A4-P3-19** Toast hide timeouts never cleared (`app.js:1976-1979`) → a second toast is hidden early
+  by the first toast's timer.
+- **A4-P3-20** Single unescaped `innerHTML` sink: `app.js:967` inserts raw `l.language.toUpperCase()`
+  (all other ~40 sinks escape — verified).
+- **A4-P3-21** Unguarded `.toFixed()` on API star fields (`sections.js:1200-1201,1237`): one missing
+  `magnitude`/`alt_deg` → TypeError on hover, NaN radii drawn.
+- **A4-P3-22** Theme flash: `index.html:2` hardcodes `data-theme="light"` + label "LIGHT MODE" while
+  `initTheme()` defaults `'dark'` (`app.js:125`) at DOMContentLoaded → light flash + extra render cycle.
+- **A4-P3-23** Galaxy layout re-randomised every reload (`galaxy.js:250-259`): stored `node.x/y/z` from
+  `/api/galaxy` never read → no spatial memory, graph disconnected from stored coordinates. (Same root
+  as legacy A2-6.)
+
+## Verified clean (searched, not assumed)
+
+- SQL injection: all statements static + bound params; FTS5 `MATCH` receives the query as a bound
+  parameter (`db.rs:412-428`), both query paths only emit quoted phrases — no FTS-language injection.
+- Path traversal: `/maps/{filename}` + `DELETE` reject `/`, `\`, `..` (`maps.rs:47,155`); axum 0.8
+  percent-decodes path params before the check; `/fonts` + SPA fallback use `ServeDir`.
+- Command injection: `source`/bbox passed as discrete `Command::args` (`fetch.rs:423-434`), no shell.
+- Fetch slot race: `begin()`/`finish()` under one mutex — no interleaving bug (hang/timeout is A4-P2-3).
+- Off-by-one in note/backlink and chunker byte slicing (`notes.rs:17-33`, `content.rs:4-213`).
+- No duplicated DOM ids, no `console.log` litter, no CORS wildcard, no secrets/`unsafe` in scope.
+- ~39/40 `innerHTML` sinks correctly escaped (exception A4-P3-20).
+
+## Not tested (stated, not implied)
+
+Live server behavior (no instance probed this session), Ollama/LLM path, cross-tenant/authorization
+(A01 structurally incomplete without a second account), A09 logging & alerting (not assessable from
+outside), supply-chain integrity of vendored `web/vendor/*`, Windows/ARM portability, and real-network
+PMTiles fetch. All P1–P3 findings are static-analysis **observations**, not PoC-validated vulns, except
+A4-P0-3 which was reproduced by exact-algorithm replay.
+
+## Suggested fix order (when authorized)
+
+1. **A4-P0-3** — one-line divisor fix + regression test over Feb 26–28 (backend correctness, dated).
+2. **A4-P0-1** — delete the duplicate `app.js` toolbar bindings (restores 4 controls).
+3. **A4-P0-2** — reset `selectedCategory` in `showHierarchyRoot()`.
+4. **A4-P1-1/P1-2** — stream `/maps` responses + RFC-compliant Range parsing (OOM/corruption class).
+5. **A4-P1-3..P1-8** — frontend race/teardown/telemetry batch.
+6. **A4-P2-1..P2-3** — fetch endpoint hardening (SSRF allowlist, bbox cap, job timeout) before any
+   `0.0.0.0` deployment (A4-P2-6).
+

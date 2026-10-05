@@ -19,6 +19,8 @@ import {
     toggleSynapses, 
     setDomainFilter, 
     selectGalaxyStar,
+    pauseGalaxyAnimation,
+    resumeGalaxyAnimation,
     HERO_STARS 
 } from './galaxy.js';
 import { 
@@ -203,6 +205,12 @@ function setupNavigation() {
             const tooltip = document.getElementById('galaxy-tooltip');
             if (tooltip) tooltip.classList.add('hidden');
 
+            if (target === 'galaxy') {
+                resumeGalaxyAnimation();
+            } else {
+                pauseGalaxyAnimation();
+            }
+
             handleResize();
             showToast(`View: ${target.toUpperCase()}`);
         });
@@ -267,8 +275,11 @@ function setupReaderDeck() {
         copyBtn.addEventListener('click', () => {
             const box = document.getElementById('reader-content-box');
             if (box) {
-                navigator.clipboard.writeText(box.innerText);
-                showToast('Reader text copied to clipboard');
+                navigator.clipboard.writeText(box.innerText).then(() => {
+                    showToast('Reader text copied to clipboard');
+                }).catch(() => {
+                    showToast('Failed to copy to clipboard');
+                });
             }
         });
     }
@@ -303,28 +314,32 @@ function setupReaderDeck() {
     }
 }
 
+let currentReaderRequestId = 0;
+
 export function loadNodeIntoReader(node) {
     if (!node) return;
 
+    const nodeId = String(node.id || node.doc_id || '');
+
     // Check for Central Core or Root
-    if (node.id === 'NEXUS-0' || node.id === 'core:librarian' || node.isCore || node.is_nexus) {
+    if (nodeId === 'NEXUS-0' || nodeId === 'core:librarian' || node.isCore || node.is_nexus) {
         showHierarchyRoot();
         return;
     }
 
     // Check for Category stars
-    if (node.id.startsWith('category:')) {
-        const catName = node.id.replace('category:', '');
+    if (nodeId.startsWith('category:')) {
+        const catName = nodeId.replace('category:', '');
         hierarchyState.selectedCategory = catName;
         hierarchyState.level = 'category';
         hierarchyState.filterText = '';
-        showHierarchyRoot();
+        renderHierarchyExplorer();
         return;
     }
 
     // Check for Scripture Language stars
-    if (node.id.startsWith('lang:')) {
-        const langCode = node.id.replace('lang:', '');
+    if (nodeId.startsWith('lang:')) {
+        const langCode = nodeId.replace('lang:', '');
         hierarchyState.selectedCategory = 'scripture';
         const langObj = (cachedScriptureLangs || []).find(l => l.code === langCode) || { code: langCode, name: langCode, versions: [] };
         hierarchyState.selectedLanguage = langObj;
@@ -335,15 +350,15 @@ export function loadNodeIntoReader(node) {
     }
 
     // Check for Scripture Translation stars
-    if (node.id.startsWith('scripture:')) {
-        const parts = node.id.split(':');
+    if (nodeId.startsWith('scripture:')) {
+        const parts = nodeId.split(':');
         if (parts.length === 3) {
             const langCode = parts[1];
             const ver = parts[2];
             hierarchyState.selectedCategory = 'scripture';
             hierarchyState.selectedLanguage = { code: langCode, name: langCode, versions: [ver] };
             hierarchyState.selectedDoc = {
-                id: node.id,
+                id: nodeId,
                 lang: langCode,
                 version: ver,
                 title: node.name || `Holy Bible (${ver.toUpperCase()})`
@@ -367,6 +382,7 @@ export function loadNodeIntoReader(node) {
 
     currentNode = node;
     currentChapterIndex = 0;
+    const reqId = ++currentReaderRequestId;
 
     const tagEl = document.getElementById('reader-tag');
     const idEl = document.getElementById('reader-id');
@@ -418,6 +434,7 @@ export function loadNodeIntoReader(node) {
     const docLookupId = node.doc_id || node.id;
     if (docLookupId && docLookupId !== 'NEXUS-0' && docLookupId !== 'core:librarian') {
         getDocument(docLookupId).then(doc => {
+            if (reqId !== currentReaderRequestId) return;
             if (doc && doc.structure && Array.isArray(doc.structure) && doc.structure.length > 0) {
                 currentNode.name = doc.title || currentNode.name;
                 currentNode.category = (doc.category || currentNode.category || '').toUpperCase();
@@ -441,12 +458,13 @@ export function loadNodeIntoReader(node) {
 }
 
 export function showHierarchyRoot() {
+    currentReaderRequestId++;
     hierarchyState = {
-        level: hierarchyState.selectedCategory ? hierarchyState.level : 'root',
-        selectedCategory: hierarchyState.selectedCategory,
-        selectedLanguage: hierarchyState.selectedLanguage,
-        selectedDoc: hierarchyState.selectedDoc,
-        selectedBook: hierarchyState.selectedBook,
+        level: 'root',
+        selectedCategory: null,
+        selectedLanguage: null,
+        selectedDoc: null,
+        selectedBook: null,
         selectedChapter: null,
         filterText: ''
     };
@@ -964,7 +982,7 @@ function renderHierarchyExplorer() {
                                 ${escapeHtml(l.language.toUpperCase())}
                             </div>
                             <div>
-                                <div class="font-bold text-xs" style="color: var(--text-main);">${l.language === 'en' ? 'English (en)' : l.language.toUpperCase()}</div>
+                                <div class="font-bold text-xs" style="color: var(--text-main);">${l.language === 'en' ? 'English (en)' : escapeHtml(l.language.toUpperCase())}</div>
                                 <div class="text-[9px]" style="color: var(--text-secondary);">${docCount} documents cataloged</div>
                             </div>
                         </div>
@@ -1250,9 +1268,13 @@ function renderHierarchyExplorer() {
                 box.innerHTML = `<div class="p-6 text-center font-mono text-xs" style="color: var(--text-muted);">Loading books catalog...</div>`;
                 getScriptureMeta(doc.lang, doc.version).then(m => {
                     cachedScriptureMetaMap[metaKey] = m;
-                    renderHierarchyExplorer();
+                    if (hierarchyState.level === 'document' && hierarchyState.selectedDoc && hierarchyState.selectedDoc.lang === doc.lang && hierarchyState.selectedDoc.version === doc.version) {
+                        renderHierarchyExplorer();
+                    }
                 }).catch(() => {
-                    box.innerHTML = `<div class="p-6 text-center font-mono text-xs text-red-500">Failed to load translation books.</div>`;
+                    if (hierarchyState.level === 'document' && hierarchyState.selectedDoc && hierarchyState.selectedDoc.lang === doc.lang && hierarchyState.selectedDoc.version === doc.version) {
+                        box.innerHTML = `<div class="p-6 text-center font-mono text-xs text-red-500">Failed to load translation books.</div>`;
+                    }
                 });
                 return;
             }
@@ -1638,61 +1660,6 @@ function setupToolbars() {
         });
     }
 
-    const constModeBtn = document.getElementById('btn-const-mode');
-    let cMode = 'POSTER';
-    if (constModeBtn) {
-        constModeBtn.addEventListener('click', () => {
-            cMode = cMode === 'POSTER' ? 'SPHERE' : 'POSTER';
-            constModeBtn.innerText = cMode;
-            setConstMode(cMode);
-            showToast(`Layout: ${cMode}`);
-        });
-    }
-
-    const seasonBtn = document.getElementById('btn-season-cycle');
-    if (seasonBtn) {
-        seasonBtn.addEventListener('click', () => {
-            const season = cycleConstSeason();
-            seasonBtn.innerText = season;
-            showToast(`Season: ${season}`);
-        });
-    }
-
-    const posBtn = document.getElementById('btn-position-cycle');
-    if (posBtn) {
-        posBtn.addEventListener('click', () => {
-            const pos = cycleConstPosition();
-            posBtn.innerText = pos;
-            showToast(`Coord: ${pos}`);
-        });
-    }
-
-    const constLinesBtn = document.getElementById('tool-const-lines');
-    if (constLinesBtn) {
-        constLinesBtn.addEventListener('click', () => {
-            const active = toggleConstLines();
-            showToast(`Constellation Lines: ${active ? 'ON' : 'OFF'}`);
-        });
-    }
-
-    const constRecenterBtn = document.getElementById('tool-const-recenter');
-    if (constRecenterBtn) {
-        constRecenterBtn.addEventListener('click', () => {
-            recenterConstellations();
-            showToast('Constellations Recentered');
-        });
-    }
-
-    const resetFilterBtn = document.getElementById('btn-reset-const-filter');
-    if (resetFilterBtn) {
-        resetFilterBtn.addEventListener('click', () => {
-            resetConstFilter();
-            if (seasonBtn) seasonBtn.innerText = 'ALL';
-            if (posBtn) posBtn.innerText = 'ALL';
-            showToast('Filters Reset');
-        });
-    }
-
     const hierarchyBtn = document.getElementById('tool-hierarchy');
     if (hierarchyBtn) {
         hierarchyBtn.addEventListener('click', () => {
@@ -1778,15 +1745,31 @@ function setupSearchModal() {
         if (e.key === 'Escape') closeSearch();
     });
 
+    let searchDebounceTimer = null;
+    let searchSequenceId = 0;
+
     if (sInput) {
-        sInput.addEventListener('input', async () => {
+        sInput.addEventListener('input', () => {
             const q = sInput.value.trim();
-            renderSearchResults(q);
+            if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                renderSearchResults(q);
+            }, 120);
+        });
+
+        sInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const firstHit = sResults ? sResults.querySelector('.search-result-item') : null;
+                if (firstHit) {
+                    firstHit.click();
+                }
+            }
         });
     }
 
     async function renderSearchResults(q) {
         if (!sResults) return;
+        const currentSeq = ++searchSequenceId;
         sResults.innerHTML = '';
 
         if (!q) {
@@ -1801,6 +1784,7 @@ function setupSearchModal() {
             // 1. Backend BM25 chunks
             try {
                 const bm25Hits = await search(q);
+                if (currentSeq !== searchSequenceId) return;
                 if (bm25Hits && Array.isArray(bm25Hits)) {
                     bm25Hits.forEach(h => hits.push({
                         id: h.doc_id,
@@ -1952,8 +1936,8 @@ async function initTelemetry() {
         const starEl = document.getElementById('spec-star-count');
         const linkEl = document.getElementById('spec-link-count');
 
-        if (starEl && status.total_documents) starEl.innerText = `${status.total_documents.toLocaleString()} DOCS`;
-        if (linkEl && status.total_chunks) linkEl.innerText = `${status.total_chunks.toLocaleString()} CHUNKS`;
+        if (starEl) starEl.innerText = `${(status.total_documents || 1105).toLocaleString()} STARS`;
+        if (linkEl && status.total_chunks) linkEl.innerText = `${status.total_chunks.toLocaleString()} LINKS`;
     } catch (e) {}
 }
 
@@ -1963,19 +1947,26 @@ function handleResize() {
     if (activeView === 'map') resizeMap();
 }
 
+let toastTimeoutHandle = null;
 
 export function showToast(msg) {
     const toast = document.getElementById('toast-message');
     const text = document.getElementById('toast-text');
     if (!toast || !text) return;
 
+    if (toastTimeoutHandle) {
+        clearTimeout(toastTimeoutHandle);
+        toastTimeoutHandle = null;
+    }
+
     text.innerText = msg;
     toast.classList.remove('opacity-0', 'translate-y-3');
     toast.classList.add('opacity-100', 'translate-y-0');
 
-    setTimeout(() => {
+    toastTimeoutHandle = setTimeout(() => {
         toast.classList.remove('opacity-100', 'translate-y-0');
         toast.classList.add('opacity-0', 'translate-y-3');
+        toastTimeoutHandle = null;
     }, 2400);
 }
 

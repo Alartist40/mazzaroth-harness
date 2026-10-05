@@ -58,7 +58,7 @@ async fn test_sky_deck_and_tree_endpoints() {
     assert!(sections.iter().any(|s| s["id"] == "librarian"));
     assert!(sections.iter().any(|s| s["id"] == "maps"));
 
-    // 2. Test /api/sky default
+    // 2. Test /api/sky default with time parameter
     let sky_req = Request::builder().uri("/api/sky?lat=35.6762&lon=139.6503&time=2026-09-30T21:00:00Z").body(Body::empty()).unwrap();
     let sky_res = app.clone().oneshot(sky_req).await.unwrap();
     assert_eq!(sky_res.status(), StatusCode::OK);
@@ -68,6 +68,24 @@ async fn test_sky_deck_and_tree_endpoints() {
     assert_eq!(sky_val["lon"], 139.6503);
     assert!(sky_val["visible_stars"].as_array().unwrap().len() > 10);
     assert!(sky_val["cardinal_bearings"].as_array().unwrap().len() == 8);
+
+    // 2b. Test bare /api/sky (tests current_utc_ymd_h without input parameters)
+    let bare_req = Request::builder().uri("/api/sky").body(Body::empty()).unwrap();
+    let bare_res = app.clone().oneshot(bare_req).await.unwrap();
+    assert_eq!(bare_res.status(), StatusCode::OK);
+    let bare_bytes = bare_res.into_body().collect().await.unwrap().to_bytes();
+    let bare_val: serde_json::Value = serde_json::from_slice(&bare_bytes).unwrap();
+    assert!(bare_val["visible_stars"].as_array().is_some());
+
+    // 2c. Test Feb 26-28 dates across 2026-2030 (regression test for Hinnant date algorithm)
+    for year in 2026..=2030 {
+        for day in 26..=28 {
+            let uri = format!("/api/sky?lat=35.6762&lon=139.6503&time={:04}-02-{:02}T12:00:00Z", year, day);
+            let req = Request::builder().uri(&uri).body(Body::empty()).unwrap();
+            let res = app.clone().oneshot(req).await.unwrap();
+            assert_eq!(res.status(), StatusCode::OK, "Failed on date {}-02-{}", year, day);
+        }
+    }
 
     // 3. Test /api/tree returns categorized hierarchy
     let tree_req = Request::builder().uri("/api/tree").body(Body::empty()).unwrap();

@@ -29,7 +29,10 @@ pub async fn handle_search(
     State(state): State<ServerState>,
     Query(query): Query<SearchQuery>,
 ) -> Result<Json<Vec<SearchHitResponse>>, StatusCode> {
-    let limit = query.limit.unwrap_or_else(|| state.config.profile.top_k());
+    let limit = query
+        .limit
+        .unwrap_or_else(|| state.config.profile.top_k())
+        .clamp(1, 100);
     match state.db.search(&query.q, limit) {
         Ok(hits) => {
             let resp = hits

@@ -19,6 +19,7 @@ futures-util = { workspace = true }
 async-stream = { workspace = true }
 uuid = { workspace = true }
 tower = { workspace = true }
+tokio-util = { workspace = true }
 
 [dev-dependencies]
 tower = { workspace = true }

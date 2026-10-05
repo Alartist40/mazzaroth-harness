@@ -115,8 +115,28 @@ function createGlowTexture(isSparkle = false) {
     return tex;
 }
 
+function disposeMesh(obj) {
+    if (!obj) return;
+    if (obj.geometry) obj.geometry.dispose();
+    if (obj.material) {
+        if (Array.isArray(obj.material)) {
+            obj.material.forEach(m => {
+                if (m.map) m.map.dispose();
+                m.dispose();
+            });
+        } else {
+            if (obj.material.map) obj.material.map.dispose();
+            obj.material.dispose();
+        }
+    }
+}
+
 function buildCore() {
-    if (coreMesh) galaxyGroup.remove(coreMesh);
+    if (coreMesh) {
+        galaxyGroup.remove(coreMesh);
+        disposeMesh(coreMesh);
+        coreMesh = null;
+    }
 
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const coreColor = isDark ? 0xffffff : 0x0a0a0c;
@@ -130,7 +150,11 @@ function buildCore() {
 }
 
 function buildParticleDisc() {
-    if (pointsMesh) galaxyGroup.remove(pointsMesh);
+    if (pointsMesh) {
+        galaxyGroup.remove(pointsMesh);
+        disposeMesh(pointsMesh);
+        pointsMesh = null;
+    }
 
     const count = densitySetting === 'high' ? 16000 : (densitySetting === 'med' ? 9000 : 4500);
     const positions = new Float32Array(count * 3);
@@ -324,7 +348,11 @@ function getDomainColorObj(domain, isDark) {
 }
 
 function updateStarsGeometry() {
-    if (starsMesh) galaxyGroup.remove(starsMesh);
+    if (starsMesh) {
+        galaxyGroup.remove(starsMesh);
+        disposeMesh(starsMesh);
+        starsMesh = null;
+    }
 
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const count = interactiveStars.length;
@@ -365,7 +393,11 @@ function updateStarsGeometry() {
 }
 
 function rebuildSynapseLines() {
-    if (linesMesh) galaxyGroup.remove(linesMesh);
+    if (linesMesh) {
+        galaxyGroup.remove(linesMesh);
+        disposeMesh(linesMesh);
+        linesMesh = null;
+    }
     if (!showSynapseLines || !selectedNode) return;
 
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -466,14 +498,22 @@ function setupCanvasEvents() {
     if (!gCanvas) return;
 
     const tooltip = document.getElementById('galaxy-tooltip');
+    let pointerDownPos = { x: 0, y: 0 };
 
-    // Click anywhere to select closest star
+    gCanvas.addEventListener('pointerdown', (e) => {
+        pointerDownPos = { x: e.clientX, y: e.clientY };
+    });
+
+    // Click anywhere to select closest star (ignored if dragging camera)
     gCanvas.addEventListener('click', (e) => {
+        const dragDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+        if (dragDist > 6) return;
+
         const rect = gCanvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
-        const closest = findClosestStarToScreen(mouseX, mouseY, rect.width, rect.height);
+        const closest = findClosestStarToScreen(mouseX, mouseY, rect.width, rect.height, 48);
         if (closest) {
             selectedNode = closest;
             if (onSelectNodeCallback) onSelectNodeCallback(selectedNode);
@@ -535,7 +575,7 @@ function setupCanvasEvents() {
     }
 }
 
-function findClosestStarToScreen(screenX, screenY, width, height, maxRadius = 140) {
+function findClosestStarToScreen(screenX, screenY, width, height, maxRadius = 48) {
     if (!camera || interactiveStars.length === 0) return null;
 
     let closest = null;
@@ -564,7 +604,21 @@ function findClosestStarToScreen(screenX, screenY, width, height, maxRadius = 14
     return closest;
 }
 
+export function pauseGalaxyAnimation() {
+    if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+    }
+}
+
+export function resumeGalaxyAnimation() {
+    if (!animFrameId) {
+        startAnimationLoop();
+    }
+}
+
 function startAnimationLoop() {
+    if (animFrameId) cancelAnimationFrame(animFrameId);
     function animate() {
         if (controls) controls.update();
         if (renderer && scene && camera) {

@@ -68,7 +68,7 @@ fn current_utc_ymd_h() -> (i32, u32, u32, f64) {
     let z = days_since_epoch + 719468;
     let era = (if z >= 0 { z } else { z - 146096 }) / 146097;
     let doe = (z - era * 146097) as u32;
-    let yoe = (doe - doe / 1020 + doe / 1461 - doe / 146096) / 365;
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
     let y = (yoe as i64 + era * 400) as i32;
     let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
     let mp = (5 * doy + 2) / 153;

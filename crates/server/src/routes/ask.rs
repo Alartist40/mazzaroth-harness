@@ -230,37 +230,39 @@ Your Conversational Purpose:\n\
         match client.post(&ollama_chat_url).json(&req_body).send().await {
             Ok(resp) if resp.status().is_success() => {
                 let mut byte_stream = resp.bytes_stream();
-                let mut buffer = String::new();
+                let mut raw_byte_buffer = Vec::new();
                 let mut is_completed = false;
 
                 loop {
                     match tokio::time::timeout(std::time::Duration::from_secs(45), byte_stream.next()).await {
                         Ok(Some(Ok(bytes))) => {
-                            if let Ok(text) = std::str::from_utf8(&bytes) {
-                                buffer.push_str(text);
-                                while let Some(pos) = buffer.find('\n') {
-                                    let line = buffer[..pos].trim().to_string();
-                                    buffer = buffer[pos + 1..].to_string();
-                                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(&line) {
-                                        let token = val["message"]["content"]
-                                            .as_str()
-                                            .or_else(|| val["response"].as_str());
-                                        if let Some(tok) = token {
-                                            if !tok.is_empty() {
-                                                if let Ok(tok_json) = serde_json::to_string(tok) {
-                                                    yield Ok(Event::default().event("token").data(tok_json));
+                            raw_byte_buffer.extend_from_slice(&bytes);
+                            while let Some(pos) = raw_byte_buffer.iter().position(|&b| b == b'\n') {
+                                let line_bytes = raw_byte_buffer.drain(..=pos).collect::<Vec<u8>>();
+                                if let Ok(line_str) = std::str::from_utf8(&line_bytes) {
+                                    let line = line_str.trim();
+                                    if !line.is_empty() {
+                                        if let Ok(val) = serde_json::from_str::<serde_json::Value>(line) {
+                                            let token = val["message"]["content"]
+                                                .as_str()
+                                                .or_else(|| val["response"].as_str());
+                                            if let Some(tok) = token {
+                                                if !tok.is_empty() {
+                                                    if let Ok(tok_json) = serde_json::to_string(tok) {
+                                                        yield Ok(Event::default().event("token").data(tok_json));
+                                                    }
                                                 }
                                             }
-                                        }
-                                        if val["done"].as_bool() == Some(true) {
-                                            is_completed = true;
-                                            break;
+                                            if val["done"].as_bool() == Some(true) {
+                                                is_completed = true;
+                                                break;
+                                            }
                                         }
                                     }
                                 }
-                                if is_completed {
-                                    break;
-                                }
+                            }
+                            if is_completed {
+                                break;
                             }
                         }
                         Ok(Some(Err(_))) => {
