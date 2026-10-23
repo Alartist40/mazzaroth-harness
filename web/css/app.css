@@ -83,27 +83,27 @@
  * THEME 4: TECHNICAL PAPER (Light Architectural Blueprint)
  * ========================================================================= */
 [data-theme="technical-paper"], [data-theme="light"] {
-    --bg-canvas: #dce1e6;
-    --bg-shell: #e4e8ec;
+    --bg-canvas: #d6dce2;
+    --bg-shell: #e2e7ec;
     --panel-bg: #ffffff;
-    --panel-bg-subtle: #f4f6f8;
-    --panel-border: #14171d;
-    --border-subtle: #ccd1d9;
-    --text-main: #0b0d11;
-    --text-secondary: #58606f;
-    --text-muted: #8c94a2;
-    --accent-primary: #0b0d11;
-    --accent-secondary: #3b82f6;
-    --accent-glow: rgba(0, 0, 0, 0.15);
+    --panel-bg-subtle: #edf2f7;
+    --panel-border: #0b0d11;
+    --border-subtle: #8e99a8;
+    --text-main: #000000;
+    --text-secondary: #1a202c;
+    --text-muted: #3d4654;
+    --accent-primary: #000000;
+    --accent-secondary: #2563eb;
+    --accent-glow: rgba(0, 0, 0, 0.2);
     --contrast-ink: #000000;
     --contrast-paper: #ffffff;
-    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    --particle-rgb: 11, 13, 17;
-    --line-synapse: rgba(11, 13, 17, 0.4);
+    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --particle-rgb: 0, 0, 0;
+    --line-synapse: rgba(0, 0, 0, 0.55);
     --core-disc-fill: #ffffff;
-    --core-disc-stroke: #0b0d11;
-    --hex-base: #cbd3dc;
-    --hex-stroke: #b0bac7;
+    --core-disc-stroke: #000000;
+    --hex-base: #b8c4d2;
+    --hex-stroke: #8696ab;
 }
 
 * {
@@ -226,6 +226,8 @@ body, html {
 }
 .tree-node-card {
     transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    overflow: hidden;
+    position: relative;
 }
 .tree-node-card:hover {
     transform: translateY(-2px);

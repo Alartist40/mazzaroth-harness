@@ -1294,19 +1294,19 @@ function renderHierarchyExplorer() {
             } else {
                 filteredVersions.forEach(ver => {
                     html += `
-                        <div data-ver="${escapeHtml(ver)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between transition-all hover:scale-[1.01]"
+                        <div data-ver="${escapeHtml(ver)}" class="tree-node-card cursor-pointer p-3 rounded-xl border flex items-center justify-between transition-all hover:scale-[1.01] gap-2"
                              style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
-                            <div class="flex items-center space-x-3">
-                                <span class="w-12 h-8 rounded border font-bold text-xs flex items-center justify-center shrink-0 uppercase font-mono"
+                            <div class="flex items-center space-x-3 min-w-0 flex-1">
+                                <span class="px-2.5 py-1 min-w-[54px] max-w-[110px] h-8 rounded border font-bold text-[10.5px] flex items-center justify-center shrink-0 uppercase font-mono overflow-hidden text-ellipsis whitespace-nowrap shadow-sm"
                                       style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
                                     ${escapeHtml(ver.toUpperCase())}
                                 </span>
-                                <div>
-                                    <div class="font-bold text-xs" style="color: var(--text-main);">Holy Bible (${escapeHtml(ver.toUpperCase())})</div>
-                                    <div class="text-[9px] mt-0.5" style="color: var(--text-secondary);">Canonical Scripture Translation • Sovereign Archive</div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="font-bold text-xs truncate" style="color: var(--text-main);">Holy Bible (${escapeHtml(ver.toUpperCase())})</div>
+                                    <div class="text-[9px] mt-0.5 truncate" style="color: var(--text-secondary);">Canonical Scripture Translation • Sovereign Archive</div>
                                 </div>
                             </div>
-                            <span class="text-[9px] px-2.5 py-1 rounded border font-semibold uppercase"
+                            <span class="text-[9px] px-2.5 py-1 rounded border font-semibold uppercase shrink-0"
                                   style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
                                 BOOKS ›
                             </span>
@@ -2175,30 +2175,96 @@ function setupSearchModal() {
     }
 }
 
-// Add Memory Action (Truthful Toast / Data Matrix Builder in Map Mode)
+// Add Memory Action (Custom Sovereign Modal in Galaxy/Librarian/Constellations, Data Matrix Builder in Map Mode)
 function setupAddMemory() {
     const btn = document.getElementById('btn-add-memory');
     const pillAdd = document.getElementById('pill-quick-add');
+    const modal = document.getElementById('modal-add-memory');
+    const closeBtn = document.getElementById('btn-close-add-memory');
+    const cancelBtn = document.getElementById('btn-cancel-add-memory');
+    const submitBtn = document.getElementById('btn-submit-add-memory');
+    const nameInput = document.getElementById('input-memory-name');
+    const tierSelect = document.getElementById('select-memory-tier');
+    const tagInput = document.getElementById('input-memory-tag');
+    const contentInput = document.getElementById('input-memory-content');
 
-    const handleAdd = async () => {
+    const openAddMemoryModal = () => {
+        if (!modal) return;
+        if (nameInput) nameInput.value = '';
+        if (tagInput) tagInput.value = '';
+        if (contentInput) contentInput.value = '';
+        if (tierSelect) tierSelect.value = 'personal';
+        modal.classList.remove('hidden');
+        playTactileClick(680, 0.03);
+        if (nameInput) setTimeout(() => nameInput.focus(), 60);
+    };
+
+    const closeAddMemoryModal = () => {
+        if (modal) modal.classList.add('hidden');
+    };
+
+    const handleAdd = () => {
         if (activeView === 'map') {
             openDataMatrixModal();
             return;
         }
-
-        const label = prompt("Enter Memory Star Name:");
-        if (!label || !label.trim()) return;
-
-        try {
-            await createMemoryNode({ label: label.trim(), tier: 'personal', tags: ['MEMORY'] });
-            showToast(`Memory star '${label}' saved to vault`);
-        } catch (e) {
-            showToast(`Memory save failed: ${e.message}`);
-        }
+        openAddMemoryModal();
     };
 
     if (btn) btn.addEventListener('click', handleAdd);
     if (pillAdd) pillAdd.addEventListener('click', handleAdd);
+    if (closeBtn) closeBtn.addEventListener('click', closeAddMemoryModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeAddMemoryModal);
+
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeAddMemoryModal();
+        });
+    }
+
+    if (submitBtn) {
+        submitBtn.addEventListener('click', async () => {
+            const name = nameInput ? nameInput.value.trim() : '';
+            if (!name) {
+                if (nameInput) nameInput.focus();
+                showToast('Please specify a star name');
+                return;
+            }
+
+            const tier = tierSelect ? tierSelect.value : 'personal';
+            const tagRaw = tagInput ? tagInput.value.trim() : '';
+            const tags = tagRaw ? tagRaw.split(',').map(t => t.trim().toUpperCase()).filter(Boolean) : ['MEMORY'];
+            const content = contentInput ? contentInput.value.trim() : '';
+
+            try {
+                const node = await createMemoryNode({
+                    label: name,
+                    tier,
+                    content: content || `Personal knowledge star: ${name}`,
+                    tags
+                });
+                closeAddMemoryModal();
+                playHarmonicChime([523.25, 659.25, 783.99]);
+                showToast(`Memory star '${name}' anchored in galaxy`);
+
+                // Reload galaxy live so the star appears instantly
+                loadGalaxyData();
+                initTelemetry();
+            } catch (e) {
+                showToast(`Memory save failed: ${e.message}`);
+            }
+        });
+    }
+
+    if (nameInput) {
+        nameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (submitBtn) submitBtn.click();
+            } else if (e.key === 'Escape') {
+                closeAddMemoryModal();
+            }
+        });
+    }
 }
 
 function setupWireframe() {

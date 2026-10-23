@@ -189,7 +189,7 @@
             <!-- ========================================================================= -->
             <!-- ZONE 1: [YELLOW ZONE] DYNAMIC LEFT TOOL RAIL                              -->
             <!-- ========================================================================= -->
-            <aside id="zone-yellow" class="relative z-20 w-16 md:w-[72px] h-full rounded-2xl mono-card flex flex-col items-center py-4 justify-between" title="Zone 1: Dynamic Toolset">
+            <aside id="zone-yellow" class="relative z-20 w-16 md:w-[72px] h-full rounded-2xl mono-card flex flex-col items-center py-4 justify-between">
                 
                 <span class="wireframe-tag hidden absolute -top-2.5 left-2 bg-yellow-400 text-black font-mono font-bold text-[9px] px-1.5 py-0.5 rounded shadow z-40">
                     YELLOW: TOOLS
@@ -510,7 +510,7 @@
             <!-- ========================================================================= -->
             <!-- ZONE 2: [RED ZONE] PRIMARY VIEWPORT (Only 1 active view renders)          -->
             <!-- ========================================================================= -->
-            <section id="zone-red" class="relative z-10 flex-1 h-full rounded-2xl mono-card overflow-hidden flex flex-col" title="Zone 2: Primary Workspace">
+            <section id="zone-red" class="relative z-10 flex-1 h-full rounded-2xl mono-card overflow-hidden flex flex-col">
                 
                 <span class="wireframe-tag hidden absolute top-3 left-4 z-30 bg-red-500 text-white font-mono font-bold text-[9px] px-1.5 py-0.5 rounded shadow">
                     RED: MAIN WORKSPACE
@@ -778,7 +778,7 @@
             <div id="right-column" class="relative z-20 w-80 lg:w-[420px] h-full flex flex-col gap-2.5 select-none transition-all">
 
                 <!-- ZONE 3: [GREEN ZONE] TOP NAVIGATION SECTIONS DECK -->
-                <section id="zone-green" class="relative w-full h-[22%] shrink-0 rounded-2xl mono-card p-2.5 flex flex-col justify-between overflow-hidden transition-all" title="Zone 3: Navigation Decks">
+                <section id="zone-green" class="relative w-full h-[22%] shrink-0 rounded-2xl mono-card p-2.5 flex flex-col justify-between overflow-hidden transition-all">
                     
                     <span class="wireframe-tag hidden absolute top-2 right-3 z-30 bg-green-500 text-white font-mono font-bold text-[9px] px-1.5 py-0.5 rounded shadow">
                         GREEN: SECTIONS
@@ -868,9 +868,9 @@
                 </section>
 
                 <!-- ZONE 4: [BLUE ZONE] GENEROUS INSPECTOR & DEEP READING DOCK -->
-                <section id="zone-blue" class="relative w-full flex-1 min-h-0 rounded-2xl mono-card p-3.5 flex flex-col justify-between overflow-hidden transition-all" title="Zone 4: Deep Reading Deck">
+                <section id="zone-blue" class="relative w-full flex-1 min-h-0 rounded-2xl mono-card p-3.5 flex flex-col justify-between overflow-hidden transition-all">
                     
-                    <span class="wireframe-tag hidden absolute top-2 right-3 z-30 bg-blue-500 text-white font-mono font-bold text-[9px] px-1.5 py-0.5 rounded shadow">
+                    <span class="wireframe-tag hidden absolute top-2 right-3 z-30 bg-blue-500 text-white font-mono font-bold text-[9px] px-1.5 py-0.5 rounded shadow pointer-events-none">
                         BLUE: DEEP READER
                     </span>
 
@@ -1015,7 +1015,7 @@
                 </section>
 
                 <!-- ZONE 5: [PURPLE ZONE] LAYERED TELEMETRY SPECS DECK -->
-                <section id="zone-purple" class="relative w-full h-[16%] shrink-0 rounded-2xl mono-card stack-depth-deck p-2.5 flex flex-col justify-between overflow-hidden transition-all" title="Zone 5: System Telemetry">
+                <section id="zone-purple" class="relative w-full h-[16%] shrink-0 rounded-2xl mono-card stack-depth-deck p-2.5 flex flex-col justify-between overflow-hidden transition-all">
                     
                     <span class="wireframe-tag hidden absolute top-1.5 right-3 z-30 bg-fuchsia-500 text-white font-mono font-bold text-[9px] px-1.5 py-0.5 rounded shadow">
                         PURPLE: SPECS
@@ -1096,6 +1096,75 @@
                 <div class="pt-3 border-t mt-3 flex justify-between items-center text-[10px] font-mono" style="border-color: var(--border-subtle); color: var(--text-muted);">
                     <span>ESC TO CANCEL • ENTER TO JUMP</span>
                     <span>LOCAL INDEXED CACHE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW MEMORY STAR CREATION MODAL -->
+        <div id="modal-add-memory" class="hidden fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="relative w-full max-w-md rounded-2xl mono-card p-5 shadow-2xl flex flex-col">
+                <div class="flex items-center justify-between pb-3 border-b" style="border-color: var(--border-subtle);">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-base">✦</span>
+                        <div>
+                            <h3 class="font-bold text-sm tracking-wider uppercase" style="color: var(--text-main);">INGEST NEW MEMORY STAR</h3>
+                            <p class="text-[9.5px] font-mono" style="color: var(--text-muted);">Sovereign Local Knowledge Vault Node</p>
+                        </div>
+                    </div>
+                    <button id="btn-close-add-memory" class="p-1 rounded-lg border hover:opacity-80 transition-opacity"
+                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);" title="Close">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-3.5 my-4 text-xs font-mono">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[9px] uppercase font-bold tracking-wider" style="color: var(--text-muted);">STAR NAME / LABEL</label>
+                        <input id="input-memory-name" type="text" placeholder="e.g. Damascus Epiphany, Epictetus Codex..."
+                               class="w-full px-3 py-2 rounded-xl border outline-none font-mono text-xs transition-all"
+                               style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[9px] uppercase font-bold tracking-wider" style="color: var(--text-muted);">TIER CLASSIFICATION</label>
+                            <select id="select-memory-tier" class="px-2.5 py-1.5 rounded-lg border outline-none font-mono text-xs"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
+                                <option value="personal">Personal Memory</option>
+                                <option value="celestial">Celestial (Bright White)</option>
+                                <option value="semantic">Semantic (Nexus Link)</option>
+                                <option value="episodic">Episodic (Historical Epoch)</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[9px] uppercase font-bold tracking-wider" style="color: var(--text-muted);">TAG / DISCIPLINE</label>
+                            <input id="input-memory-tag" type="text" placeholder="e.g. PHILOSOPHY, ASTRONOMY"
+                                   class="px-2.5 py-1.5 rounded-lg border uppercase outline-none font-mono text-xs"
+                                   style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[9px] uppercase font-bold tracking-wider" style="color: var(--text-muted);">RECORD CONTENT / SUMMARY</label>
+                        <textarea id="input-memory-content" rows="3" placeholder="Enter notes, observations, or manuscript excerpt..."
+                                  class="w-full px-3 py-2 rounded-xl border outline-none resize-none font-mono text-xs"
+                                  style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);"></textarea>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t flex items-center justify-between font-mono text-[10px]" style="border-color: var(--border-subtle);">
+                    <button id="btn-cancel-add-memory" class="px-3 py-1.5 rounded-xl border hover:opacity-80 transition-opacity"
+                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
+                        CANCEL
+                    </button>
+                    <button id="btn-submit-add-memory" class="px-4 py-1.5 rounded-xl border font-bold uppercase transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 shadow-sm"
+                            style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
+                        <span>✦</span>
+                        <span>PERSIST TO GALAXY</span>
+                    </button>
                 </div>
             </div>
         </div>
