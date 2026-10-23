@@ -275,6 +275,7 @@ fn chrono_like_timestamp() -> u64 {
         .unwrap_or(0)
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn run_server(
     bind: String,
     db: PathBuf,
@@ -396,7 +397,7 @@ pub async fn run_doctor(db_path: &PathBuf, llm_endpoint: &str, bind_addr: &str) 
 // ---------------------------------------------------------------------------
 
 async fn run_maps_fetch(
-    maps_dir: &PathBuf,
+    maps_dir: &std::path::Path,
     bbox: &str,
     name: Option<String>,
     maxzoom: u8,

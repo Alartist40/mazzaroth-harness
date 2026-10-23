@@ -52,7 +52,7 @@ pub async fn handle_status(State(state): State<ServerState>) -> Json<SystemStatu
     let maps_count = if let Ok(entries) = std::fs::read_dir("maps") {
         entries
             .filter_map(|e| e.ok())
-            .filter(|e| e.path().extension().map_or(false, |ext| ext == "pmtiles"))
+            .filter(|e| e.path().extension().is_some_and(|ext| ext == "pmtiles"))
             .count()
     } else {
         0

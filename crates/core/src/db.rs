@@ -356,7 +356,7 @@ impl LibrarianDb {
         for entry in std::fs::read_dir(d)? {
             let entry = entry?;
             let path = entry.path();
-            if path.is_file() && path.extension().map_or(false, |e| e == "json") {
+            if path.is_file() && path.extension().is_some_and(|e| e == "json") {
                 match self.ingest_file(&path) {
                     Ok(Some(_)) => count += 1,
                     Ok(None) => {},

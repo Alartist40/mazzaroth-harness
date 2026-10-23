@@ -17,8 +17,10 @@ async fn test_pmtiles_range_serving() {
     std::fs::write(&test_map_file, fake_data).unwrap();
 
     let db = LibrarianDb::open_in_memory().unwrap();
-    let mut config = LibrarianConfig::default();
-    config.maps_dir = maps_dir;
+    let config = LibrarianConfig {
+        maps_dir,
+        ..Default::default()
+    };
 
     let state = ServerState::new(db, config, None);
     let app = create_app(state);

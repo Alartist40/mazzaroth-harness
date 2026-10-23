@@ -19,7 +19,7 @@ pub struct SkyQueryParams {
 fn parse_iso_datetime(s: &str) -> Option<(i32, u32, u32, f64)> {
     // Expected format: YYYY-MM-DDTHH:MM or YYYY-MM-DD HH:MM
     let s = s.trim();
-    let parts: Vec<&str> = s.split(|c| c == 'T' || c == ' ').collect();
+    let parts: Vec<&str> = s.split(['T', ' ']).collect();
     if parts.is_empty() {
         return None;
     }

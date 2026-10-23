@@ -47,6 +47,8 @@ pub struct BackgroundStar {
     pub is_visible: bool,
 }
 
+pub type SkyLine = ((f64, f64), (f64, f64), String);
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SkyProjection {
     pub lat: f64,
@@ -55,7 +57,7 @@ pub struct SkyProjection {
     pub lst_deg: f64,
     pub visible_stars: Vec<ProjectedStar>,
     pub background_stars: Vec<BackgroundStar>,
-    pub lines: Vec<((f64, f64), (f64, f64), String)>, // (start, end, const_name)
+    pub lines: Vec<SkyLine>, // (start, end, const_name)
     pub constellation_labels: Vec<ConstellationLabel>,
     pub cardinal_bearings: Vec<CardinalPoint>,
 }
@@ -161,7 +163,7 @@ pub fn generate_background_stars(lat_deg: f64, lst_deg: f64, dome_radius: f64) -
 
     for i in 0..n {
         let theta = 2.0 * std::f64::consts::PI * (i as f64) / golden_ratio;
-        let phi = ((1.0 - 2.0 * (i as f64 + 0.5) / n as f64)).clamp(-1.0, 1.0).asin();
+        let phi = (1.0 - 2.0 * (i as f64 + 0.5) / n as f64).clamp(-1.0, 1.0).asin();
 
         let ra_deg = theta.to_degrees().rem_euclid(360.0);
         let dec_deg = phi.to_degrees();

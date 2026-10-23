@@ -1,18 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum HardwareProfile {
     Tiny,
+    #[default]
     Standard,
     Full,
-}
-
-impl Default for HardwareProfile {
-    fn default() -> Self {
-        Self::Standard
-    }
 }
 
 impl HardwareProfile {

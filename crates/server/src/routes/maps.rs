@@ -39,6 +39,13 @@ pub async fn handle_list_maps(State(state): State<ServerState>) -> Json<Vec<MapR
     Json(list)
 }
 
+type TileCacheMap = std::sync::OnceLock<std::sync::Mutex<std::collections::HashMap<String, (std::time::Instant, Vec<u8>)>>>;
+static TILE_CACHE: TileCacheMap = std::sync::OnceLock::new();
+
+fn get_tile_cache() -> &'static std::sync::Mutex<std::collections::HashMap<String, (std::time::Instant, Vec<u8>)>> {
+    TILE_CACHE.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()))
+}
+
 pub async fn handle_serve_pmtiles(
     State(state): State<ServerState>,
     Path(filename): Path<String>,
@@ -109,14 +116,9 @@ pub async fn handle_serve_pmtiles(
                     if length <= MAX_CACHED_RANGE_LEN {
                         let cache_key = format!("{}:{}:{}", filename, start, length);
                         let cached_bytes = {
-                            static TILE_CACHE: std::sync::OnceLock<std::sync::Mutex<std::collections::HashMap<String, (std::time::Instant, Vec<u8>)>>> = std::sync::OnceLock::new();
-                            let map = TILE_CACHE.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+                            let map = get_tile_cache();
                             let guard = map.lock().unwrap();
-                            if let Some((_, data)) = guard.get(&cache_key) {
-                                Some(data.clone())
-                            } else {
-                                None
-                            }
+                            guard.get(&cache_key).map(|(_, data)| data.clone())
                         };
 
                         if let Some(data) = cached_bytes {
@@ -144,8 +146,7 @@ pub async fn handle_serve_pmtiles(
                             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
                         {
-                            static TILE_CACHE: std::sync::OnceLock<std::sync::Mutex<std::collections::HashMap<String, (std::time::Instant, Vec<u8>)>>> = std::sync::OnceLock::new();
-                            let map = TILE_CACHE.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+                            let map = get_tile_cache();
                             let mut guard = map.lock().unwrap();
                             // Limit cache size to 512 entries (~32MB RAM max)
                             if guard.len() >= 512 {
