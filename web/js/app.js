@@ -327,6 +327,7 @@ function setupReaderDeck() {
             if (!currentNode || !currentNode.chapters) return;
             if (currentChapterIndex > 0) {
                 currentChapterIndex--;
+                playTactileClick(600, 0.03);
                 renderChapterBody();
             }
         });
@@ -337,6 +338,7 @@ function setupReaderDeck() {
             if (!currentNode || !currentNode.chapters) return;
             if (currentChapterIndex < currentNode.chapters.length - 1) {
                 currentChapterIndex++;
+                playTactileClick(680, 0.03);
                 renderChapterBody();
             }
         });
@@ -413,6 +415,18 @@ function setupReaderDeck() {
         });
     }
 }
+
+// Global audio hooks for rich interactive sound design
+window.playCelestialStarChime = function(star) {
+    if (!star) return;
+    // Map star coordinates and category to celestial pentatonic scales
+    const baseFreq = star.isCore ? 330 : 440;
+    const offset = Math.abs(Math.sin((star.x || 10) * 0.05 + (star.z || 20) * 0.05)) * 300;
+    const f1 = baseFreq + offset;
+    const f2 = f1 * 1.25; // major third
+    const f3 = f1 * 1.5;  // perfect fifth
+    playHarmonicChime([f1, f2, f3]);
+};
 
 // Global hook for Grounded Citations (NotebookLM/Perplexity style)
 window.inspectCitationPassage = function(citation) {

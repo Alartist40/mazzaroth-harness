@@ -609,6 +609,11 @@ function setupCanvasEvents() {
             if (onSelectNodeCallback) onSelectNodeCallback(selectedNode);
             updateStarsGeometry();
             rebuildSynapseLines();
+
+            // Interactive celestial audio feedback
+            if (window.playCelestialStarChime) {
+                window.playCelestialStarChime(closest);
+            }
         }
     });
 
