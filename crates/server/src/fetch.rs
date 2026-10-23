@@ -49,8 +49,8 @@ pub fn validate_bbox(parts: &[f64]) -> anyhow::Result<[f64; 4]> {
     {
         anyhow::bail!("bbox out of range or inverted: {minlon},{minlat},{maxlon},{maxlat}");
     }
-    if (maxlon - minlon) > 60.0 || (maxlat - minlat) > 60.0 {
-        anyhow::bail!("bbox span too large: maximum 60 degrees longitude and latitude allowed per extract");
+    if (maxlon - minlon) > 360.0 || (maxlat - minlat) > 180.0 {
+        anyhow::bail!("bbox span too large: maximum 360 degrees longitude and 180 degrees latitude allowed");
     }
     Ok([minlon, minlat, maxlon, maxlat])
 }
@@ -511,6 +511,9 @@ mod tests {
     fn test_validate_bbox_bounds_and_span() {
         // Valid small bbox (Tokyo)
         assert!(validate_bbox(&[139.5, 35.5, 140.0, 36.0]).is_ok());
+        // Valid large bbox (Russia/Canada/China)
+        assert!(validate_bbox(&[19.2, 41.1, 180.0, 77.7]).is_ok());
+        assert!(validate_bbox(&[-141.0, 41.7, -52.6, 83.1]).is_ok());
 
         // Inverted bbox
         assert!(validate_bbox(&[140.0, 35.5, 139.5, 36.0]).is_err());
@@ -519,10 +522,6 @@ mod tests {
         // Out of world bounds
         assert!(validate_bbox(&[-185.0, 0.0, 10.0, 10.0]).is_err());
         assert!(validate_bbox(&[0.0, -95.0, 10.0, 10.0]).is_err());
-
-        // Span exceeding 60 degrees
-        assert!(validate_bbox(&[0.0, 0.0, 65.0, 10.0]).is_err());
-        assert!(validate_bbox(&[0.0, 0.0, 10.0, 65.0]).is_err());
     }
 
     #[test]

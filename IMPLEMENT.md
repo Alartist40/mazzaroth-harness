@@ -94,3 +94,44 @@
   - Wrapped SQLite insertion loop inside ACID transactions with cached prepared statements, increasing bulk ingestion speed >100x.
   - Expanded database vault to **12 documents, 555 searchable chunks, and 1,099 nodes** in `data/mazzaroth.db`.
   - Verified with `cargo test --workspace` (all 8 suites passing, 12 integration/unit tests).
+
+## [2026-10-05] Security Hardening, Dynamic Geodata Matrix & Audit Closure
+- **Map Downloads & BBox Validation (`crates/server/src/fetch.rs`)**:
+  - Raised bbox span limit in `validate_bbox()` to full global bounds (360° lon / 180° lat) allowing full continent/country extractions for China, Canada, and Russia without 400 errors.
+- **Security & XSS Elimination (`web/js/sections.js`)**:
+  - Sanitized all dynamic geodata card interpolations with `escapeHtml()` preventing XSS via custom datasets.
+  - Protected built-in dataset IDs (`TOTAL`, `CATHOLIC`, `PROTESTANT`, `ORTHODOX`, `MANUSCRIPTS`) by auto-prefixing custom colliding IDs with `CUSTOM_`.
+- **UI & High-DPI Display Scaling (`web/js/sections.js`, `web/index.html`)**:
+  - Added HiDPI `devicePixelRatio` canvas backing resolution scaling with CSS pixel preservation for crisp rendering on retina displays.
+  - Preserved canvas pan/zoom coordinates across window resize and section view switches.
+  - Added live coordinate tracker `#map-cursor-coords` inside the map HUD panel.
+- **Streaming & Async Network Resilience (`web/js/api.js`)**:
+  - Replaced hard 60s request abort in `askStream()` with a 30s connection timeout and 45s streaming chunk idle timeout, allowing long LLM responses to stream indefinitely.
+  - Raised default HTTP timeout in `fetchWithTimeout()` to 20s.
+- **Hex Map & Theme Matrix Translations (`web/js/sections.js`)**:
+  - Hoisted dataset and palette preset lookups outside the 4,000 hex rendering loop for 60fps rendering.
+  - Added explicit color grading support for `crimson`, `mono`, `neon`, `emerald`, `technical-paper`, and `midnight-gold` palettes.
+  - Added generation tokens to MapLibre mounting to eliminate race-condition teardowns during rapid view switches.
+
+## [2026-10-23] Sovereign Phase 6: Living Brain, Grounded Citations, Volumetric Cartography, Genesis Ignition & Snapshots
+- **Cross-Module Interlinking ("The Living Brain") (`web/js/app.js`, `web/js/sections.js`, `web/index.html`)**:
+  - Added bidirectional linking between Galaxy stars, Deep Reading Deck passages, Earth map coordinates, and Astrometry celestial dome projections.
+  - Linked scripture books and historical passages directly to physical origins on Earth (e.g. Levant / Alexandria / Rome) via `#btn-cross-view-earth` and celestial dome astrometry via `#btn-cross-view-sky`.
+- **Grounded Source Citations (NotebookLM / Perplexity style) (`crates/server/src/routes/ask.rs`, `web/js/sections.js`, `web/js/app.js`)**:
+  - Instructed LLM to emit inline bracketed citations (`[1]`, `[2]`).
+  - Rendered interactive grounded source chips in Librarian responses that load the exact cited document into the Deep Reading Deck and highlight the matching text snippet with harmonic audio chime feedback.
+- **Cartography & Geodata Enhancements (`web/js/sections.js`, `web/index.html`)**:
+  - Historical Time-Slider dock (`#map-timeline-dock`) supporting `100 AD`, `500 AD`, `1500 AD`, and `MODERN` epochs dynamically recalculating regional demographic weights.
+  - Volumetric 3D Hexagon Extrusion for high-intensity cells with shaded isometric side-facets and elevated caps.
+  - Sovereign `.mazz` Bundle Export & Import for offline dataset portability with JSON validation.
+- **Deep Reading Deck Synoptic Reader (`web/js/app.js`, `web/index.html`)**:
+  - Side-by-side synoptic split grid (`#reader-synoptic-grid`) comparing primary translation with companion versions (Greek Textus Receptus, Hebrew WLC, Latin Vulgate, Luther Bibel, Ostervald, Reina Valera).
+- **Audiovisual Atmosphere & Genesis Ignition (`web/js/galaxy.js`, `web/js/sections.js`, `web/index.html`)**:
+  - Genesis Cosmic Ignition: Initial cosmic void screen transitioning on click into a white radial flare and Big Bang expansion into the 1,105-star logarithmic spiral.
+  - Cinematic Presentation Tour Mode (`togglePresentationTour`) smoothly orbiting camera at 520px radius with sine/cosine elevation.
+  - Procedural Client-Side Web Audio synthesizer (55Hz / 82.4Hz celestial ambient drone, tactile micro-clicks, and harmonic chimes) with header toggle button (`#audio-toggle-btn`) and 0 external MB footprint.
+- **Backend Optimizations & Sovereign Snapshot Engine (`crates/server/src/routes/maps.rs`, `crates/cli/src/main.rs`)**:
+  - Zero-Copy In-Memory LRU Tile Cache (`TILE_CACHE`, max 512 entries, up to 512KB ranges) returning `X-Cache: HIT/MISS` headers.
+  - Sovereign Snapshot CLI (`mazzaroth snapshot export/import`) with SHA-256 header verification ensuring vault portability.
+- **Verification**: 18/18 Cargo unit/integration tests passing; 4/4 web scripts passing `node --check`.
+

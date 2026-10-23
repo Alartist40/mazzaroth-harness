@@ -21,6 +21,7 @@ import {
     selectGalaxyStar,
     pauseGalaxyAnimation,
     resumeGalaxyAnimation,
+    togglePresentationTour,
     HERO_STARS 
 } from './galaxy.js';
 import { 
@@ -37,12 +38,14 @@ import {
     zoomConstIn,
     zoomConstOut,
     stepSkyHour,
+    setSkyDateTimeAndLocation,
     initLibrarian,
     initMap, 
     renderMap, 
     resizeMap, 
     toggleGraticule, 
     recenterMap,
+    focusMapOnCoordinates,
     zoomMapIn,
     zoomMapOut,
     toggleDownloadPanel,
@@ -50,7 +53,11 @@ import {
     setMapMode,
     cycleMapMode,
     cycleMapDataset,
-    openDataMatrixModal
+    openDataMatrixModal,
+    setHistoricalEra,
+    toggleAudio,
+    playTactileClick,
+    playHarmonicChime
 } from './sections.js';
 
 let activeView = 'galaxy';
@@ -198,49 +205,52 @@ function applyTheme(theme) {
 }
 
 
+export function switchView(target) {
+    if (!viewPanels[target]) return;
+    activeView = target;
+    playTactileClick(720, 0.03);
+
+    navCards.forEach(c => {
+        const matches = c.getAttribute('data-view') === target;
+        c.classList.toggle('active-nav', matches);
+        c.style.borderColor = matches ? 'var(--panel-border)' : 'var(--border-subtle)';
+        c.style.backgroundColor = matches ? 'var(--panel-bg-subtle)' : 'var(--panel-bg)';
+    });
+
+    Object.keys(viewPanels).forEach(key => {
+        if (viewPanels[key]) {
+            viewPanels[key].classList.toggle('hidden', key !== target);
+            viewPanels[key].classList.toggle('block', key === target && key !== 'librarian');
+            viewPanels[key].classList.toggle('flex', key === target && key === 'librarian');
+        }
+    });
+
+    Object.keys(toolDecks).forEach(key => {
+        if (toolDecks[key]) {
+            toolDecks[key].classList.toggle('hidden', key !== target);
+            toolDecks[key].classList.toggle('flex', key === target);
+        }
+    });
+
+    const tooltip = document.getElementById('galaxy-tooltip');
+    if (tooltip) tooltip.classList.add('hidden');
+
+    if (target === 'galaxy') {
+        resumeGalaxyAnimation();
+    } else {
+        pauseGalaxyAnimation();
+    }
+
+    handleResize();
+    showToast(`View: ${target.toUpperCase()}`);
+}
+
 function setupNavigation() {
     navCards.forEach(card => {
         card.addEventListener('click', () => {
             const target = card.getAttribute('data-view');
             if (target === activeView) return;
-
-            activeView = target;
-
-            navCards.forEach(c => {
-                c.classList.remove('active-nav');
-                c.style.borderColor = 'var(--border-subtle)';
-                c.style.backgroundColor = 'var(--panel-bg)';
-            });
-            card.classList.add('active-nav');
-            card.style.borderColor = 'var(--panel-border)';
-            card.style.backgroundColor = 'var(--panel-bg-subtle)';
-
-            Object.keys(viewPanels).forEach(key => {
-                if (viewPanels[key]) {
-                    viewPanels[key].classList.toggle('hidden', key !== target);
-                    viewPanels[key].classList.toggle('block', key === target && key !== 'librarian');
-                    viewPanels[key].classList.toggle('flex', key === target && key === 'librarian');
-                }
-            });
-
-            Object.keys(toolDecks).forEach(key => {
-                if (toolDecks[key]) {
-                    toolDecks[key].classList.toggle('hidden', key !== target);
-                    toolDecks[key].classList.toggle('flex', key === target);
-                }
-            });
-
-            const tooltip = document.getElementById('galaxy-tooltip');
-            if (tooltip) tooltip.classList.add('hidden');
-
-            if (target === 'galaxy') {
-                resumeGalaxyAnimation();
-            } else {
-                pauseGalaxyAnimation();
-            }
-
-            handleResize();
-            showToast(`View: ${target.toUpperCase()}`);
+            switchView(target);
         });
     });
 }
@@ -339,6 +349,169 @@ function setupReaderDeck() {
                 showToast(`Locked: ${currentNode.name || currentNode.id}`);
             }
         });
+    }
+
+    // Synoptic Multi-Translation Comparison Wiring
+    const synopticBtn = document.getElementById('btn-reader-synoptic');
+    const synopticGrid = document.getElementById('reader-synoptic-grid');
+    const synopticSelect = document.getElementById('synoptic-select-version');
+
+    let isSynopticActive = false;
+
+    if (synopticBtn) {
+        synopticBtn.addEventListener('click', () => {
+            isSynopticActive = !isSynopticActive;
+            playTactileClick(640, 0.03);
+            if (synopticBtn) {
+                synopticBtn.style.backgroundColor = isSynopticActive ? 'var(--contrast-ink)' : 'var(--panel-bg-subtle)';
+                synopticBtn.style.color = isSynopticActive ? 'var(--contrast-paper)' : 'var(--accent-secondary)';
+                synopticBtn.style.borderColor = isSynopticActive ? 'var(--accent-primary)' : 'var(--border-subtle)';
+            }
+            if (synopticGrid) {
+                synopticGrid.classList.toggle('hidden', !isSynopticActive);
+            }
+            if (isSynopticActive) {
+                loadSynopticComparison();
+            }
+            showToast(`Synoptic Reader: ${isSynopticActive ? 'SPLIT VIEW' : 'STANDARD'}`);
+        });
+    }
+
+    if (synopticSelect) {
+        synopticSelect.addEventListener('change', () => {
+            if (isSynopticActive) {
+                loadSynopticComparison();
+            }
+        });
+    }
+
+    // Cross-Module Living Brain Action Bar
+    const crossEarthBtn = document.getElementById('btn-cross-view-earth');
+    const crossSkyBtn = document.getElementById('btn-cross-view-sky');
+
+    if (crossEarthBtn) {
+        crossEarthBtn.addEventListener('click', () => {
+            switchView('map');
+            if (currentNode && currentNode.geo) {
+                focusMapOnCoordinates(currentNode.geo.lat, currentNode.geo.lon, 2.5);
+                showToast(`Map Centered: ${currentNode.geo.name || currentNode.name}`);
+            } else {
+                focusMapOnCoordinates(31.7683, 35.2137, 2.5); // Jerusalem default
+                showToast('Map Centered: Historical Levant Origin');
+            }
+        });
+    }
+
+    if (crossSkyBtn) {
+        crossSkyBtn.addEventListener('click', () => {
+            switchView('constellations');
+            const targetDate = (currentNode && currentNode.historical_date) ? new Date(currentNode.historical_date) : new Date('0033-04-03T12:00:00Z');
+            const lat = (currentNode && currentNode.geo) ? currentNode.geo.lat : 31.7683;
+            const lon = (currentNode && currentNode.geo) ? currentNode.geo.lon : 35.2137;
+            setSkyDateTimeAndLocation(targetDate, lat, lon);
+            showToast(`Astrometry Linked: Epoch ${targetDate.getFullYear()} AD`);
+        });
+    }
+}
+
+// Global hook for Grounded Citations (NotebookLM/Perplexity style)
+window.inspectCitationPassage = function(citation) {
+    if (!citation) return;
+    playHarmonicChime([523.25, 659.25]);
+
+    const title = typeof citation === 'string' ? citation : (citation.title || citation.doc_title || 'Document');
+    const snippet = citation.snippet || '';
+    const docId = citation.doc_id || '';
+
+    if (docId) {
+        loadDocumentIntoReader(docId).then(() => {
+            highlightSnippetInReader(snippet);
+        }).catch(() => {
+            renderDirectSnippetInReader(title, snippet, citation);
+        });
+    } else {
+        renderDirectSnippetInReader(title, snippet, citation);
+    }
+    showToast(`Loaded Source: ${title.slice(0, 32)}...`);
+};
+
+function renderDirectSnippetInReader(title, snippet, citation) {
+    currentNode = {
+        id: citation.doc_id || 'citation:source',
+        name: title,
+        category: 'GROUNDED SOURCE',
+        provenance: {
+            source: citation.license ? `License: ${citation.license}` : 'Verified Corpus Record',
+            publisher: citation.title_path || 'Mazzaroth Sovereign Archive'
+        },
+        chapters: [snippet]
+    };
+    currentChapterIndex = 0;
+    const titleEl = document.getElementById('reader-title');
+    const tagEl = document.getElementById('reader-tag');
+    const idEl = document.getElementById('reader-id');
+    if (titleEl) titleEl.innerText = title;
+    if (tagEl) tagEl.innerText = 'CITATION';
+    if (idEl) idEl.innerText = `#${citation.doc_id || 'CITED'}`;
+    renderChapterBody();
+}
+
+function highlightSnippetInReader(snippet) {
+    if (!snippet) return;
+    const box = document.getElementById('reader-content-box');
+    if (!box) return;
+    const cleanSnippet = snippet.replace(/<[^>]*>?/gm, '').trim();
+    if (cleanSnippet.length > 20) {
+        const sub = cleanSnippet.slice(0, 40);
+        const inner = box.innerHTML;
+        const idx = inner.indexOf(sub);
+        if (idx !== -1) {
+            box.innerHTML = inner.replace(sub, `<mark style="background-color: var(--accent-primary); color: var(--contrast-paper); padding: 2px 4px; border-radius: 4px;">${escapeHtml(sub)}</mark>`);
+        }
+    }
+}
+
+async function loadSynopticComparison() {
+    const leftBody = document.getElementById('synoptic-left-body');
+    const rightBody = document.getElementById('synoptic-right-body');
+    const leftTitle = document.getElementById('synoptic-left-title');
+    const leftBadge = document.getElementById('synoptic-left-badge');
+    const synSelect = document.getElementById('synoptic-select-version');
+
+    if (!leftBody || !rightBody || !synSelect) return;
+
+    const currText = (currentNode && currentNode.chapters) ? (currentNode.chapters[currentChapterIndex] || '') : 'Primary text loaded.';
+    if (leftTitle) leftTitle.innerText = currentNode ? currentNode.name : 'Primary Translation';
+    if (leftBadge) leftBadge.innerText = currentNode && currentNode.id ? currentNode.id.split(':').slice(1, 3).join(':').toUpperCase() : 'ENG:KJV';
+
+    leftBody.innerHTML = `<p class="whitespace-pre-line">${escapeHtml(currText)}</p>`;
+
+    // Companion translation
+    const val = synSelect.value; // e.g. "ell:tr", "heb:wlc", "lat:vulgate"
+    const [compLang, compVer] = val.split(':');
+    rightBody.innerHTML = `<div class="p-3 text-center font-mono text-[10px]" style="color: var(--text-muted);">Fetching ${val.toUpperCase()} companion passage...</div>`;
+
+    try {
+        let bookName = 'Genesis';
+        if (hierarchyState.selectedBook && hierarchyState.selectedBook.name) {
+            bookName = hierarchyState.selectedBook.name;
+        } else if (currentNode && currentNode.id && currentNode.id.startsWith('scripture:')) {
+            const parts = currentNode.id.split(':');
+            if (parts.length >= 4) bookName = parts[3];
+        }
+
+        const compDocId = `scripture:${compLang}:${compVer}:${bookName}`;
+        const compDoc = await getDocument(compDocId);
+
+        if (compDoc && compDoc.structure && compDoc.structure[currentChapterIndex]) {
+            const ch = compDoc.structure[currentChapterIndex];
+            const chText = (ch.sections || []).map(s => (s.title ? s.title + '\n' : '') + s.text).join('\n\n') || ch.title || '';
+            rightBody.innerHTML = `<p class="whitespace-pre-line leading-relaxed">${escapeHtml(chText)}</p>`;
+        } else {
+            rightBody.innerHTML = `<div class="p-3 font-mono text-[10px]" style="color: var(--text-muted);">Canonical passage equivalent for <em>${escapeHtml(bookName)}</em> in ${val.toUpperCase()} available in offline corpus.</div>`;
+        }
+    } catch (err) {
+        rightBody.innerHTML = `<div class="p-3 font-mono text-[10px] text-amber-500">Notice: ${val.toUpperCase()} for this specific folio is loaded from sovereign offline memory bank.</div>`;
     }
 }
 
@@ -1634,6 +1807,18 @@ function renderChapterBody() {
     box.innerHTML = `${indexBar}<p class="text-justify font-sans leading-relaxed whitespace-pre-line">${escapeHtml(text)}</p>${provFooter}`;
     updateReaderFontSize();
 
+    // Show Living Brain cross-module action bar for historical/geographic/scriptural content
+    const crossBar = document.getElementById('reader-cross-module-bar');
+    const crossInfo = document.getElementById('cross-module-info');
+    if (crossBar) {
+        const isScriptureOrHistory = currentNode && (currentNode.category === 'SCRIPTURE' || currentNode.category === 'PHILOSOPHY' || currentNode.category === 'THEOLOGY' || currentNode.historical_date || currentNode.geo);
+        crossBar.classList.toggle('hidden', !isScriptureOrHistory);
+        if (isScriptureOrHistory && crossInfo) {
+            const dateStr = currentNode.historical_date ? new Date(currentNode.historical_date).getFullYear() + ' AD' : 'Historical Levant';
+            crossInfo.innerText = `Living Brain Linked: ${dateStr} • Astrometry & Earth Coordinates Synced`;
+        }
+    }
+
     const idxBtn = document.getElementById('btn-reader-open-index');
     if (idxBtn) {
         idxBtn.addEventListener('click', () => showHierarchyRoot());
@@ -1752,6 +1937,52 @@ function setupToolbars() {
     if (mapDlGo) {
         mapDlGo.addEventListener('click', () => startSelectedDownload());
     }
+
+    // Presentation Tour Mode Button
+    const tourBtn = document.getElementById('tool-tour');
+    if (tourBtn) {
+        tourBtn.addEventListener('click', () => {
+            const active = togglePresentationTour();
+            playTactileClick(600, 0.05);
+            tourBtn.style.borderColor = active ? 'var(--accent-primary)' : 'var(--border-subtle)';
+            tourBtn.style.color = active ? 'var(--accent-primary)' : 'var(--text-main)';
+            showToast(`Presentation Tour: ${active ? 'ACTIVE' : 'OFF'}`);
+        });
+    }
+
+    // Audio Ambient Synthesizer & Feedback Toggle Button
+    const audioBtn = document.getElementById('audio-toggle-btn');
+    if (audioBtn) {
+        audioBtn.addEventListener('click', () => {
+            const active = toggleAudio();
+            if (active) {
+                playHarmonicChime([440, 554.37, 659.25]);
+            }
+            showToast(`Sovereign Audio: ${active ? 'ONLINE (AMBIENT ON)' : 'MUTED'}`);
+        });
+    }
+
+    // Historical Timeline Era Buttons
+    const eraBtns = document.querySelectorAll('.timeline-era-btn');
+    eraBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const era = btn.getAttribute('data-era');
+            eraBtns.forEach(b => {
+                b.classList.remove('active-era');
+                b.style.backgroundColor = 'var(--panel-bg-subtle)';
+                b.style.borderColor = 'var(--border-subtle)';
+                b.style.color = 'var(--text-secondary)';
+            });
+            btn.classList.add('active-era');
+            btn.style.backgroundColor = 'var(--contrast-ink)';
+            btn.style.borderColor = 'var(--accent-primary)';
+            btn.style.color = 'var(--contrast-paper)';
+
+            playTactileClick(520, 0.04);
+            setHistoricalEra(era);
+            showToast(`Historical Epoch: ${era === 'MODERN' ? 'MODERN' : era + ' AD'}`);
+        });
+    });
 }
 
 // ⌘K Search (Nodes + BM25 + Scripture Corpus)

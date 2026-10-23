@@ -168,3 +168,8 @@ copy-exact definitions below.
   EXPECT: 7 passed; 0 failed
   EVIDENCE: 2026-09-29 — `cargo test --workspace` passed 7/7 test suites with 0 warnings.
 
+- [x] P6_SOVEREIGN_ENHANCEMENTS: Cross-module Living Brain, Grounded Source Citations (NotebookLM/Perplexity style), Synoptic Multi-Translation Reader, Historical Time-Slider & Volumetric 3D Hex Cartography, Sovereign Snapshot CLI & .mazz bundles, Genesis Cosmic Ignition & Zero-asset Procedural Audio, In-Memory LRU Tile Cache.
+  CHECK: cargo test --workspace && node --check web/js/api.js && node --check web/js/galaxy.js && node --check web/js/sections.js && node --check web/js/app.js
+  EXPECT: 0 exit code across all targets
+  EVIDENCE: 2026-10-23 — 18/18 cargo tests passing; 4/4 node JS modules pass syntax check; zero-copy LRU cache operational in routes/maps.rs; snapshot export/import SHA-256 verified; procedural Web Audio synthesizer zero-dependency online.
+

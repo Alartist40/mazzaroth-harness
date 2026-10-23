@@ -613,6 +613,19 @@ export function stepSkyHour(delta) {
     refreshSkyData();
 }
 
+export function setSkyDateTimeAndLocation(dateObj, lat = null, lon = null) {
+    if (dateObj instanceof Date && !isNaN(dateObj)) {
+        skyDateTime = dateObj;
+        const dtInput = document.getElementById('const-datetime-input');
+        if (dtInput) dtInput.value = formatDateTimeLocal(skyDateTime);
+    }
+    if (lat !== null && lon !== null) {
+        skyLat = lat;
+        skyLon = lon;
+    }
+    refreshSkyData();
+}
+
 let skyRefreshSequenceId = 0;
 
 export async function refreshSkyData() {
@@ -1744,9 +1757,30 @@ function generateHexWorldGrid() {
     recomputeHexIntensities();
 }
 
+let currentHistoricalEra = 'MODERN'; // '100', '500', '1500', 'MODERN'
+
+export function setHistoricalEra(era) {
+    currentHistoricalEra = era;
+    recomputeHexIntensities();
+    renderMap();
+}
+
 function recomputeHexIntensities() {
     const currDataset = MAP_DATASETS[activeMapDatasetKey] || MAP_DATASETS["TOTAL"];
     const hotspots = MAP_HOTSPOTS[activeMapDatasetKey] || MAP_HOTSPOTS["TOTAL"] || [];
+
+    // Historical epoch multipliers for regional distribution shifts
+    // 100 AD: Levant/Middle East & Eastern Med dominant, Americas/S-Africa undeveloped
+    // 500 AD: Mediterranean, Europe, Levant, Nile active
+    // 1500 AD: Europe high, Reformation hubs, Americas early contact
+    // MODERN: Globalized distribution
+    const eraMultipliers = {
+        '100': { 'ME': 1.6, 'EU': 0.7, 'AF': 0.5, 'NA': 0.05, 'LA': 0.05, 'AP': 0.15 },
+        '500': { 'ME': 1.3, 'EU': 1.2, 'AF': 0.8, 'NA': 0.05, 'LA': 0.05, 'AP': 0.25 },
+        '1500': { 'ME': 0.7, 'EU': 1.5, 'AF': 0.5, 'NA': 0.20, 'LA': 0.60, 'AP': 0.35 },
+        'MODERN': { 'ME': 1.0, 'EU': 1.0, 'AF': 1.0, 'NA': 1.0, 'LA': 1.0, 'AP': 1.0 }
+    };
+    const multipliers = eraMultipliers[currentHistoricalEra] || eraMultipliers['MODERN'];
 
     for (let i = 0; i < hexWorldGrid.length; i++) {
         const hex = hexWorldGrid[i];
@@ -1759,7 +1793,8 @@ function recomputeHexIntensities() {
         }
         const proximityBoost = Math.max(0, 1 - minDist / 22);
         const baseIntensity = regData ? regData.intensity : 0.25;
-        hex.intensity = Math.min(1.0, baseIntensity * 0.3 + proximityBoost * 0.7);
+        const eraFactor = multipliers[hex.region] || 1.0;
+        hex.intensity = Math.min(1.0, (baseIntensity * 0.3 + proximityBoost * 0.7) * eraFactor);
     }
 }
 
@@ -2509,8 +2544,13 @@ async function bootMapLibre() {
     await mountMapLibre(file);
 }
 
+let maplibreMountGeneration = 0;
+
 async function mountMapLibre(file) {
+    const currentGen = ++maplibreMountGeneration;
     const info = await detectRegionMeta(file);
+    if (currentGen !== maplibreMountGeneration) return;
+
     activeRegion = { filename: file, ...info };
     const isStreet = info.schema === 'street';
     const container = document.getElementById('maplibre-container');
@@ -2549,6 +2589,8 @@ async function mountMapLibre(file) {
                 resolve();
             });
         });
+
+        if (currentGen !== maplibreMountGeneration) return;
 
         const attr = document.getElementById('map-attribution');
         if (attr) attr.classList.toggle('hidden', !isStreet);
@@ -2594,6 +2636,7 @@ async function mountMapLibre(file) {
             if (e && e.lngLat) updateCoordsHud(e.lngLat.lng, e.lngLat.lat);
         });
     } catch (e) {
+        if (currentGen !== maplibreMountGeneration) return;
         console.warn('MapLibre unavailable, vector canvas fallback active:', e && e.message ? e.message : e);
         setMapStatus(`MAPLIBRE: ${e && e.message ? e.message : 'boot failed'} — canvas fallback`, true);
         if (maplibreInstance) {
@@ -2620,6 +2663,25 @@ export function toggleGraticule() {
     }
     renderMap();
     return showGraticule;
+}
+
+export function focusMapOnCoordinates(lat, lon, zoomLevel = 2.4) {
+    if (mapOperatingMode === 'OFFLINE' && maplibreActive && maplibreInstance) {
+        try {
+            maplibreInstance.easeTo({ center: [lon, lat], zoom: Math.max(4.0, zoomLevel * 2.2), duration: 800 });
+        } catch (e) {}
+        return;
+    }
+    if (!mCanvas) return;
+    const redZone = document.getElementById('zone-red');
+    const w = redZone ? redZone.clientWidth : (mCanvas._logicalWidth || mCanvas.width);
+    const h = redZone ? redZone.clientHeight : (mCanvas._logicalHeight || mCanvas.height);
+    const scaleX = 2.4;
+    const scaleY = 2.4;
+    mapZoom = zoomLevel;
+    mapPanX = (w / 2) - (lon * scaleX * mapZoom);
+    mapPanY = (h / 2) - (-lat * scaleY * mapZoom);
+    renderMap();
 }
 
 export function recenterMap() {
@@ -2668,10 +2730,29 @@ export function resizeMap() {
     if (!mCanvas) return;
     const redZone = document.getElementById('zone-red');
     if (redZone) {
-        mCanvas.width = redZone.clientWidth;
-        mCanvas.height = redZone.clientHeight;
-        mapPanX = mCanvas.width / 2;
-        mapPanY = mCanvas.height / 2;
+        const dpr = window.devicePixelRatio || 1;
+        const width = redZone.clientWidth;
+        const height = redZone.clientHeight;
+        if (width === 0 || height === 0) return;
+
+        const prevW = mCanvas._logicalWidth || 0;
+        const prevH = mCanvas._logicalHeight || 0;
+
+        mCanvas.width = width * dpr;
+        mCanvas.height = height * dpr;
+        mCanvas.style.width = `${width}px`;
+        mCanvas.style.height = `${height}px`;
+        mCanvas._logicalWidth = width;
+        mCanvas._logicalHeight = height;
+        mCanvas._dpr = dpr;
+
+        if (mapPanX === 0 && mapPanY === 0) {
+            mapPanX = width / 2;
+            mapPanY = height / 2;
+        } else if (prevW > 0 && prevH > 0 && (width !== prevW || height !== prevH)) {
+            mapPanX += (width - prevW) / 2;
+            mapPanY += (height - prevH) / 2;
+        }
         renderMap();
     }
 }
@@ -2699,6 +2780,8 @@ export function renderMap() {
     mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
 
     mCtx.save();
+    const dpr = mCanvas._dpr || window.devicePixelRatio || 1;
+    mCtx.scale(dpr, dpr);
     mCtx.translate(mapPanX, mapPanY);
     mCtx.scale(mapZoom, mapZoom);
 
@@ -2851,22 +2934,70 @@ export function renderMap() {
     mCtx.restore();
 }
 
-function drawHexagon(ctx, x, y, r, fill, stroke) {
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i;
-        const hx = x + r * Math.cos(angle);
-        const hy = y + r * Math.sin(angle);
-        if (i === 0) ctx.moveTo(hx, hy);
-        else ctx.lineTo(hx, hy);
-    }
-    ctx.closePath();
-    ctx.fillStyle = fill;
-    ctx.fill();
-    if (stroke) {
-        ctx.lineWidth = 0.55;
-        ctx.strokeStyle = stroke;
-        ctx.stroke();
+function drawHexagon(ctx, x, y, r, fill, stroke, extrusionHeight = 0) {
+    if (extrusionHeight > 0.5) {
+        // Volumetric 3D Hexagon Extrusion
+        const h = extrusionHeight;
+        
+        // 1. Draw 3D side facets for bottom extrusion depth
+        const basePts = [];
+        const topPts = [];
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI / 3) * i;
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            topPts.push({ x: x + r * cos, y: y - h + (r * 0.85) * sin });
+            basePts.push({ x: x + r * cos, y: y + (r * 0.85) * sin });
+        }
+
+        // Draw side shadows (sides facing downward)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        for (let i = 0; i < 3; i++) {
+            const p1 = topPts[i];
+            const p2 = topPts[(i + 1) % 6];
+            const b2 = basePts[(i + 1) % 6];
+            const b1 = basePts[i];
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.lineTo(b2.x, b2.y);
+            ctx.lineTo(b1.x, b1.y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // 2. Draw Elevated Hexagon Top Cap
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            if (i === 0) ctx.moveTo(topPts[i].x, topPts[i].y);
+            else ctx.lineTo(topPts[i].x, topPts[i].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        if (stroke) {
+            ctx.lineWidth = 0.7;
+            ctx.strokeStyle = stroke;
+            ctx.stroke();
+        }
+    } else {
+        // Standard Flat Hexagon
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI / 3) * i;
+            const hx = x + r * Math.cos(angle);
+            const hy = y + r * Math.sin(angle);
+            if (i === 0) ctx.moveTo(hx, hy);
+            else ctx.lineTo(hx, hy);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        if (stroke) {
+            ctx.lineWidth = 0.55;
+            ctx.strokeStyle = stroke;
+            ctx.stroke();
+        }
     }
 }
 
@@ -2885,6 +3016,8 @@ function renderHexDataMap() {
     mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
 
     mCtx.save();
+    const dpr = mCanvas._dpr || window.devicePixelRatio || 1;
+    mCtx.scale(dpr, dpr);
     mCtx.translate(mapPanX, mapPanY);
     mCtx.scale(mapZoom, mapZoom);
 
@@ -2903,6 +3036,9 @@ function renderHexDataMap() {
         }
     }
 
+    const currDataset = MAP_DATASETS[activeMapDatasetKey] || MAP_DATASETS["TOTAL"];
+    const preset = currDataset?.colorPreset || 'adaptive';
+
     // 2. Ultra-Fast High-Density Hexagons (Read precomputed intensity, zero expensive shadowBlur)
     for (let i = 0; i < hexWorldGrid.length; i++) {
         const hex = hexWorldGrid[i];
@@ -2919,11 +3055,23 @@ function renderHexDataMap() {
         let fillColor = hexBase;
         let strokeColor = hexStroke;
 
-        const currDataset = MAP_DATASETS[activeMapDatasetKey] || MAP_DATASETS["TOTAL"];
-        const preset = currDataset?.colorPreset || 'adaptive';
-
         // Precise Color Grading Translation Across Themes and Custom Presets
-        if (preset === 'mono' || (preset === 'adaptive' && (theme === 'obsidian-mono' || theme === 'dark'))) {
+        if (preset === 'crimson') {
+            // Explicit Crimson Heat preset
+            if (cellIntensity >= 0.75) {
+                fillColor = '#e11d48';
+                strokeColor = '#fb7185';
+            } else if (cellIntensity >= 0.52) {
+                fillColor = '#f59e0b';
+                strokeColor = '#fef08a';
+            } else if (cellIntensity >= 0.30) {
+                fillColor = '#0284c7';
+                strokeColor = '#38bdf8';
+            } else {
+                fillColor = '#0f172a';
+                strokeColor = '#1e293b';
+            }
+        } else if (preset === 'mono' || (preset === 'adaptive' && (theme === 'obsidian-mono' || theme === 'dark'))) {
             // Obsidian Mono: Pure Luminous White -> Silver Light Gray -> Mid Slate Gray -> Charcoal Obsidian Base
             if (cellIntensity >= 0.75) {
                 fillColor = '#ffffff';
@@ -2984,7 +3132,7 @@ function renderHexDataMap() {
                 strokeColor = '#cbd5e1';
             }
         } else {
-            // Midnight Gold & Crimson Heat: Crimson Red -> Amber Gold -> Cyan Blue -> Deep Midnight Slate
+            // Midnight Gold & default adaptive: Crimson Red -> Amber Gold -> Cyan Blue -> Deep Midnight Slate
             if (cellIntensity >= 0.75) {
                 fillColor = '#e11d48';
                 strokeColor = '#fb7185';
@@ -3018,7 +3166,9 @@ function renderHexDataMap() {
             strokeColor = '#ffffff';
         }
 
-        drawHexagon(mCtx, hex.x, hex.y, hex.radius, fillColor, strokeColor);
+        // Volumetric 3D extrusion height based on demographic intensity
+        const extrusionHeight = cellIntensity >= 0.52 ? (cellIntensity - 0.45) * 4.2 : 0;
+        drawHexagon(mCtx, hex.x, hex.y, hex.radius, fillColor, strokeColor, extrusionHeight);
     }
 
     // 3. Country Beacons & Regional Nodes
@@ -3078,6 +3228,10 @@ function updateMapFloatingBadges() {
     container.classList.remove('hidden');
     container.innerHTML = '';
 
+    const containerRect = container.getBoundingClientRect();
+    const maxLeft = Math.max(16, (containerRect.width || window.innerWidth) - 320);
+    const maxTop = Math.max(60, (containerRect.height || window.innerHeight) - 340);
+
     const scaleX = 2.4;
     const scaleY = 2.4;
 
@@ -3095,8 +3249,8 @@ function updateMapFloatingBadges() {
 
         const card = document.createElement('div');
         card.className = "absolute pointer-events-auto rounded-2xl p-4 shadow-2xl transition-all duration-200 text-xs font-mono select-none flex flex-col gap-2 backdrop-blur-xl animate-fade-in";
-        card.style.left = `${Math.max(16, Math.min(window.innerWidth - 320, screenX + 16))}px`;
-        card.style.top = `${Math.max(60, Math.min(window.innerHeight - 340, screenY - 60))}px`;
+        card.style.left = `${Math.max(16, Math.min(maxLeft, screenX + 16))}px`;
+        card.style.top = `${Math.max(60, Math.min(maxTop, screenY - 60))}px`;
         card.style.width = '300px';
         card.style.backgroundColor = 'var(--panel-bg)';
         card.style.border = '1.5px solid var(--accent-primary)';
@@ -3105,10 +3259,10 @@ function updateMapFloatingBadges() {
         card.innerHTML = `
             <div class="flex items-center justify-between border-b pb-2" style="border-color: var(--border-subtle);">
                 <div class="flex items-center space-x-2">
-                    <span class="text-base leading-none">${c.flag || '📍'}</span>
+                    <span class="text-base leading-none">${escapeHtml(c.flag || '📍')}</span>
                     <div class="flex flex-col">
-                        <span class="font-bold text-sm tracking-wide" style="color: var(--text-main);">${c.name}</span>
-                        <span class="text-[9px] uppercase tracking-widest" style="color: var(--accent-secondary);">${c.region} REGION • ${c.id}</span>
+                        <span class="font-bold text-sm tracking-wide" style="color: var(--text-main);">${escapeHtml(c.name)}</span>
+                        <span class="text-[9px] uppercase tracking-widest" style="color: var(--accent-secondary);">${escapeHtml(c.region)} REGION • ${escapeHtml(c.id)}</span>
                     </div>
                 </div>
                 <button id="btn-close-detail-card" class="w-6 h-6 rounded-full flex items-center justify-center opacity-70 hover:opacity-100 hover:bg-white/10 transition-colors" style="color: var(--text-muted);" title="Close detail card">✕</button>
@@ -3116,22 +3270,22 @@ function updateMapFloatingBadges() {
             
             <div class="flex items-baseline justify-between py-1 px-2.5 rounded-lg" style="background-color: var(--panel-bg-subtle);">
                 <div class="flex flex-col">
-                    <span class="text-[9px] uppercase tracking-wider" style="color: var(--text-muted);">${currDataset.metricLabel}</span>
-                    <span class="font-extrabold text-base tracking-tight" style="color: var(--accent-primary);">${displayCount}</span>
+                    <span class="text-[9px] uppercase tracking-wider" style="color: var(--text-muted);">${escapeHtml(currDataset.metricLabel)}</span>
+                    <span class="font-extrabold text-base tracking-tight" style="color: var(--accent-primary);">${escapeHtml(displayCount)}</span>
                 </div>
-                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded" style="background-color: var(--panel-border); color: var(--accent-secondary);">${displayPct}</span>
+                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded" style="background-color: var(--panel-border); color: var(--accent-secondary);">${escapeHtml(displayPct)}</span>
             </div>
 
             ${displayCenters ? `
             <div class="text-[10px] leading-relaxed">
                 <span class="font-bold uppercase tracking-wider" style="color: var(--text-secondary);">Centers: </span>
-                <span style="color: var(--text-muted);">${displayCenters}</span>
+                <span style="color: var(--text-muted);">${escapeHtml(displayCenters)}</span>
             </div>
             ` : ''}
 
             ${displayChapters && displayChapters.length > 0 ? `
             <div class="text-[10.5px] leading-relaxed line-clamp-3 p-2 rounded border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
-                ${displayChapters[0]}
+                ${escapeHtml(displayChapters[0])}
             </div>
             ` : ''}
 
@@ -3179,23 +3333,23 @@ function updateMapFloatingBadges() {
         card.innerHTML = `
             <div class="flex items-center justify-between border-b pb-2" style="border-color: var(--border-subtle);">
                 <div class="flex items-center space-x-2">
-                    <span class="font-bold text-sm tracking-wide" style="color: var(--text-main);">${regData.name || reg.name}</span>
-                    <span class="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded" style="background-color: var(--panel-bg-subtle); color: var(--accent-secondary);">${reg.id}</span>
+                    <span class="font-bold text-sm tracking-wide" style="color: var(--text-main);">${escapeHtml(regData.name || reg.name)}</span>
+                    <span class="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded" style="background-color: var(--panel-bg-subtle); color: var(--accent-secondary);">${escapeHtml(reg.id)}</span>
                 </div>
                 <button id="btn-close-region-card" class="w-6 h-6 rounded-full flex items-center justify-center opacity-70 hover:opacity-100 hover:bg-white/10 transition-colors" style="color: var(--text-muted);" title="Close detail card">✕</button>
             </div>
             
             <div class="flex items-baseline justify-between py-1 px-2.5 rounded-lg" style="background-color: var(--panel-bg-subtle);">
                 <div class="flex flex-col">
-                    <span class="text-[9px] uppercase tracking-wider" style="color: var(--text-muted);">${currDataset.metricLabel}</span>
-                    <span class="font-extrabold text-base tracking-tight" style="color: var(--accent-primary);">${regData.count || '--'}</span>
+                    <span class="text-[9px] uppercase tracking-wider" style="color: var(--text-muted);">${escapeHtml(currDataset.metricLabel)}</span>
+                    <span class="font-extrabold text-base tracking-tight" style="color: var(--accent-primary);">${escapeHtml(regData.count || '--')}</span>
                 </div>
-                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded" style="background-color: var(--panel-border); color: var(--accent-secondary);">${regData.pct || '--'}</span>
+                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded" style="background-color: var(--panel-border); color: var(--accent-secondary);">${escapeHtml(regData.pct || '--')}</span>
             </div>
 
             ${regData.chapters && regData.chapters.length > 0 ? `
             <div class="text-[10.5px] leading-relaxed line-clamp-4 p-2 rounded border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
-                ${regData.chapters[0]}
+                ${escapeHtml(regData.chapters[0])}
             </div>
             ` : ''}
 
@@ -3435,6 +3589,8 @@ function setupMapInteractions() {
 
             if (clickedHex && clickedHex.country) {
                 selectCountry(clickedHex.country);
+            } else if (clickedHex && clickedHex.region) {
+                selectDataMapRegion(clickedHex.region);
             } else {
                 selectedCountry = null;
                 selectedMapRegion = null;
@@ -3695,11 +3851,24 @@ export function submitLibrarianQuery(question) {
         (citations) => {
             if (citSpan && citations && citations.length > 0) {
                 citSpan.classList.remove('hidden');
-                citSpan.innerHTML = `<span class="text-[9px] font-bold uppercase mr-1" style="color: var(--text-muted);">CITATIONS:</span>` +
-                    citations.map(c => {
-                        const title = typeof c === 'string' ? c : (c.doc_title || c.title || 'Citation');
-                        return `<span class="px-2 py-0.5 rounded border text-[9px]" style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);">${escapeHtml(title)}</span>`;
-                    }).join('');
+                citSpan.innerHTML = `<span class="text-[9px] font-bold uppercase mr-1" style="color: var(--text-muted);">GROUNDED SOURCES:</span>`;
+                citations.forEach((c, idx) => {
+                    const title = typeof c === 'string' ? c : (c.doc_title || c.title || 'Citation');
+                    const btn = document.createElement('button');
+                    btn.className = "px-2 py-0.5 rounded border text-[9px] font-mono font-bold transition-all hover:scale-105 active:scale-95 flex items-center gap-1";
+                    btn.style.backgroundColor = "var(--panel-bg)";
+                    btn.style.borderColor = "var(--accent-primary)";
+                    btn.style.color = "var(--text-main)";
+                    btn.innerHTML = `<span style="color: var(--accent-primary);">[${idx + 1}]</span> <span>${escapeHtml(title)}</span>`;
+                    btn.title = "Click to inspect grounded source passage in Deep Reader";
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (window.inspectCitationPassage) {
+                            window.inspectCitationPassage(c);
+                        }
+                    });
+                    citSpan.appendChild(btn);
+                });
             }
         },
         () => {
@@ -3853,7 +4022,11 @@ export function setupDataMatrixModal() {
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
             const rawId = (document.getElementById('data-creator-id')?.value || '').trim();
-            const id = rawId ? rawId.toUpperCase().replace(/[^A-Z0-9_]/g, '') : `CUSTOM_${Date.now() % 10000}`;
+            let id = rawId ? rawId.toUpperCase().replace(/[^A-Z0-9_]/g, '') : `CUSTOM_${Date.now() % 10000}`;
+            const BUILTIN_IDS = ['TOTAL', 'CATHOLIC', 'PROTESTANT', 'ORTHODOX', 'MANUSCRIPTS'];
+            if (BUILTIN_IDS.includes(id)) {
+                id = `CUSTOM_${id}`;
+            }
             const title = (document.getElementById('data-creator-title')?.value || '').trim() || 'CUSTOM GEODATA MATRIX';
             const metric = (document.getElementById('data-creator-metric')?.value || '').trim() || 'Recorded Entries';
             const palette = document.getElementById('data-creator-palette')?.value || 'adaptive';
@@ -3900,6 +4073,182 @@ export function setupDataMatrixModal() {
             closeDataMatrixModal();
         });
     }
+
+    const exportBtn = document.getElementById('btn-export-mazz-bundle');
+    const importBtn = document.getElementById('btn-import-mazz-bundle');
+    const importFileInput = document.getElementById('input-import-mazz-file');
+
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            const saved = JSON.parse(localStorage.getItem('mazzaroth:customDatasets') || '{}');
+            const blob = new Blob([JSON.stringify(saved, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mazzaroth_datasets_${Date.now()}.mazz`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    if (importBtn && importFileInput) {
+        importBtn.addEventListener('click', () => importFileInput.click());
+        importFileInput.addEventListener('change', (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const parsed = JSON.parse(ev.target.result);
+                    let count = 0;
+                    for (const [id, ds] of Object.entries(parsed)) {
+                        if (ds && ds.id) {
+                            saveCustomMapDataset(ds);
+                            count++;
+                        }
+                    }
+                    const t = document.getElementById('toast-text');
+                    const tm = document.getElementById('toast-message');
+                    if (t && tm) {
+                        t.innerText = `Imported ${count} datasets from .mazz bundle`;
+                        tm.classList.remove('opacity-0', 'translate-y-3');
+                        setTimeout(() => tm.classList.add('opacity-0', 'translate-y-3'), 2800);
+                    }
+                    closeDataMatrixModal();
+                } catch (err) {
+                    alert('Invalid .mazz bundle: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        });
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 6. CLIENT-SIDE PROCEDURAL WEB AUDIO SYNTHESIZER & TACTILE CLICKS
+// 100% Offline, Zero external assets, Web Audio API native synthesis
+// ---------------------------------------------------------------------------
+
+let audioCtx = null;
+let isAudioEnabled = false;
+let ambientOsc1 = null;
+let ambientOsc2 = null;
+let ambientGain = null;
+
+export function toggleAudio() {
+    isAudioEnabled = !isAudioEnabled;
+    const audioIcon = document.getElementById('audio-icon');
+    const audioLabel = document.getElementById('audio-label');
+    const audioBtn = document.getElementById('audio-toggle-btn');
+
+    if (isAudioEnabled) {
+        initAudio();
+        startAmbientDrone();
+        if (audioIcon) audioIcon.innerText = '🔊';
+        if (audioLabel) audioLabel.innerText = 'ON';
+        if (audioBtn) audioBtn.style.borderColor = 'var(--accent-primary)';
+    } else {
+        stopAmbientDrone();
+        if (audioIcon) audioIcon.innerText = '🔇';
+        if (audioLabel) audioLabel.innerText = 'OFF';
+        if (audioBtn) audioBtn.style.borderColor = 'var(--border-subtle)';
+    }
+    return isAudioEnabled;
+}
+
+function initAudio() {
+    if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+        }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+function startAmbientDrone() {
+    if (!audioCtx) return;
+    try {
+        stopAmbientDrone();
+
+        ambientGain = audioCtx.createGain();
+        ambientGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+        ambientGain.gain.exponentialRampToValueAtTime(0.035, audioCtx.currentTime + 3.0);
+        ambientGain.connect(audioCtx.destination);
+
+        // Low celestial sub-fundamental (55 Hz - A1)
+        ambientOsc1 = audioCtx.createOscillator();
+        ambientOsc1.type = 'sine';
+        ambientOsc1.frequency.setValueAtTime(55.0, audioCtx.currentTime);
+        ambientOsc1.connect(ambientGain);
+        ambientOsc1.start();
+
+        // Shimmering fifth overtone (82.4 Hz - E2)
+        ambientOsc2 = audioCtx.createOscillator();
+        ambientOsc2.type = 'triangle';
+        ambientOsc2.frequency.setValueAtTime(82.4, audioCtx.currentTime);
+        ambientOsc2.connect(ambientGain);
+        ambientOsc2.start();
+    } catch (e) {
+        console.warn('Could not start ambient drone:', e);
+    }
+}
+
+function stopAmbientDrone() {
+    if (ambientGain && audioCtx) {
+        try {
+            ambientGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.0);
+            setTimeout(() => {
+                if (ambientOsc1) { ambientOsc1.stop(); ambientOsc1.disconnect(); ambientOsc1 = null; }
+                if (ambientOsc2) { ambientOsc2.stop(); ambientOsc2.disconnect(); ambientOsc2 = null; }
+                if (ambientGain) { ambientGain.disconnect(); ambientGain = null; }
+            }, 1050);
+        } catch (e) {}
+    }
+}
+
+export function playTactileClick(freq = 880, duration = 0.04) {
+    if (!isAudioEnabled || !audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.4, audioCtx.currentTime + duration);
+
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    } catch (e) {}
+}
+
+export function playHarmonicChime(notes = [440, 554.37, 659.25]) {
+    if (!isAudioEnabled || !audioCtx) return;
+    try {
+        notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.05);
+
+            gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.04, audioCtx.currentTime + idx * 0.05 + 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + idx * 0.05 + 1.4);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime + idx * 0.05);
+            osc.stop(audioCtx.currentTime + idx * 0.05 + 1.5);
+        });
+    } catch (e) {}
 }
 
 

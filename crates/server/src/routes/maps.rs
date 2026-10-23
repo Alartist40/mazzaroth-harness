@@ -103,6 +103,77 @@ pub async fn handle_serve_pmtiles(
                     }
 
                     let length = end - start + 1;
+
+                    // Optimize small/medium tile reads (< 512KB) using zero-copy in-memory LRU caching
+                    const MAX_CACHED_RANGE_LEN: u64 = 512 * 1024;
+                    if length <= MAX_CACHED_RANGE_LEN {
+                        let cache_key = format!("{}:{}:{}", filename, start, length);
+                        let cached_bytes = {
+                            static TILE_CACHE: std::sync::OnceLock<std::sync::Mutex<std::collections::HashMap<String, (std::time::Instant, Vec<u8>)>>> = std::sync::OnceLock::new();
+                            let map = TILE_CACHE.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+                            let guard = map.lock().unwrap();
+                            if let Some((_, data)) = guard.get(&cache_key) {
+                                Some(data.clone())
+                            } else {
+                                None
+                            }
+                        };
+
+                        if let Some(data) = cached_bytes {
+                            return Ok(Response::builder()
+                                .status(StatusCode::PARTIAL_CONTENT)
+                                .header(ACCEPT_RANGES, "bytes")
+                                .header(CONTENT_TYPE, "application/octet-stream")
+                                .header(CONTENT_LENGTH, length.to_string())
+                                .header(
+                                    CONTENT_RANGE,
+                                    format!("bytes {}-{}/{}", start, end, total_len),
+                                )
+                                .header("X-Cache", "HIT")
+                                .body(Body::from(data))
+                                .unwrap());
+                        }
+
+                        file.seek(SeekFrom::Start(start))
+                            .await
+                            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+                        let mut buf = vec![0u8; length as usize];
+                        file.read_exact(&mut buf)
+                            .await
+                            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+                        {
+                            static TILE_CACHE: std::sync::OnceLock<std::sync::Mutex<std::collections::HashMap<String, (std::time::Instant, Vec<u8>)>>> = std::sync::OnceLock::new();
+                            let map = TILE_CACHE.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+                            let mut guard = map.lock().unwrap();
+                            // Limit cache size to 512 entries (~32MB RAM max)
+                            if guard.len() >= 512 {
+                                let oldest_key = guard
+                                    .iter()
+                                    .min_by_key(|(_, (t, _))| *t)
+                                    .map(|(k, _)| k.clone());
+                                if let Some(k) = oldest_key {
+                                    guard.remove(&k);
+                                }
+                            }
+                            guard.insert(cache_key, (std::time::Instant::now(), buf.clone()));
+                        }
+
+                        return Ok(Response::builder()
+                            .status(StatusCode::PARTIAL_CONTENT)
+                            .header(ACCEPT_RANGES, "bytes")
+                            .header(CONTENT_TYPE, "application/octet-stream")
+                            .header(CONTENT_LENGTH, length.to_string())
+                            .header(
+                                CONTENT_RANGE,
+                                format!("bytes {}-{}/{}", start, end, total_len),
+                            )
+                            .header("X-Cache", "MISS")
+                            .body(Body::from(buf))
+                            .unwrap());
+                    }
+
                     file.seek(SeekFrom::Start(start))
                         .await
                         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;

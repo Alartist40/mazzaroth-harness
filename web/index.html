@@ -170,15 +170,12 @@
                     </div>
                 </div>
 
-                <!-- Wireframe Presentation Overlay Toggle -->
-                <button id="wireframe-toggle-btn" class="flex items-center space-x-1.5 px-3 py-1 rounded-full border text-[11px] font-mono transition-all hover:opacity-80 active:scale-95"
-                        style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="3" y1="9" x2="21" y2="9"></line>
-                        <line x1="9" y1="21" x2="9" y2="9"></line>
-                    </svg>
-                    <span>WIREFRAME GUIDE: <strong id="wireframe-label" style="color: var(--text-main);">OFF</strong></span>
+                <!-- Client-Side Web Audio Ambient & Feedback Toggle -->
+                <button id="audio-toggle-btn" class="flex items-center space-x-1.5 px-3 py-1 rounded-full border text-[11px] font-mono transition-all hover:opacity-80 active:scale-95"
+                        style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);"
+                        title="Toggle Ambient Synthesizer & Tactile Audio Feedback">
+                    <span id="audio-icon">🔇</span>
+                    <span>AUDIO: <strong id="audio-label" style="color: var(--text-main);">OFF</strong></span>
                 </button>
 
                 <div class="hidden sm:block text-[11px] font-mono pl-2 border-l" style="border-color: var(--border-subtle); color: var(--text-muted);" id="offline-clock">
@@ -267,6 +264,15 @@
                                 <circle cx="11" cy="11" r="8"></circle>
                                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                 <line x1="8" y1="11" x2="14" y2="11"></line>
+                            </svg>
+                        </button>
+
+                        <button id="tool-tour" class="w-9 h-9 rounded-xl border flex items-center justify-center transition-all opacity-80 hover:opacity-100"
+                                style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);"
+                                title="Toggle Cinematic Presentation Tour Mode">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
                             </svg>
                         </button>
 
@@ -514,6 +520,21 @@
                 <div id="view-galaxy" class="view-panel relative w-full h-full block">
                     <canvas id="galaxy-canvas" class="w-full h-full cursor-crosshair block"></canvas>
                     
+                    <!-- Genesis Cosmic Ignition Veil (Void -> Flash -> Expansion) -->
+                    <div id="galaxy-genesis-veil" class="absolute inset-0 z-30 flex flex-col items-center justify-center cursor-pointer transition-opacity duration-1000 select-none bg-black">
+                        <div id="genesis-flash" class="absolute inset-0 bg-white pointer-events-none opacity-0 transition-opacity duration-500 z-40"></div>
+                        <div class="relative z-50 flex flex-col items-center gap-3 text-center px-6 animate-pulse">
+                            <div class="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white/80 bg-white/5 backdrop-blur shadow-2xl">
+                                <svg class="w-6 h-6 animate-spin" style="animation-duration: 8s;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M12 2a10 10 0 0 1 10 10"></path>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-mono tracking-[0.3em] uppercase text-zinc-300 font-bold">CLICK COSMIC VOID TO IGNITE GALAXY</span>
+                            <span class="text-[9px] font-mono tracking-widest text-zinc-500">INITIATE EXPANSION OF 1,105 SOVEREIGN STARS</span>
+                        </div>
+                    </div>
+
                     <div class="absolute top-4 left-4 z-20 flex flex-col gap-1.5 pointer-events-none">
                         <div class="px-2.5 py-1 rounded-md border font-mono text-[10px] flex items-center space-x-2"
                              style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);">
@@ -683,10 +704,38 @@
                             <span class="w-1.5 h-1.5 rounded-full inline-block" style="background-color: var(--accent-secondary);"></span>
                             <span id="map-dataset-label">TOTAL CHRISTIAN POPULATION (~2.42B)</span>
                         </div>
+                        <div id="map-cursor-coords" class="px-2.5 py-1 rounded-md border flex items-center space-x-2 text-[9px]"
+                             style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-muted);">
+                            <span>0.00° N, 0.00° E</span>
+                        </div>
                     </div>
 
                     <div id="maplibre-status" class="hidden absolute top-4 right-4 z-20 pointer-events-none font-mono text-[10px] px-3 py-1.5 rounded-lg border shadow-sm"
                          style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-secondary);"></div>
+
+                    <!-- Historical Timeline Era Slider (Active in Hexagon Mode) -->
+                    <div id="map-timeline-dock" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-4 py-2 rounded-2xl border shadow-2xl font-mono text-[10px] backdrop-blur-xl"
+                         style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);">
+                        <span class="text-[8px] font-bold tracking-widest uppercase" style="color: var(--text-muted);">HISTORICAL EPOCH:</span>
+                        <div class="flex items-center gap-1.5" id="timeline-era-buttons">
+                            <button data-era="100" class="timeline-era-btn px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all opacity-70 hover:opacity-100"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
+                                100 AD
+                            </button>
+                            <button data-era="500" class="timeline-era-btn px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all opacity-70 hover:opacity-100"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
+                                500 AD
+                            </button>
+                            <button data-era="1500" class="timeline-era-btn px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all opacity-70 hover:opacity-100"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
+                                1500 AD
+                            </button>
+                            <button data-era="MODERN" class="timeline-era-btn active-era px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all"
+                                    style="background-color: var(--contrast-ink); border-color: var(--accent-primary); color: var(--contrast-paper);">
+                                MODERN
+                            </button>
+                        </div>
+                    </div>
 
                     <div class="absolute bottom-5 left-5 z-20 pointer-events-none font-mono text-[10px] px-3 py-1.5 rounded-lg border shadow-sm"
                          style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-secondary);">
@@ -844,8 +893,12 @@
                             </div>
                         </div>
 
-                        <!-- Reader Utility Buttons: Font Scaling & Expand Fullscreen -->
+                        <!-- Reader Utility Buttons: Font Scaling, Synoptic Compare, & Expand Fullscreen -->
                         <div class="flex items-center space-x-1 font-mono text-[10px] shrink-0">
+                            <button id="btn-reader-synoptic" class="px-2 py-0.5 rounded border hover:opacity-80 transition-all text-[9px] font-bold"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--accent-secondary);" title="Toggle Side-by-Side Synoptic Translation Comparison">
+                                SYNOPTIC
+                            </button>
                             <button id="btn-font-dec" class="px-1.5 py-0.5 rounded border hover:opacity-80 transition-all"
                                     style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);" title="Decrease Text Size">A-</button>
                             <button id="btn-font-inc" class="px-1.5 py-0.5 rounded border hover:opacity-80 transition-all"
@@ -866,15 +919,66 @@
                         </div>
                     </div>
 
+                    <!-- Living Brain Cross-Module Action Bar -->
+                    <div id="reader-cross-module-bar" class="py-1 px-2 my-1 rounded-lg border flex items-center justify-between text-[9px] font-mono hidden"
+                         style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">
+                        <div class="flex items-center gap-1.5 truncate">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                            <span id="cross-module-info" class="text-zinc-400 truncate">Sovereign Geolocation & Astrometry Linked</span>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button id="btn-cross-view-earth" class="px-2 py-0.5 rounded border font-bold hover:scale-105 active:scale-95 transition-all text-sky-400"
+                                    style="background-color: var(--panel-bg); border-color: var(--panel-border);" title="View physical historical origin on Map">
+                                🌍 VIEW ON EARTH
+                            </button>
+                            <button id="btn-cross-view-sky" class="px-2 py-0.5 rounded border font-bold hover:scale-105 active:scale-95 transition-all text-amber-300"
+                                    style="background-color: var(--panel-bg); border-color: var(--panel-border);" title="Project Celestial Dome for date of writing">
+                                🌌 PROJECT SKY
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Long-form Reading Body (Takes maximum height) -->
                     <div id="reader-content-box" class="flex-1 min-h-0 overflow-y-auto reader-scroll py-2.5 my-1 text-xs leading-relaxed space-y-2.5 pr-1"
                          style="color: var(--text-secondary);">
-                        <p id="reader-p1" class="text-justify font-sans">
-                            Galactic epicenter of the Mazzaroth repository. This sovereign root node orchestrates 1,105 cataloged memory stars across 5 logarithmic spiral arms. All records are maintained with zero cloud connectivity.
-                        </p>
-                        <p id="reader-p2" class="text-justify font-sans">
-                            Every star acts as a localized node of memory containing full textual records, telemetry logs, or philosophical manuscripts. Connections represent contextual linkages discovered through historical traversal.
-                        </p>
+                        
+                        <!-- Synoptic Dual Comparison Split Pane (Toggled on Demand) -->
+                        <div id="reader-synoptic-grid" class="grid grid-cols-2 gap-2.5 w-full hidden">
+                            <div class="flex flex-col gap-1.5 p-2 rounded-xl border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">
+                                <div class="flex items-center justify-between border-b pb-1" style="border-color: var(--border-subtle);">
+                                    <span id="synoptic-left-title" class="font-bold text-[10px] text-zinc-300">PRIMARY TRANSLATION</span>
+                                    <span id="synoptic-left-badge" class="px-1 rounded bg-black/30 text-[8px] text-amber-400 font-mono">ENG: KJV</span>
+                                </div>
+                                <div id="synoptic-left-body" class="text-xs leading-relaxed space-y-2"></div>
+                            </div>
+                            <div class="flex flex-col gap-1.5 p-2 rounded-xl border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">
+                                <div class="flex items-center justify-between border-b pb-1" style="border-color: var(--border-subtle);">
+                                    <div class="flex items-center gap-1">
+                                        <span class="font-bold text-[10px] text-zinc-300">COMPANION:</span>
+                                        <select id="synoptic-select-version" class="text-[9px] font-mono rounded px-1 py-0.5 bg-black/40 border border-white/10 text-white outline-none cursor-pointer">
+                                            <option value="ell:tr">ELL: Textus Receptus (Greek)</option>
+                                            <option value="heb:wlc">HEB: Westminster Leningrad (Hebrew)</option>
+                                            <option value="lat:vulgate">LAT: Biblia Sacra Vulgata (Latin)</option>
+                                            <option value="deu:luther">DEU: Luther Bibel 1912 (German)</option>
+                                            <option value="fra:ostervald">FRA: Ostervald 1996 (French)</option>
+                                            <option value="spa:rvr">SPA: Reina Valera 1909 (Spanish)</option>
+                                        </select>
+                                    </div>
+                                    <span id="synoptic-right-badge" class="px-1 rounded bg-black/30 text-[8px] text-sky-400 font-mono">GREEK / ORIGINAL</span>
+                                </div>
+                                <div id="synoptic-right-body" class="text-xs leading-relaxed space-y-2 font-serif"></div>
+                            </div>
+                        </div>
+
+                        <!-- Standard Single Document Reading View -->
+                        <div id="reader-standard-body" class="space-y-2.5">
+                            <p id="reader-p1" class="text-justify font-sans">
+                                Galactic epicenter of the Mazzaroth repository. This sovereign root node orchestrates 1,105 cataloged memory stars across 5 logarithmic spiral arms. All records are maintained with zero cloud connectivity.
+                            </p>
+                            <p id="reader-p2" class="text-justify font-sans">
+                                Every star acts as a localized node of memory containing full textual records, telemetry logs, or philosophical manuscripts. Connections represent contextual linkages discovered through historical traversal.
+                            </p>
+                        </div>
                     </div>
 
                     <!-- Footer: Chapter Paging & Collapsible Synapse Links -->
@@ -1163,10 +1267,23 @@
 
                 <!-- Modal Footer -->
                 <div class="pt-3 border-t flex items-center justify-between" style="border-color: var(--border-subtle);">
-                    <button id="btn-cancel-data-creator" class="px-3 py-1.5 rounded-xl border text-xs font-mono hover:opacity-80 transition-opacity"
-                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
-                        CANCEL
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button id="btn-cancel-data-creator" class="px-3 py-1.5 rounded-xl border text-xs font-mono hover:opacity-80 transition-opacity"
+                                style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
+                            CANCEL
+                        </button>
+                        <button id="btn-export-mazz-bundle" class="px-3 py-1.5 rounded-xl border text-xs font-mono font-bold flex items-center gap-1 hover:opacity-90 transition-opacity"
+                                style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--accent-secondary);"
+                                title="Export current custom datasets to sovereign .mazz bundle">
+                            <span>📦</span> <span>EXPORT .MAZZ</span>
+                        </button>
+                        <button id="btn-import-mazz-bundle" class="px-3 py-1.5 rounded-xl border text-xs font-mono font-bold flex items-center gap-1 hover:opacity-90 transition-opacity"
+                                style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-main);"
+                                title="Import .mazz bundle file">
+                            <span>📂</span> <span>IMPORT .MAZZ</span>
+                        </button>
+                        <input id="input-import-mazz-file" type="file" accept=".mazz,.json" class="hidden">
+                    </div>
                     <button id="btn-save-data-creator" class="px-4 py-1.5 rounded-xl border text-xs font-mono font-bold tracking-wider uppercase transition-all hover:scale-105 active:scale-95 flex items-center space-x-1.5 shadow-sm"
                             style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
                         <span>💾</span>

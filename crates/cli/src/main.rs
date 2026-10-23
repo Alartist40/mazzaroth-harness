@@ -62,6 +62,26 @@ enum Commands {
         #[command(subcommand)]
         action: MapsCommands,
     },
+    /// Sovereign database snapshot export and restore
+    Snapshot {
+        #[command(subcommand)]
+        action: SnapshotCommands,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum SnapshotCommands {
+    /// Export sovereign snapshot (database + notes + metadata) to file
+    Export {
+        /// Destination snapshot file path (e.g. mazzaroth_backup.snap)
+        #[arg(short, long, default_value = "mazzaroth_snapshot.snap")]
+        output: PathBuf,
+    },
+    /// Import and restore sovereign snapshot
+    Import {
+        /// Source snapshot file to restore
+        input: PathBuf,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -127,6 +147,14 @@ async fn main() -> anyhow::Result<()> {
                 run_maps_list(&cli.maps_dir)?;
             }
         },
+        Some(Commands::Snapshot { action }) => match action {
+            SnapshotCommands::Export { output } => {
+                run_snapshot_export(&cli.db, &output)?;
+            }
+            SnapshotCommands::Import { input } => {
+                run_snapshot_import(&cli.db, &input)?;
+            }
+        },
         Some(Commands::Serve) | None => {
             run_server(
                 cli.bind,
@@ -145,6 +173,106 @@ async fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+fn run_snapshot_export(db_path: &PathBuf, output_path: &PathBuf) -> anyhow::Result<()> {
+    if !db_path.exists() {
+        anyhow::bail!("Cannot export snapshot: Database file {:?} does not exist", db_path);
+    }
+    let db = LibrarianDb::open(db_path)?;
+    let integrity = db.check_integrity().unwrap_or(false);
+    if !integrity {
+        anyhow::bail!("Database integrity check failed prior to snapshot export");
+    }
+
+    let raw_bytes = std::fs::read(db_path)?;
+    let sha = sha256_hex(&raw_bytes);
+    let nodes = db.count_nodes().unwrap_or(0);
+    let docs = db.count_documents().unwrap_or(0);
+    let chunks = db.count_chunks().unwrap_or(0);
+
+    let header = serde_json::json!({
+        "format": "mazzaroth-snapshot-v1",
+        "timestamp": chrono_like_timestamp(),
+        "sha256": sha,
+        "nodes": nodes,
+        "docs": docs,
+        "chunks": chunks,
+        "data_len": raw_bytes.len(),
+    });
+
+    let header_bytes = serde_json::to_vec_pretty(&header)?;
+    let mut file = std::fs::File::create(output_path)?;
+    use std::io::Write;
+    file.write_all(b"MAZZAROTH_SNAP_V1\n")?;
+    file.write_all(&(header_bytes.len() as u32).to_le_bytes())?;
+    file.write_all(&header_bytes)?;
+    file.write_all(&raw_bytes)?;
+
+    println!("✦ Sovereign Snapshot successfully exported to: {:?}", output_path);
+    println!("  • Size:       {}", librarian_server::fetch::human_size(raw_bytes.len() as u64));
+    println!("  • Nodes:      {}", nodes);
+    println!("  • Documents:  {}", docs);
+    println!("  • Chunks:     {}", chunks);
+    println!("  • SHA-256:    {}", sha);
+    Ok(())
+}
+
+fn run_snapshot_import(db_path: &PathBuf, input_path: &PathBuf) -> anyhow::Result<()> {
+    if !input_path.exists() {
+        anyhow::bail!("Cannot import snapshot: File {:?} not found", input_path);
+    }
+    use std::io::Read;
+    let mut file = std::fs::File::open(input_path)?;
+    let mut magic = [0u8; 18];
+    file.read_exact(&mut magic)?;
+    if &magic != b"MAZZAROTH_SNAP_V1\n" {
+        anyhow::bail!("Invalid snapshot header: Magic prefix mismatch");
+    }
+
+    let mut len_bytes = [0u8; 4];
+    file.read_exact(&mut len_bytes)?;
+    let header_len = u32::from_le_bytes(len_bytes) as usize;
+
+    let mut header_buf = vec![0u8; header_len];
+    file.read_exact(&mut header_buf)?;
+    let header: serde_json::Value = serde_json::from_slice(&header_buf)?;
+
+    let mut db_bytes = Vec::new();
+    file.read_to_end(&mut db_bytes)?;
+
+    let expected_sha = header["sha256"].as_str().unwrap_or("");
+    let actual_sha = sha256_hex(&db_bytes);
+    if expected_sha != actual_sha {
+        anyhow::bail!("Snapshot corruption: Checksum mismatch (expected {}, got {})", expected_sha, actual_sha);
+    }
+
+    if let Some(parent) = db_path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(db_path, &db_bytes)?;
+
+    let db = LibrarianDb::open(db_path)?;
+    println!("✦ Sovereign Snapshot successfully restored into {:?}", db_path);
+    println!("  • Nodes:      {}", db.count_nodes().unwrap_or(0));
+    println!("  • Documents:  {}", db.count_documents().unwrap_or(0));
+    println!("  • Chunks:     {}", db.count_chunks().unwrap_or(0));
+    Ok(())
+}
+
+fn sha256_hex(data: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    let result = hasher.finalize();
+    result.iter().map(|b| format!("{:02x}", b)).collect()
+}
+
+fn chrono_like_timestamp() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
 }
 
 async fn run_server(

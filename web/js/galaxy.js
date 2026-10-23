@@ -22,6 +22,11 @@ let onSelectNodeCallback = null;
 let isDragging = false;
 let animFrameId = null;
 
+let isGenesisIgnited = false;
+let genesisProgress = 0; // 0 to 1 expansion interpolation
+let isPresentationTour = false;
+let presentationAngle = 0;
+
 const NUM_ARMS = 5;
 const MAX_GALAXY_RADIUS = 480;
 const CORE_RADIUS = 26;
@@ -32,8 +37,58 @@ export function initGalaxy(canvas, onSelectNode) {
 
     initThree();
     setupCanvasEvents();
+    setupGenesisCosmicIgnition();
     loadGalaxyData();
     startAnimationLoop();
+}
+
+export function setupGenesisCosmicIgnition() {
+    const veil = document.getElementById('galaxy-genesis-veil');
+    const flash = document.getElementById('genesis-flash');
+    if (!veil) {
+        isGenesisIgnited = true;
+        genesisProgress = 1;
+        return;
+    }
+
+    veil.addEventListener('click', () => {
+        if (isGenesisIgnited) return;
+        isGenesisIgnited = true;
+
+        if (flash) {
+            flash.style.opacity = '1';
+            setTimeout(() => {
+                flash.style.opacity = '0';
+            }, 300);
+        }
+
+        veil.style.opacity = '0';
+        veil.style.pointerEvents = 'none';
+        setTimeout(() => {
+            veil.classList.add('hidden');
+        }, 1100);
+
+        // Animate expansion from 0 to 1 over 2.4 seconds with cubic ease-out
+        const startTime = performance.now();
+        const duration = 2400;
+
+        function stepExpansion(now) {
+            const elapsed = now - startTime;
+            const t = Math.min(1.0, elapsed / duration);
+            // Cubic ease out
+            genesisProgress = 1 - Math.pow(1 - t, 3);
+            if (galaxyGroup) {
+                galaxyGroup.scale.set(genesisProgress, genesisProgress, genesisProgress);
+            }
+            if (t < 1.0) {
+                requestAnimationFrame(stepExpansion);
+            } else {
+                genesisProgress = 1.0;
+                if (galaxyGroup) galaxyGroup.scale.set(1, 1, 1);
+            }
+        }
+        requestAnimationFrame(stepExpansion);
+    });
 }
 
 function getThemeInfo() {
@@ -102,6 +157,10 @@ function initThree() {
     }
 
     galaxyGroup = new THREE.Group();
+    const veil = document.getElementById('galaxy-genesis-veil');
+    if (veil && !isGenesisIgnited) {
+        galaxyGroup.scale.set(0.001, 0.001, 0.001);
+    }
     scene.add(galaxyGroup);
 
     buildCore();
@@ -648,10 +707,30 @@ export function resumeGalaxyAnimation() {
     }
 }
 
+export function togglePresentationTour() {
+    isPresentationTour = !isPresentationTour;
+    if (controls) {
+        controls.autoRotate = !isPresentationTour;
+    }
+    return isPresentationTour;
+}
+
 function startAnimationLoop() {
     if (animFrameId) cancelAnimationFrame(animFrameId);
     function animate() {
-        if (controls) controls.update();
+        if (isPresentationTour && camera && controls) {
+            presentationAngle += 0.0035;
+            const dist = 520 + Math.sin(presentationAngle * 0.7) * 140;
+            const elevation = 260 + Math.cos(presentationAngle * 0.5) * 120;
+            camera.position.x = Math.sin(presentationAngle) * dist;
+            camera.position.z = Math.cos(presentationAngle) * dist;
+            camera.position.y = elevation;
+            camera.lookAt(0, 0, 0);
+            controls.target.set(0, 0, 0);
+        } else if (controls) {
+            controls.update();
+        }
+
         if (renderer && scene && camera) {
             renderer.render(scene, camera);
         }

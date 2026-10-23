@@ -1,6 +1,6 @@
 // MAZZAROTH Sovereign API Contract Layer (PLAN.md §D)
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+async function fetchWithTimeout(url, options = {}, timeoutMs = 20000) {
     const signal = options.signal || (typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(timeoutMs) : undefined);
     return await fetch(url, { ...options, signal });
 }
@@ -46,25 +46,44 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
         }
     };
 
+    const controller = new AbortController();
+    let idleTimer = null;
+    const resetIdleTimer = () => {
+        if (idleTimer) clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+            controller.abort(new Error('Librarian streaming idle timeout (45s)'));
+        }, 45000);
+    };
+
     try {
         const payload = { question: question.trim() };
         if (model) payload.model = model;
         if (history && history.length > 0) payload.history = history;
 
-        const res = await fetchWithTimeout('/api/ask', {
+        const connectTimer = setTimeout(() => {
+            controller.abort(new Error('Librarian connection timeout (30s)'));
+        }, 30000);
+
+        const res = await fetch('/api/ask', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        }, 60000);
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+        clearTimeout(connectTimer);
+
         if (!res.ok) throw new Error(`ask failed: ${res.status}`);
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
 
+        resetIdleTimer();
+
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
+            resetIdleTimer();
             buffer += decoder.decode(value, { stream: true });
 
             const lines = buffer.split('\n');
@@ -102,8 +121,10 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
                 }
             }
         }
+        if (idleTimer) clearTimeout(idleTimer);
         safeDone();
     } catch (err) {
+        if (idleTimer) clearTimeout(idleTimer);
         if (onError) onError(err);
     }
 }

@@ -14,8 +14,12 @@ Zero Docker. Zero cloud. Works completely offline.
 4. **Grounded AI Librarian**: Local LLM (Ministral 3B via Ollama / OpenAI-compatible endpoint) answers strictly from verified passages with exact citations and dates. Refuses out-of-context queries and degrades gracefully if the LLM is offline.
 5. **3D & 2D Galaxy Graph**: Interactive 3D Three.js logarithmic particle spiral and lightweight 2D Canvas fallback visualizing the knowledge vault by category, document, and field note backlinks.
 6. **Constellations & Celestial Dome**: Real-time celestial sphere projection and live alt/az astrometry dome (Julian Day, LST, 115+ navigational stars, 40+ constellation vector lines, 800+ background starfield, time/date & GPS HUD), plus 3D celestial sphere and 20+ poster grid catalog.
-7. **Offline PMTiles Maps**: Direct HTTP Range byte-serving for single-file `.pmtiles` regional OpenStreetMap packages with street-level downloader.
+7. **Offline PMTiles Maps**: Direct HTTP Range byte-serving for single-file `.pmtiles` regional OpenStreetMap packages with street-level downloader, zero-copy in-memory LRU tile cache, historical time-slider (`100 AD`, `500 AD`, `1500 AD`, `Modern`), and volumetric 3D extruded hex cartography.
 8. **Field Notes & Star Navigation Handbook**: Markdown note-taking and public-domain star lore handbook with backlinks (`[[doc-id#section-id]]`) into the Deep Reader.
+9. **The Living Brain & Grounded Citations**: Bidirectional navigation between Galaxy stars $\leftrightarrow$ Reading Deck $\leftrightarrow$ Physical Earth coordinates $\leftrightarrow$ Celestial dome astrometry. AI responses feature interactive bracketed source chips (`[1]`, `[2]`) that focus and highlight passages in the Deep Reader with harmonic chime audio.
+10. **Side-by-Side Synoptic Reader**: Compare scripture translations concurrently across ancient Greek Textus Receptus, Hebrew Leningrad, Latin Vulgate, German Luther, French Ostervald, and Spanish Reina Valera.
+11. **Audiovisual Atmosphere & Genesis Cosmic Ignition**: Procedural zero-asset Web Audio engine (celestial drone & tactile feedback) and Big Bang ignition expansion sequence.
+12. **Sovereign Snapshot Portability**: One-command vault archive bundling (`mazzaroth snapshot export/import`) and `.mazz` geodata matrix export/import.
 
 ---
 
