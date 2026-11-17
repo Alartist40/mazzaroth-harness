@@ -99,6 +99,7 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
+        let currentEvent = 'message';
 
         resetIdleTimer();
 
@@ -111,10 +112,13 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
             const lines = buffer.split('\n');
             buffer = lines.pop() || '';
 
-            let currentEvent = 'message';
             for (const line of lines) {
                 const trimmed = line.trim();
-                if (!trimmed) continue;
+                if (!trimmed) {
+                    currentEvent = 'message';
+                    continue;
+                }
+                if (trimmed.startsWith(':')) continue; // SSE keepalive comment
                 if (trimmed.startsWith('event:')) {
                     currentEvent = trimmed.slice(6).trim();
                 } else if (trimmed.startsWith('data:') || line.startsWith('data:')) {

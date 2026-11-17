@@ -251,6 +251,24 @@ pub async fn handle_ask(
         hits.iter().map(|h| h.doc_id.as_str()).collect();
     let unique_doc_count = unique_docs.len();
 
+    // Detect if Chief Librarian should visibly consult a domain specialist
+    let consult_worker: Option<&'static str> = if worker.id == "coordinator" {
+        let ql = q.to_lowercase();
+        if hits.iter().any(|h| h.category == "scripture") || ql.contains("bible") || ql.contains("verse") || ql.contains("scripture") {
+            Some("archivist")
+        } else if hits.iter().any(|h| h.category == "astronomy") || ql.contains("star") || ql.contains("polaris") || ql.contains("constellation") {
+            Some("astronomer")
+        } else if hits.iter().any(|h| h.category == "medical") || ql.contains("medical") || ql.contains("triage") || ql.contains("airway") {
+            Some("medic")
+        } else if hits.iter().any(|h| h.category == "survival" || h.category == "pathfinders") || ql.contains("survival") || ql.contains("water") {
+            Some("pathfinder")
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
     let citations: Vec<Citation> = hits
         .iter()
         .map(|h| Citation {
@@ -283,6 +301,19 @@ pub async fn handle_ask(
             serde_json::json!({ "worker_name": worker.name }),
         ) {
             yield Ok(ev);
+        }
+
+        // Optional Stage 1b: Chief Librarian consults domain specialist
+        if let Some(consult_id) = consult_worker {
+            if let Some(ev) = make_office_event(
+                "handoff",
+                worker.id,
+                Some("desk"),
+                &format!("Consulting @{}...", consult_id),
+                serde_json::json!({ "consult": consult_id }),
+            ) {
+                yield Ok(ev);
+            }
         }
 
         // Stage 2: Search station

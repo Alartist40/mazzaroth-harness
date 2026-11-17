@@ -242,6 +242,24 @@ const CORRIDOR_DOORS = {
     'lunch-room': { nx: 0.80, ny: 0.50 }
 };
 
+const OFFICE_PROPS_KEY = 'mazzaroth_office_props_v1';
+
+export const PLACEABLE_PROPS = [
+    { id: 'book_stack', label: 'Book Stack' },
+    { id: 'lamp', label: 'Desk Lamp' },
+    { id: 'plant', label: 'Potted Plant' },
+    { id: 'globe', label: 'Star Globe' }
+];
+
+const LOUNGE_SLOTS = [
+    { nx: 0.44, ny: 0.56 },
+    { nx: 0.54, ny: 0.64 },
+    { nx: 0.62, ny: 0.52 },
+    { nx: 0.48, ny: 0.68 },
+    { nx: 0.68, ny: 0.62 },
+    { nx: 0.56, ny: 0.50 }
+];
+
 class LibrarianOffice {
     constructor() {
         this.canvas = null;
@@ -263,13 +281,17 @@ class LibrarianOffice {
         this.activeTask = null;
         this.particles = [];
         this.imageCache = new Map();
+        this.bundledArtPack = { sprites: {}, rooms: {} };
         this.customSprites = {};
         this.customRooms = {};
+        this.roomProps = this.loadRoomProps();
         this.dragState = null;
+        this.dragPropState = null;
         this.idleWanderTimer = 2.5;
 
         this.workers = OFFICE_WORKERS.map((def, idx) => ({
             ...def,
+            slotIdx: idx,
             homeRoom: def.room,
             nx: def.desk.nx,
             ny: def.desk.ny,
@@ -277,6 +299,7 @@ class LibrarianOffice {
             homeNy: def.desk.ny,
             waypoints: [],
             state: 'idle',
+            coffeeTtl: 0,
             bubble: null,
             alertTtl: 0,
             walkFrameIdx: 0,
@@ -287,6 +310,34 @@ class LibrarianOffice {
         }));
     }
 
+    loadRoomProps() {
+        try {
+            return JSON.parse(localStorage.getItem(OFFICE_PROPS_KEY) || '{}');
+        } catch {
+            return {};
+        }
+    }
+
+    saveRoomProps() {
+        localStorage.setItem(OFFICE_PROPS_KEY, JSON.stringify(this.roomProps));
+    }
+
+    addProp(kind) {
+        if (!this.roomProps[this.activeRoomId]) this.roomProps[this.activeRoomId] = [];
+        this.roomProps[this.activeRoomId].push({
+            uid: `${kind}-${Date.now()}`,
+            kind,
+            nx: 0.45 + (Math.random() - 0.5) * 0.2,
+            ny: 0.60 + (Math.random() - 0.5) * 0.14
+        });
+        this.saveRoomProps();
+    }
+
+    clearRoomProps() {
+        this.roomProps[this.activeRoomId] = [];
+        this.saveRoomProps();
+    }
+
     mount(canvasEl, callbacks = {}) {
         if (!canvasEl) return;
         this.canvas = canvasEl;
@@ -295,6 +346,7 @@ class LibrarianOffice {
         this.onRoomChange = callbacks.onRoomChange || null;
 
         this.reloadCustomAssets();
+        this.loadBundledArtPack();
         this.preloadAssets();
         this.resize();
 
@@ -321,9 +373,26 @@ class LibrarianOffice {
         }
     }
 
+    async loadBundledArtPack() {
+        try {
+            const res = await fetch('/assets/office/art-pack.json');
+            if (!res.ok) return;
+            const pack = await res.json();
+            if (pack && typeof pack === 'object') {
+                this.bundledArtPack = {
+                    sprites: pack.sprites || {},
+                    rooms: pack.rooms || {}
+                };
+                this.reloadCustomAssets();
+            }
+        } catch {
+            // Optional bundled pack; ignore when absent
+        }
+    }
+
     reloadCustomAssets() {
-        this.customSprites = loadCustomSprites();
-        this.customRooms = loadCustomRooms();
+        this.customSprites = { ...(this.bundledArtPack.sprites || {}), ...loadCustomSprites() };
+        this.customRooms = { ...(this.bundledArtPack.rooms || {}), ...loadCustomRooms() };
         // Clear data-URL entries so updated images reload immediately
         for (const key of this.imageCache.keys()) {
             if (key.startsWith('data:')) this.imageCache.delete(key);
@@ -401,14 +470,28 @@ class LibrarianOffice {
 
         if (stage === 'dispatch') {
             this.activeTask = { workerId: worker.id, stage: 'dispatch', startTime: performance.now() };
+            worker.coffeeTtl = 0;
             if (worker.room !== worker.homeRoom) {
-                this.walkWorkerCrossRoom(worker, worker.homeRoom, worker.homeNx, worker.homeNy, 'thinking');
+                worker.room = worker.homeRoom;
+                worker.nx = worker.homeNx;
+                worker.ny = worker.homeNy;
+                worker.waypoints = [];
             }
-            if (worker.homeRoom !== this.activeRoomId) this.setRoom(worker.homeRoom);
+            if (worker.room !== this.activeRoomId) this.setRoom(worker.room);
             worker.state = 'alert';
             worker.alertTtl = 0.65;
             worker.lastAction = ev.detail || 'Query received';
             worker.bubble = { text: 'On it!', ttl: 1.6, kind: 'accent' };
+        } else if (stage === 'handoff') {
+            const target = ev.consult ? this.getWorker(ev.consult) : null;
+            if (target) {
+                worker.lastAction = `Consulting ${target.shortName}`;
+                worker.bubble = { text: `Consulting @${target.shortName}...`, ttl: 2.2, kind: 'accent' };
+                target.bubble = { text: 'Sharing archive notes!', ttl: 2.2, kind: 'info' };
+                if (target.room === worker.room) {
+                    this.moveWorkerTo(worker, target.nx + 0.06, target.ny, 'searching');
+                }
+            }
         } else if (stage === 'search') {
             officeAudio.playPageTurn();
             this.moveWorkerTo(worker, worker.station.nx, worker.station.ny, 'searching');
@@ -515,6 +598,20 @@ class LibrarianOffice {
             }
         }
 
+        // 1b. Check placed props in active room
+        const props = this.roomProps[this.activeRoomId] || [];
+        if (this.roomRect.w > 0) {
+            const pnx = (mx - this.roomRect.x) / this.roomRect.w;
+            const pny = (my - this.roomRect.y) / this.roomRect.h;
+            for (let i = props.length - 1; i >= 0; i--) {
+                const pr = props[i];
+                if (Math.hypot(pnx - pr.nx, pny - pr.ny) <= 0.04) {
+                    this.dragPropState = { prop: pr };
+                    return;
+                }
+            }
+        }
+
         // 2. Check room hotspots / doorways
         const room = OFFICE_ROOMS.find(r => r.id === this.activeRoomId);
         if (room && this.roomRect.w > 0) {
@@ -550,6 +647,13 @@ class LibrarianOffice {
         const rect = this.canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
+
+        if (this.dragPropState && this.roomRect.w > 0) {
+            this.dragPropState.prop.nx = Math.max(0.08, Math.min(0.92, (mx - this.roomRect.x) / this.roomRect.w));
+            this.dragPropState.prop.ny = Math.max(0.22, Math.min(0.90, (my - this.roomRect.y) / this.roomRect.h));
+            this.canvas.style.cursor = 'grabbing';
+            return;
+        }
 
         if (this.dragState) {
             const dist = Math.hypot(mx - this.dragState.startX, my - this.dragState.startY);
@@ -587,6 +691,12 @@ class LibrarianOffice {
     }
 
     handlePointerUp() {
+        if (this.dragPropState) {
+            this.dragPropState = null;
+            this.saveRoomProps();
+            if (this.canvas) this.canvas.style.cursor = 'default';
+            return;
+        }
         if (!this.dragState) return;
         const { worker, isDragging } = this.dragState;
         this.dragState = null;
@@ -612,26 +722,24 @@ class LibrarianOffice {
         if (this.idleWanderTimer <= 0) {
             this.idleWanderTimer = 4.0 + Math.random() * 4.5;
             const idleWorkers = this.workers.filter(w => w.state === 'idle' && w.waypoints.length === 0);
-            if (idleWorkers.length > 0 && !this.dragState) {
+            const loungeCount = this.workers.filter(w =>
+                w.room === 'lunch-room' || w.waypoints.some(wp => wp.switchRoom === 'lunch-room')
+            ).length;
+
+            if (idleWorkers.length > 0 && !this.dragState && !this.dragPropState) {
                 const w = idleWorkers[Math.floor(Math.random() * idleWorkers.length)];
                 if (w.room !== w.homeRoom) {
-                    // Return from Break Lounge back to home room
                     this.walkWorkerCrossRoom(w, w.homeRoom, w.homeNx, w.homeNy, 'idle');
                     w.lastAction = 'Returning to desk';
-                } else if (Math.random() < 0.35) {
-                    // Cross-room coffee break through Corridor -> Break Lounge
-                    this.walkWorkerCrossRoom(w, 'lunch-room', 0.62 + (Math.random() - 0.5) * 0.1, 0.54, 'coffee');
+                } else if (loungeCount < 2 && Math.random() < 0.25) {
+                    const slot = LOUNGE_SLOTS[w.slotIdx % LOUNGE_SLOTS.length];
+                    this.walkWorkerCrossRoom(w, 'lunch-room', slot.nx, slot.ny, 'coffee');
                     w.lastAction = 'Walking to Break Lounge';
                     w.bubble = { text: '☕ Coffee break', ttl: 2.2, kind: 'info' };
-                    setTimeout(() => {
-                        if (w.state === 'coffee') {
-                            this.walkWorkerCrossRoom(w, w.homeRoom, w.homeNx, w.homeNy, 'idle');
-                        }
-                    }, 5000);
                 } else {
                     // Stroll to a nearby spot in their own room
-                    const jx = Math.max(0.20, Math.min(0.80, w.homeNx + (Math.random() - 0.5) * 0.22));
-                    const jy = Math.max(0.36, Math.min(0.76, w.homeNy + (Math.random() - 0.5) * 0.16));
+                    const jx = Math.max(0.22, Math.min(0.78, w.homeNx + (Math.random() - 0.5) * 0.20));
+                    const jy = Math.max(0.38, Math.min(0.74, w.homeNy + (Math.random() - 0.5) * 0.14));
                     this.moveWorkerTo(w, jx, jy, 'idle');
                 }
             }
@@ -645,6 +753,13 @@ class LibrarianOffice {
             if (w.bubble) {
                 w.bubble.ttl -= dt;
                 if (w.bubble.ttl <= 0) w.bubble = null;
+            }
+            if (w.state === 'coffee' && w.waypoints.length === 0) {
+                w.coffeeTtl -= dt;
+                if (w.coffeeTtl <= 0) {
+                    this.walkWorkerCrossRoom(w, w.homeRoom, w.homeNx, w.homeNy, 'idle');
+                    w.lastAction = 'Returning to desk';
+                }
             }
 
             // Subtle idle looking around
@@ -671,7 +786,13 @@ class LibrarianOffice {
                         if (typeof wp.enterNx === 'number') w.nx = wp.enterNx;
                         if (typeof wp.enterNy === 'number') w.ny = wp.enterNy;
                     }
-                    if (w.waypoints.length === 0) w.state = wp.arrivalState || 'idle';
+                    if (w.waypoints.length === 0) {
+                        w.state = wp.arrivalState || 'idle';
+                        if (w.state === 'coffee') {
+                            w.coffeeTtl = 4.5;
+                            w.lastAction = 'Having coffee';
+                        }
+                    }
                 } else {
                     w.nx += (dx / dist) * speed * dt;
                     w.ny += (dy / dist) * speed * dt;
@@ -771,6 +892,12 @@ class LibrarianOffice {
             }
         }
 
+        // Render placed custom props (depth-sorted)
+        const roomProps = [...(this.roomProps[this.activeRoomId] || [])].sort((a, b) => a.ny - b.ny);
+        for (const pr of roomProps) {
+            this.drawRoomProp(ctx, pr, isNight);
+        }
+
         // Render workers in active room (depth-sorted by ny)
         const roomWorkers = this.workers
             .filter(w => w.room === this.activeRoomId)
@@ -794,6 +921,54 @@ class LibrarianOffice {
         }
 
         ctx.restore();
+    }
+
+    drawRoomProp(ctx, pr, isNight) {
+        const px = Math.round(this.roomRect.x + pr.nx * this.roomRect.w);
+        const py = Math.round(this.roomRect.y + pr.ny * this.roomRect.h);
+        ctx.fillStyle = 'rgba(0,0,0,0.28)';
+        ctx.beginPath();
+        ctx.ellipse(px, py, 11, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (pr.kind === 'book_stack') {
+            ctx.fillStyle = '#92400e';
+            ctx.fillRect(px - 8, py - 6, 16, 5);
+            ctx.fillStyle = '#1d4ed8';
+            ctx.fillRect(px - 7, py - 11, 14, 5);
+            ctx.fillStyle = '#dc2626';
+            ctx.fillRect(px - 6, py - 15, 12, 4);
+        } else if (pr.kind === 'lamp') {
+            if (isNight) {
+                ctx.fillStyle = 'rgba(251, 191, 36, 0.25)';
+                ctx.beginPath();
+                ctx.arc(px, py - 18, 18, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.fillStyle = '#ca8a04';
+            ctx.fillRect(px - 2, py - 14, 4, 14);
+            ctx.fillStyle = '#16a34a';
+            ctx.fillRect(px - 7, py - 20, 14, 7);
+        } else if (pr.kind === 'plant') {
+            ctx.fillStyle = '#9a3412';
+            ctx.fillRect(px - 5, py - 8, 10, 8);
+            ctx.fillStyle = '#15803d';
+            ctx.fillRect(px - 8, py - 18, 16, 10);
+            ctx.fillStyle = '#22c55e';
+            ctx.fillRect(px - 5, py - 23, 10, 6);
+        } else if (pr.kind === 'globe') {
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(px - 4, py - 5, 8, 5);
+            ctx.fillStyle = '#0284c7';
+            ctx.beginPath();
+            ctx.arc(px, py - 14, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.ellipse(px, py - 14, 10, 4, -0.35, 0, Math.PI * 2);
+            ctx.stroke();
+        }
     }
 
     drawSpriteWorker(ctx, w, isNight) {

@@ -689,14 +689,25 @@
                                  style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
                                 Ready at desk
                             </div>
+                            <div id="inspector-telemetry" class="mt-1 px-2 py-0.5 rounded border text-[9px] hidden"
+                                 style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--accent-primary);"></div>
                             <div id="inspector-prompts" class="mt-2 flex flex-col gap-1"></div>
                         </div>
 
                         <!-- Bottom-left Interactive Hint -->
                         <div class="absolute bottom-2 left-2.5 z-10 px-2 py-0.5 rounded border font-mono text-[9px] pointer-events-none"
                              style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-muted); opacity: 0.9;">
-                            Click or drag workers · Click bookshelf, orrery, fireplace, server rack, or coffee bar
+                            Click or drag workers &amp; props · Click doors or stations
                         </div>
+
+                        <!-- Bottom-right Placeable Props Tray -->
+                        <div id="office-props-tray" class="absolute bottom-2 right-2.5 z-10 flex items-center gap-1 font-mono text-[9px]"></div>
+                    </div>
+
+                    <!-- DRAGGABLE SPLIT HANDLE -->
+                    <div id="office-resize-handle" class="w-full h-1.5 cursor-row-resize flex items-center justify-center shrink-0 hover:opacity-100 opacity-60 transition-opacity"
+                         title="Drag to resize office height">
+                        <div class="w-16 h-1 rounded-full" style="background-color: var(--panel-border);"></div>
                     </div>
 
                     <!-- CHAT LOG -->

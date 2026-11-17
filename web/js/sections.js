@@ -1,6 +1,6 @@
 // MAZZAROTH Sections: Constellations, Sovereign Vector Cartography Map, Librarian AI, and Sky Deck
 import { askStream, warmModel, getStatus, getMaps, startMapFetch, getMapFetchStatus, deleteMapRegion, getSkyProjection, getModels } from './api.js';
-import { librarianOffice, officeAudio, OFFICE_WORKERS, OFFICE_ROOMS } from './office.js';
+import { librarianOffice, officeAudio, OFFICE_WORKERS, OFFICE_ROOMS, PLACEABLE_PROPS } from './office.js';
 import { PixelStudioModal } from './sprite_studio.js';
 
 
@@ -3886,6 +3886,58 @@ export function initLibrarian() {
         });
     }
 
+    // Placeable Props Tray
+    const propsTray = document.getElementById('office-props-tray');
+    if (propsTray) {
+        propsTray.innerHTML = '';
+        PLACEABLE_PROPS.forEach(pr => {
+            const btn = document.createElement('button');
+            btn.className = 'px-1.5 py-0.5 rounded border hover:opacity-90 transition-opacity';
+            btn.style.backgroundColor = 'var(--panel-bg)';
+            btn.style.borderColor = 'var(--border-subtle)';
+            btn.style.color = 'var(--text-secondary)';
+            btn.innerText = `+ ${pr.label}`;
+            btn.title = `Add ${pr.label} to active room (drag to position)`;
+            btn.addEventListener('click', () => librarianOffice.addProp(pr.id));
+            propsTray.appendChild(btn);
+        });
+        const clr = document.createElement('button');
+        clr.className = 'px-1.5 py-0.5 rounded border hover:opacity-90 transition-opacity';
+        clr.style.backgroundColor = 'var(--panel-bg)';
+        clr.style.borderColor = 'var(--border-subtle)';
+        clr.style.color = 'var(--text-muted)';
+        clr.innerText = 'CLEAR';
+        clr.title = 'Clear placed props in current room';
+        clr.addEventListener('click', () => librarianOffice.clearRoomProps());
+        propsTray.appendChild(clr);
+    }
+
+    // Draggable Split Handle between Office Stage & Chat Log
+    const resizeHandle = document.getElementById('office-resize-handle');
+    if (resizeHandle && officeStage) {
+        const savedH = localStorage.getItem('mazzaroth_office_height');
+        if (savedH) officeStage.style.height = savedH;
+        let draggingSplit = false;
+        resizeHandle.addEventListener('pointerdown', (e) => {
+            draggingSplit = true;
+            e.preventDefault();
+        });
+        window.addEventListener('pointermove', (e) => {
+            if (!draggingSplit) return;
+            const parentRect = officeStage.parentElement.getBoundingClientRect();
+            const stageTop = officeStage.getBoundingClientRect().top;
+            const newH = Math.max(180, Math.min(parentRect.height * 0.78, e.clientY - stageTop));
+            officeStage.style.height = `${Math.round(newH)}px`;
+            librarianOffice.resize();
+        });
+        window.addEventListener('pointerup', () => {
+            if (draggingSplit) {
+                draggingSplit = false;
+                localStorage.setItem('mazzaroth_office_height', officeStage.style.height);
+            }
+        });
+    }
+
     getStatus().then(status => {
         if (typeof status.total_docs === 'number' && typeof status.total_chunks === 'number') {
             librarianOffice.setDbStats(status.total_docs, status.total_chunks);
@@ -4035,9 +4087,16 @@ export function submitLibrarianQuery(rawQuestion) {
     const outgoingHistory = [...workerHistory];
     workerHistory.push({ role: 'user', content: question });
 
+    const queryStartAt = performance.now();
+    let firstTokenAt = null;
+    let tokenCount = 0;
+    const telemetryEl = document.getElementById('inspector-telemetry');
+
     askStream(
         question,
         (token) => {
+            if (firstTokenAt === null) firstTokenAt = performance.now();
+            tokenCount++;
             if (tokenSpan) {
                 tokenSpan.innerText += token;
                 accumulatedResponse += token;
@@ -4070,6 +4129,14 @@ export function submitLibrarianQuery(rawQuestion) {
         () => {
             activeAskController = null;
             setQueryStreamingUI(false);
+            if (telemetryEl && firstTokenAt !== null && tokenCount > 0) {
+                const now = performance.now();
+                const evalSec = ((firstTokenAt - queryStartAt) / 1000).toFixed(1);
+                const genSec = Math.max(0.05, (now - firstTokenAt) / 1000);
+                const tps = (tokenCount / genSec).toFixed(1);
+                telemetryEl.innerText = `${evalSec}s eval · ${tps} tok/s · ${tokenCount} tok`;
+                telemetryEl.classList.remove('hidden');
+            }
             if (accumulatedResponse.trim()) {
                 workerHistory.push({ role: 'assistant', content: accumulatedResponse.trim() });
             }
