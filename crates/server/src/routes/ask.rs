@@ -19,6 +19,87 @@ pub struct AskRequest {
     pub question: String,
     pub history: Option<Vec<ChatMessage>>,
     pub model: Option<String>,
+    pub worker: Option<String>,
+}
+
+struct WorkerProfile {
+    id: &'static str,
+    name: &'static str,
+    location: &'static str,
+    categories: &'static [&'static str],
+    persona: &'static str,
+}
+
+fn resolve_worker_profile(worker_id: Option<&str>) -> WorkerProfile {
+    match worker_id.unwrap_or("coordinator").trim().to_lowercase().as_str() {
+        "archivist" => WorkerProfile {
+            id: "archivist",
+            name: "Archivist",
+            location: "bookshelf",
+            categories: &["scripture"],
+            persona: "You are the Archivist, specialist in ancient scriptures, world translations, and linguistic comparison.",
+        },
+        "astronomer" => WorkerProfile {
+            id: "astronomer",
+            name: "Astronomer",
+            location: "orrery",
+            categories: &["astronomy"],
+            persona: "You are the Astronomer, specialist in celestial navigation, constellations, Polaris alignment, and astrometry.",
+        },
+        "medic" => WorkerProfile {
+            id: "medic",
+            name: "Field Medic",
+            location: "map_table",
+            categories: &["medical"],
+            persona: "You are the Field Medic, specialist in clinical medicine, anatomy, pathology, and emergency medical protocols.",
+        },
+        "pathfinder" | "field" => WorkerProfile {
+            id: "pathfinder",
+            name: "The Pathfinder",
+            location: "map_table",
+            categories: &["survival", "pathfinders", "youth"],
+            persona: "You are the Pathfinder, specialist in wilderness survival (FM 21-76), expedition craft, knotcraft, and cartography.",
+        },
+        "chronicler" => WorkerProfile {
+            id: "chronicler",
+            name: "Chronicler",
+            location: "terminal",
+            categories: &[],
+            persona: "You are the Chronicler, specialist in cross-referencing the entire Mazzaroth knowledge vault and personal memory notes.",
+        },
+        _ => WorkerProfile {
+            id: "coordinator",
+            name: "Chief Librarian",
+            location: "desk",
+            categories: &[],
+            persona: "You are the Chief Librarian of Mazzaroth, coordinating all vault archives and answering with grounded precision.",
+        },
+    }
+}
+
+fn make_office_event(
+    stage: &str,
+    worker: &str,
+    location: Option<&str>,
+    detail: &str,
+    extra: serde_json::Value,
+) -> Option<Event> {
+    let mut payload = serde_json::json!({
+        "stage": stage,
+        "worker": worker,
+        "detail": detail,
+    });
+    if let Some(loc) = location {
+        payload["location"] = serde_json::json!(loc);
+    }
+    if let Some(obj) = extra.as_object() {
+        for (k, v) in obj {
+            payload[k] = v.clone();
+        }
+    }
+    serde_json::to_string(&payload)
+        .ok()
+        .map(|s| Event::default().event("office").data(s))
 }
 
 #[derive(Debug, Serialize)]
@@ -86,6 +167,57 @@ async fn resolve_ollama_model(client: &reqwest::Client, endpoint: &str, requeste
     requested_model.to_string()
 }
 
+fn is_small_model(model: &str) -> bool {
+    let m = model.to_lowercase();
+    [":0.5b", ":1b", ":1.5b", ":2b", ":3b", ":4b", "1b-", "3b-", "mini", "tiny", "nano", "phi3"]
+        .iter()
+        .any(|pat| m.contains(pat))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct WarmRequest {
+    pub model: Option<String>,
+}
+
+/// Pre-warms the selected Ollama model with a 10m keep_alive so cold-load latency disappears.
+pub async fn handle_warm(
+    State(state): State<ServerState>,
+    Json(req): Json<WarmRequest>,
+) -> Json<serde_json::Value> {
+    let endpoint = state.config.llm_endpoint.clone();
+    let requested_model = req
+        .model
+        .as_ref()
+        .filter(|m| !m.trim().is_empty())
+        .cloned()
+        .unwrap_or_else(|| state.config.llm_model.clone());
+
+    let client = reqwest::Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(3))
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+        .unwrap_or_default();
+
+    let resolved_model = resolve_ollama_model(&client, &endpoint, &requested_model).await;
+    let url = format!("{}/api/generate", endpoint.trim_end_matches('/'));
+    let body = serde_json::json!({
+        "model": resolved_model,
+        "prompt": "",
+        "stream": false,
+        "keep_alive": "10m"
+    });
+
+    let ok = match client.post(&url).json(&body).send().await {
+        Ok(r) => r.status().is_success(),
+        Err(_) => false,
+    };
+
+    Json(serde_json::json!({
+        "ok": ok,
+        "model": resolved_model
+    }))
+}
+
 pub async fn handle_ask(
     State(state): State<ServerState>,
     Json(req): Json<AskRequest>,
@@ -95,9 +227,29 @@ pub async fn handle_ask(
         return Err(StatusCode::BAD_REQUEST);
     }
 
-    // 1. Retrieve top chunks from SQLite FTS5
+    let worker = resolve_worker_profile(req.worker.as_deref());
+
+    // 1. Retrieve top chunks from SQLite FTS5 (scoped to worker's specialty first, fallback to global)
     let top_k = state.config.profile.top_k();
-    let hits = state.db.search(&q, top_k).unwrap_or_default();
+    let search_start = std::time::Instant::now();
+    let mut hits = if worker.categories.is_empty() {
+        state.db.search(&q, top_k).unwrap_or_default()
+    } else {
+        state
+            .db
+            .search_by_categories(&q, worker.categories, top_k)
+            .unwrap_or_default()
+    };
+    let mut scoped_fallback = false;
+    if hits.is_empty() && !worker.categories.is_empty() {
+        hits = state.db.search(&q, top_k).unwrap_or_default();
+        scoped_fallback = true;
+    }
+    let search_ms = search_start.elapsed().as_millis() as u64;
+
+    let unique_docs: std::collections::HashSet<&str> =
+        hits.iter().map(|h| h.doc_id.as_str()).collect();
+    let unique_doc_count = unique_docs.len();
 
     let citations: Vec<Citation> = hits
         .iter()
@@ -122,10 +274,47 @@ pub async fn handle_ask(
     let history = req.history.unwrap_or_default();
 
     let stream = async_stream::stream! {
+        // Stage 1: Dispatch worker
+        if let Some(ev) = make_office_event(
+            "dispatch",
+            worker.id,
+            Some("desk"),
+            &format!("Assigned to {}", worker.name),
+            serde_json::json!({ "worker_name": worker.name }),
+        ) {
+            yield Ok(ev);
+        }
+
+        // Stage 2: Search station
+        let search_loc = if scoped_fallback { "terminal" } else { worker.location };
+        if let Some(ev) = make_office_event(
+            "search",
+            worker.id,
+            Some(search_loc),
+            &format!("Scanning FTS5 index ({}ms)...", search_ms),
+            serde_json::json!({ "ms": search_ms }),
+        ) {
+            yield Ok(ev);
+        }
+
+        // Stage 3: Found hits
+        if let Some(ev) = make_office_event(
+            "found",
+            worker.id,
+            Some(search_loc),
+            &format!("Found {} passages across {} docs", hits.len(), unique_doc_count),
+            serde_json::json!({ "hits": hits.len(), "docs": unique_doc_count, "ms": search_ms }),
+        ) {
+            yield Ok(ev);
+        }
+
         // If LLM is offline and no passages found -> return standard refusal
         if !is_reachable && hits.is_empty() {
             if let Ok(tok) = serde_json::to_string("I don't have that in the library.") {
                 yield Ok(Event::default().event("token").data(tok));
+            }
+            if let Some(ev) = make_office_event("done", worker.id, Some("desk"), "Task complete (offline)", serde_json::json!({})) {
+                yield Ok(ev);
             }
             yield Ok(Event::default().event("done").data("[DONE]"));
             return;
@@ -144,6 +333,9 @@ pub async fn handle_ask(
             ) {
                 yield Ok(Event::default().event("token").data(tok));
             }
+            if let Some(ev) = make_office_event("done", worker.id, Some("desk"), "Passages retrieved (Ollama offline)", serde_json::json!({})) {
+                yield Ok(ev);
+            }
             yield Ok(Event::default().event("done").data("[DONE]"));
             return;
         }
@@ -155,14 +347,26 @@ pub async fn handle_ask(
             .unwrap_or_default();
 
         let resolved_model = resolve_ollama_model(&client, &endpoint, &requested_model).await;
+        let slm_mode = is_small_model(&resolved_model);
 
-        // Assemble grounded RAG context with budget constraints
-        let max_ctx = state.config.profile.max_context_tokens().max(2048);
-        let max_chars = max_ctx * 4;
-        let mut context_text = format!("=== LIBRARY CATALOG MANIFEST ===\n{}\n\n", get_library_catalog_summary());
+        // Dynamic Context Budget: SLMs (1B-4B) get compact context & top-4 focused passages
+        // so prompt-eval stays fast and the model does not drift or hallucinate.
+        let base_ctx = state.config.profile.max_context_tokens().max(2048);
+        let effective_ctx = if slm_mode { base_ctx.min(3072) } else { base_ctx };
+        let max_chars = if slm_mode { 6000 } else { effective_ctx * 4 };
+        let max_passages = if slm_mode { 4 } else { hits.len() };
+        let max_snippet_chars = if slm_mode { 800 } else { 4000 };
+
+        let mut context_text = if slm_mode {
+            "=== VAULT CATALOG ===\n66-language Scripture DB (226 versions), Astronomy (88 constellations, Polaris), Medical & Survival (FM 21-76), Cognitive Memory & Offline Maps.\n\n".to_string()
+        } else {
+            format!("=== LIBRARY CATALOG MANIFEST ===\n{}\n\n", get_library_catalog_summary())
+        };
+
         if !hits.is_empty() {
             context_text.push_str("=== RETRIEVED DOCUMENT PASSAGES ===\n");
-            for (i, h) in hits.iter().enumerate() {
+            for (i, h) in hits.iter().take(max_passages).enumerate() {
+                let text_slice: String = h.text.chars().take(max_snippet_chars).collect();
                 let passage = format!(
                     "[{}] ({}, Date: {}, License: {}) {}:\n\"{}\"\n\n",
                     i + 1,
@@ -170,7 +374,7 @@ pub async fn handle_ask(
                     h.retrieved_date,
                     h.license,
                     h.title_path,
-                    h.text
+                    text_slice
                 );
                 if context_text.len() + passage.len() > max_chars {
                     break;
@@ -179,18 +383,38 @@ pub async fn handle_ask(
             }
         }
 
+        // Stage 4: Thinking / Prompt Evaluation on local SLM/LLM
+        if let Some(ev) = make_office_event(
+            "think",
+            worker.id,
+            Some("desk"),
+            &format!(
+                "Evaluating {} chars on {}{}",
+                context_text.len(),
+                resolved_model,
+                if slm_mode { " [SLM]" } else { "" }
+            ),
+            serde_json::json!({
+                "model": resolved_model,
+                "context_chars": context_text.len(),
+                "num_ctx": effective_ctx,
+                "slm_mode": slm_mode
+            }),
+        ) {
+            yield Ok(ev);
+        }
+
         let system_prompt = format!(
-            "You are Mazzaroth, an intelligent, eloquent, and sovereign AI Librarian and polyglot scholar. You reside within a private offline cognitive memory vault.\n\n\
-Your Conversational Purpose:\n\
-- Engage in rich, natural, and insightful conversations with the user. You are a conversational scholar companion, not a mechanical search filter.\n\
-- Discuss literature, theology, history, astronomy, and science with depth, intellectual warmth, and nuance.\n\
-- When discussing scriptures or world texts, feel free to compare verses across translations, analyze original linguistic meanings (e.g. Greek, Hebrew, Latin, English, German, French, etc.), and provide rich context.\n\
-- SOURCE CITATIONS & NOTEBOOKLM CAPABILITY: Whenever you draw facts or quotes from the RETRIEVED DOCUMENT PASSAGES below, you MUST reference them using numeric brackets matching the passage number, such as [1], [2], etc., or inline references. The frontend will turn these into interactive, clickable source links.\n\
-- When relevant document passages are provided in your context, weave them naturally into your response and cite them.\n\
-- For catalog and database inventory inquiries (such as what languages or books are in the vault), speak authoritatively using the Library Catalog Manifest below.\n\
-- If the question is completely unrelated to anything in the library and no text exists, politely let the user know: \"I don't have that in the library.\"\n\n\
-{}",
-            context_text
+            "{persona}\n\
+You reside in Mazzaroth, a private offline knowledge vault.\n\n\
+RULES:\n\
+- Be direct, natural, and concise. No AI clichés or filler.\n\
+- Lead with verified facts and cite retrieved passages using [1], [2], etc.\n\
+- Quote passages verbatim; do not invent quotes or facts outside the passages/catalog.\n\
+- If nothing relevant exists in the vault, say: \"I don't have that in the library.\"\n\n\
+{context}",
+            persona = worker.persona,
+            context = context_text
         );
 
         // Build multi-turn chat messages
@@ -200,8 +424,9 @@ Your Conversational Purpose:\n\
             "content": system_prompt
         }));
 
-        // Append recent conversation history (up to last 8 turns)
-        let hist_start = if history.len() > 8 { history.len() - 8 } else { 0 };
+        // Append recent conversation history (up to last 6 turns for SLM, 8 for larger)
+        let hist_limit = if slm_mode { 6 } else { 8 };
+        let hist_start = if history.len() > hist_limit { history.len() - hist_limit } else { 0 };
         for msg in &history[hist_start..] {
             if msg.role == "user" || msg.role == "assistant" {
                 messages.push(serde_json::json!({
@@ -222,9 +447,10 @@ Your Conversational Purpose:\n\
             "model": resolved_model,
             "messages": messages,
             "stream": true,
+            "keep_alive": "10m",
             "options": {
-                "temperature": 0.6,
-                "num_ctx": max_ctx
+                "temperature": if slm_mode { 0.4 } else { 0.6 },
+                "num_ctx": effective_ctx
             }
         });
 
@@ -232,7 +458,9 @@ Your Conversational Purpose:\n\
             Ok(resp) if resp.status().is_success() => {
                 let mut byte_stream = resp.bytes_stream();
                 let mut raw_byte_buffer = Vec::new();
+                let mut full_response_text = String::new();
                 let mut is_completed = false;
+                let mut streaming_emitted = false;
 
                 loop {
                     match tokio::time::timeout(std::time::Duration::from_secs(45), byte_stream.next()).await {
@@ -249,13 +477,67 @@ Your Conversational Purpose:\n\
                                                 .or_else(|| val["response"].as_str());
                                             if let Some(tok) = token {
                                                 if !tok.is_empty() {
-                                                    if let Ok(tok_json) = serde_json::to_string(tok) {
-                                                        yield Ok(Event::default().event("token").data(tok_json));
+                                                    let sanitized_token = librarian_core::QuoteGuard::sanitize_model_token(tok);
+                                                    if !sanitized_token.is_empty() {
+                                                        if !streaming_emitted {
+                                                            streaming_emitted = true;
+                                                            if let Some(ev) = make_office_event(
+                                                                "stream",
+                                                                worker.id,
+                                                                Some("desk"),
+                                                                "Drafting grounded response...",
+                                                                serde_json::json!({}),
+                                                            ) {
+                                                                yield Ok(ev);
+                                                            }
+                                                        }
+                                                        full_response_text.push_str(&sanitized_token);
+                                                        if let Ok(tok_json) = serde_json::to_string(&sanitized_token) {
+                                                            yield Ok(Event::default().event("token").data(tok_json));
+                                                        }
                                                     }
                                                 }
                                             }
                                             if val["done"].as_bool() == Some(true) {
                                                 is_completed = true;
+
+                                                // ExactQuoteGuard: Extract model sentence and verify against canonical chunk
+                                                let citations_found = librarian_core::QuoteGuard::extract_citations(&full_response_text);
+                                                let mut verified_count = 0usize;
+                                                for cit in citations_found {
+                                                    let surrounding = librarian_core::QuoteGuard::extract_surrounding_sentence(&full_response_text, &cit.raw_citation);
+
+                                                    // Look for best matching hit matching book and chapter/verse
+                                                    let matched_hit = hits.iter().find(|h| {
+                                                        (h.text.contains(&cit.raw_citation) || h.title_path.contains(&cit.book))
+                                                            && (h.text.contains(&format!("{}:{}", cit.chapter, cit.verse))
+                                                                || h.text.contains(&format!("{}.", cit.verse))
+                                                                || h.text.contains(&format!("[{}]", cit.verse))
+                                                                || h.title_path.contains(&format!("Chapter {}", cit.chapter)))
+                                                    }).or_else(|| {
+                                                        hits.iter().find(|h| h.text.contains(&cit.raw_citation) || h.title_path.contains(&cit.book))
+                                                    });
+
+                                                    if let Some(h) = matched_hit {
+                                                        let canonical_verse = librarian_core::QuoteGuard::slice_canonical_verse(&h.text, cit.chapter, cit.verse);
+                                                        let v_res = librarian_core::QuoteGuard::verify_quote(cit.clone(), surrounding, &canonical_verse);
+                                                        verified_count += 1;
+                                                        if let Ok(v_json) = serde_json::to_string(&v_res) {
+                                                            yield Ok(Event::default().event("verification").data(v_json));
+                                                        }
+                                                    }
+                                                }
+                                                if verified_count > 0 {
+                                                    if let Some(ev) = make_office_event(
+                                                        "verify",
+                                                        worker.id,
+                                                        Some("desk"),
+                                                        &format!("QuoteGuard verified {} citation(s)", verified_count),
+                                                        serde_json::json!({ "verified": verified_count }),
+                                                    ) {
+                                                        yield Ok(ev);
+                                                    }
+                                                }
                                                 break;
                                             }
                                         }
@@ -297,6 +579,15 @@ Your Conversational Purpose:\n\
             }
         }
 
+        if let Some(ev) = make_office_event(
+            "done",
+            worker.id,
+            Some("desk"),
+            "Response delivered",
+            serde_json::json!({}),
+        ) {
+            yield Ok(ev);
+        }
         yield Ok(Event::default().event("done").data("[DONE]"));
     };
 

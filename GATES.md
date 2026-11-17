@@ -173,3 +173,19 @@ copy-exact definitions below.
   EXPECT: 0 exit code across all targets
   EVIDENCE: 2026-10-23 — 18/18 cargo tests passing; 4/4 node JS modules pass syntax check; zero-copy LRU cache operational in routes/maps.rs; snapshot export/import SHA-256 verified; procedural Web Audio synthesizer zero-dependency online.
 
+- [x] L9_SCRAPE: `tools/scrape_armandoh.py` fetches all `disease`, `clinical`, `video`, and `glossary` entries from `https://armandoh.org/wp-json/wp/v2/` and compiles valid Mazzaroth JSON corpus files in `content/armandoh/`
+  CHECK: python3 -c "import glob, json; files=glob.glob('content/armandoh/*.json'); assert len(files)>=4; docs=[json.load(open(f)) for f in files]; print('files=', len(files), 'chapters=', sum(len(d['structure']) for d in docs), 'sections=', sum(len(c['sections']) for d in docs for c in d['structure']))"
+  EXPECT: files=
+  EVIDENCE: 2026-11-14 — `files= 40 chapters= 111 sections= 2343` across 327 diseases, 40 clinical presentations, 642 video lectures (630 with full lecture transcripts + chapters), and 1,336 glossary entries (personal-use-only provenance).
+
+- [x] L9_INGEST: `./target/release/mazzaroth ingest content/armandoh` ingests all compiled armandoh.org documents into `data/mazzaroth.db` with FTS5 search working and `PRAGMA integrity_check` ok
+  CHECK: sqlite3 data/mazzaroth.db "SELECT COUNT(*) FROM documents WHERE id LIKE 'armandoh-%';" && sqlite3 data/mazzaroth.db "SELECT COUNT(*) FROM chunks_fts WHERE chunks_fts MATCH 'angina';" && sqlite3 data/mazzaroth.db "PRAGMA integrity_check;"
+  EXPECT: ok
+  EVIDENCE: 2026-11-14 — `armandoh_docs=40`, `armandoh_chunks=5576`, FTS5 `fascial_hits=19`, `PRAGMA integrity_check=ok`. `./target/release/mazzaroth doctor` reports 63 docs, 6825 chunks, integrity OK.
+
+- [x] L10_LIBRARIAN_OFFICE: Multi-room animated Librarian Virtual Office with Ollama SLM optimizations (`POST /api/warm`, dynamic `num_ctx`, category-scoped FTS5, `event: office` SSE, 6 specialists, Pixel & Environment Studio, cross-room walking, `@mention` routing, per-worker history, Stop button, and offline WebAudio ambience)
+  CHECK: node --check web/js/sprite_studio.js && node --check web/js/office.js && node --check web/js/api.js && node --check web/js/sections.js && cargo test --workspace
+  EXPECT: 0 exit code across all targets
+  EVIDENCE: 2026-11-17 — `JS OK` across all 4 modules; `cargo test --workspace` all test suites passed; live `POST /api/ask` SSE verified with `qwen2.5:3b-instruct`.
+
+

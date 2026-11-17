@@ -369,6 +369,16 @@ impl LibrarianDb {
     }
 
     pub fn search(&self, query: &str, limit: usize) -> Result<Vec<SearchHit>> {
+        self.search_by_categories(query, &[], limit)
+    }
+
+    /// Searches chunks via FTS5, optionally restricting to specific document categories.
+    pub fn search_by_categories(
+        &self,
+        query: &str,
+        categories: &[&str],
+        limit: usize,
+    ) -> Result<Vec<SearchHit>> {
         let conn = self.conn.lock().unwrap();
 
         let terms: Vec<String> = query
@@ -393,23 +403,49 @@ impl LibrarianDb {
             if fallback_terms.is_empty() {
                 return Ok(Vec::new());
             }
-            return Self::execute_fts_query(&conn, &fallback_terms.join(" OR "), limit);
+            return Self::execute_fts_query(&conn, &fallback_terms.join(" OR "), categories, limit);
         }
 
         // Try strict AND query first for highest relevance
         let and_query = terms.join(" AND ");
-        let and_hits = Self::execute_fts_query(&conn, &and_query, limit)?;
+        let and_hits = Self::execute_fts_query(&conn, &and_query, categories, limit)?;
         if !and_hits.is_empty() || terms.len() <= 1 {
             return Ok(and_hits);
         }
 
         // Fallback to OR query if AND returns no results
         let or_query = terms.join(" OR ");
-        Self::execute_fts_query(&conn, &or_query, limit)
+        Self::execute_fts_query(&conn, &or_query, categories, limit)
     }
 
-    fn execute_fts_query(conn: &Connection, fts_query: &str, limit: usize) -> Result<Vec<SearchHit>> {
-        let mut stmt = conn.prepare(
+    fn execute_fts_query(
+        conn: &Connection,
+        fts_query: &str,
+        categories: &[&str],
+        limit: usize,
+    ) -> Result<Vec<SearchHit>> {
+        let mut params_vec: Vec<rusqlite::types::Value> = vec![
+            rusqlite::types::Value::Text(fts_query.to_string()),
+        ];
+
+        let cat_clause = if categories.is_empty() {
+            String::new()
+        } else {
+            let placeholders: Vec<String> = categories
+                .iter()
+                .enumerate()
+                .map(|(idx, cat)| {
+                    params_vec.push(rusqlite::types::Value::Text((*cat).to_string()));
+                    format!("?{}", idx + 2)
+                })
+                .collect();
+            format!("AND d.category IN ({})", placeholders.join(", "))
+        };
+
+        let limit_idx = params_vec.len() + 1;
+        params_vec.push(rusqlite::types::Value::Integer(limit as i64));
+
+        let sql = format!(
             r#"
             SELECT 
                 c.id, c.doc_id, d.title, d.category, d.license, d.retrieved_date,
@@ -419,13 +455,14 @@ impl LibrarianDb {
             FROM chunks_fts
             JOIN chunks c ON chunks_fts.rowid = c.id
             JOIN documents d ON c.doc_id = d.id
-            WHERE chunks_fts MATCH ?1
+            WHERE chunks_fts MATCH ?1 {cat_clause}
             ORDER BY rank
-            LIMIT ?2
-            "#,
-        )?;
+            LIMIT ?{limit_idx}
+            "#
+        );
 
-        let rows = stmt.query_map(params![fts_query, limit], |row| {
+        let mut stmt = conn.prepare(&sql)?;
+        let rows = stmt.query_map(rusqlite::params_from_iter(params_vec), |row| {
             Ok(SearchHit {
                 chunk_id: row.get(0)?,
                 doc_id: row.get(1)?,

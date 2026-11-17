@@ -1,5 +1,7 @@
 // MAZZAROTH Sections: Constellations, Sovereign Vector Cartography Map, Librarian AI, and Sky Deck
-import { askStream, getStatus, getMaps, startMapFetch, getMapFetchStatus, deleteMapRegion, getSkyProjection, getModels } from './api.js';
+import { askStream, warmModel, getStatus, getMaps, startMapFetch, getMapFetchStatus, deleteMapRegion, getSkyProjection, getModels } from './api.js';
+import { librarianOffice, officeAudio, OFFICE_WORKERS, OFFICE_ROOMS } from './office.js';
+import { PixelStudioModal } from './sprite_studio.js';
 
 
 /* ========================================================================= */
@@ -3711,7 +3713,95 @@ function setupMapInteractions() {
 /* ========================================================================= */
 let currentLlmModel = null;
 let installedLlmModels = [];
-let librarianConversationHistory = [];
+let librarianHistoryByWorker = {};
+let activeOfficeWorkerId = 'coordinator';
+let activeAskController = null;
+
+function getWorkerHistory(workerId) {
+    if (!librarianHistoryByWorker[workerId]) librarianHistoryByWorker[workerId] = [];
+    return librarianHistoryByWorker[workerId];
+}
+
+function setQueryStreamingUI(isStreaming) {
+    const sendBtn = document.getElementById('btn-librarian-send');
+    if (!sendBtn) return;
+    if (isStreaming) {
+        sendBtn.innerText = 'STOP';
+        sendBtn.style.backgroundColor = '#dc2626';
+        sendBtn.style.color = '#ffffff';
+        sendBtn.title = 'Stop / Cancel active query';
+    } else {
+        sendBtn.innerText = 'QUERY';
+        sendBtn.style.backgroundColor = 'var(--contrast-ink)';
+        sendBtn.style.color = 'var(--contrast-paper)';
+        sendBtn.title = 'Send query';
+    }
+}
+
+function resolveMentionWorker(rawText) {
+    const match = rawText.trim().match(/^@([a-zA-Z0-9_-]+)\s+([\s\S]+)$/);
+    if (!match) return { workerId: null, question: rawText.trim() };
+    const tag = match[1].toLowerCase();
+    const rest = match[2].trim();
+    const found = OFFICE_WORKERS.find(w =>
+        w.id === tag ||
+        w.shortName.toLowerCase().replace(/\s+/g, '') === tag ||
+        (tag === 'chief' && w.id === 'coordinator') ||
+        (tag === 'medic' && w.id === 'medic')
+    );
+    if (!found) return { workerId: null, question: rawText.trim() };
+    return { workerId: found.id, question: rest };
+}
+
+function syncWorkerInspectorUI(worker) {
+    if (!worker) return;
+    activeOfficeWorkerId = worker.id;
+
+    const nameEl = document.getElementById('inspector-name');
+    const roleEl = document.getElementById('inspector-role');
+    const specEl = document.getElementById('inspector-specialty');
+    const actEl = document.getElementById('inspector-activity');
+    const dotEl = document.getElementById('inspector-dot');
+    const tagEl = document.getElementById('librarian-active-worker-tag');
+    const inputEl = document.getElementById('librarian-input');
+    const promptsEl = document.getElementById('inspector-prompts');
+
+    if (nameEl) nameEl.innerText = worker.name;
+    if (roleEl) roleEl.innerText = worker.role;
+    if (specEl) specEl.innerText = worker.specialty;
+    if (actEl) actEl.innerText = worker.lastAction || 'Ready at desk';
+    if (dotEl) dotEl.style.backgroundColor = worker.shirt;
+    if (tagEl) {
+        tagEl.innerText = `@${worker.shortName}`;
+        tagEl.style.color = worker.shirt;
+    }
+    if (inputEl) inputEl.placeholder = `Ask ${worker.name} about the local vault...`;
+
+    // Update roster pill highlights
+    document.querySelectorAll('.office-roster-pill').forEach(btn => {
+        const isMatch = btn.getAttribute('data-worker') === worker.id;
+        btn.style.borderColor = isMatch ? worker.shirt : 'var(--border-subtle)';
+        btn.style.backgroundColor = isMatch ? 'var(--panel-bg)' : 'var(--panel-bg-subtle)';
+        btn.style.color = isMatch ? 'var(--text-main)' : 'var(--text-muted)';
+    });
+
+    if (promptsEl && Array.isArray(worker.prompts)) {
+        promptsEl.innerHTML = '';
+        worker.prompts.forEach(pText => {
+            const btn = document.createElement('button');
+            btn.className = 'text-left px-2 py-1 rounded border text-[9px] truncate hover:opacity-80 transition-opacity';
+            btn.style.backgroundColor = 'var(--panel-bg-subtle)';
+            btn.style.borderColor = 'var(--border-subtle)';
+            btn.style.color = 'var(--text-main)';
+            btn.innerText = pText;
+            btn.title = pText;
+            btn.addEventListener('click', () => {
+                submitLibrarianQuery(pText);
+            });
+            promptsEl.appendChild(btn);
+        });
+    }
+}
 
 export function initLibrarian() {
     const input = document.getElementById('librarian-input');
@@ -3719,14 +3809,94 @@ export function initLibrarian() {
     const chatLog = document.getElementById('librarian-chat-log');
     const modelBtn = document.getElementById('btn-ollama-model');
     const statusDot = document.getElementById('ollama-status-dot');
+    const officeCanvas = document.getElementById('librarian-office-canvas');
+    const rosterEl = document.getElementById('office-worker-roster');
+    const roomTabsEl = document.getElementById('office-room-tabs');
+    const toggleOfficeBtn = document.getElementById('btn-toggle-office');
+    const officeStage = document.getElementById('librarian-office-stage');
+
+    const syncRoomTabs = (activeId) => {
+        if (!roomTabsEl) return;
+        roomTabsEl.querySelectorAll('.office-room-tab').forEach(btn => {
+            const match = btn.getAttribute('data-room') === activeId;
+            btn.style.borderColor = match ? 'var(--accent-primary)' : 'var(--border-subtle)';
+            btn.style.backgroundColor = match ? 'var(--panel-bg)' : 'var(--panel-bg-subtle)';
+            btn.style.color = match ? 'var(--text-main)' : 'var(--text-muted)';
+        });
+    };
+
+    if (officeCanvas) {
+        librarianOffice.mount(officeCanvas, {
+            onSelectWorker: (worker) => syncWorkerInspectorUI(worker),
+            onRoomChange: (roomId) => syncRoomTabs(roomId)
+        });
+    }
+
+    if (roomTabsEl) {
+        roomTabsEl.innerHTML = '';
+        OFFICE_ROOMS.forEach(r => {
+            const btn = document.createElement('button');
+            btn.className = 'office-room-tab px-2 py-0.5 rounded border font-bold backdrop-blur-sm transition-all hover:opacity-90';
+            btn.setAttribute('data-room', r.id);
+            btn.innerText = r.name.toUpperCase();
+            btn.addEventListener('click', () => {
+                librarianOffice.setRoom(r.id);
+            });
+            roomTabsEl.appendChild(btn);
+        });
+        syncRoomTabs(librarianOffice.activeRoomId);
+    }
+
+    const studio = new PixelStudioModal(OFFICE_WORKERS, OFFICE_ROOMS, () => {
+        librarianOffice.reloadCustomAssets();
+    });
+    studio.bind();
+
+    if (rosterEl) {
+        rosterEl.innerHTML = '';
+        OFFICE_WORKERS.forEach(w => {
+            const pill = document.createElement('button');
+            pill.className = 'office-roster-pill px-2 py-0.5 rounded-md border flex items-center gap-1.5 transition-all hover:opacity-90';
+            pill.setAttribute('data-worker', w.id);
+            pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block" style="background-color:${w.shirt}"></span><span>${escapeHtml(w.shortName)}</span>`;
+            pill.title = `${w.name} — ${w.role}`;
+            pill.addEventListener('click', () => {
+                librarianOffice.selectWorker(w.id);
+            });
+            rosterEl.appendChild(pill);
+        });
+    }
+    syncWorkerInspectorUI(librarianOffice.getSelectedWorker());
+
+    if (toggleOfficeBtn && officeStage) {
+        toggleOfficeBtn.addEventListener('click', () => {
+            const hidden = officeStage.classList.toggle('hidden');
+            toggleOfficeBtn.innerText = hidden ? 'SHOW OFFICE' : 'HIDE OFFICE';
+            if (!hidden) librarianOffice.resize();
+        });
+    }
+
+    const soundBtn = document.getElementById('btn-office-sound');
+    if (soundBtn) {
+        soundBtn.addEventListener('click', () => {
+            const on = officeAudio.toggle();
+            soundBtn.innerText = on ? 'SOUND: ON' : 'SOUND: OFF';
+            soundBtn.style.borderColor = on ? 'var(--accent-primary)' : 'var(--border-subtle)';
+            soundBtn.style.color = on ? 'var(--accent-primary)' : 'var(--text-secondary)';
+        });
+    }
 
     getStatus().then(status => {
+        if (typeof status.total_docs === 'number' && typeof status.total_chunks === 'number') {
+            librarianOffice.setDbStats(status.total_docs, status.total_chunks);
+        }
         if (status.llm_online) {
             if (statusDot) statusDot.style.backgroundColor = '#22c55e';
             if (modelBtn && status.llm_model) {
                 if (!currentLlmModel) currentLlmModel = status.llm_model;
                 modelBtn.innerText = currentLlmModel.toUpperCase().slice(0, 8);
                 modelBtn.title = `Active Model: ${currentLlmModel}`;
+                warmModel(currentLlmModel);
             }
         } else {
             if (statusDot) statusDot.style.backgroundColor = '#eab308';
@@ -3754,6 +3924,7 @@ export function initLibrarian() {
                 currentLlmModel = installedLlmModels[nextIdx];
                 modelBtn.innerText = currentLlmModel.toUpperCase().slice(0, 8);
                 modelBtn.title = `Active Model: ${currentLlmModel} (click to cycle)`;
+                warmModel(currentLlmModel);
             }
         });
     }
@@ -3768,12 +3939,17 @@ export function initLibrarian() {
 
     if (sendBtn && input) {
         sendBtn.addEventListener('click', () => {
+            if (activeAskController) {
+                activeAskController.abort(new Error('Cancelled by user'));
+                return;
+            }
             const q = input.value.trim();
             if (q) submitLibrarianQuery(q);
         });
 
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
+                if (activeAskController) return;
                 const q = input.value.trim();
                 if (q) submitLibrarianQuery(q);
             }
@@ -3783,14 +3959,14 @@ export function initLibrarian() {
     const clearBtn = document.getElementById('btn-clear-chat');
     if (clearBtn && chatLog) {
         clearBtn.addEventListener('click', () => {
-            librarianConversationHistory = [];
+            librarianHistoryByWorker[activeOfficeWorkerId] = [];
             chatLog.innerHTML = `
                 <div class="p-4 rounded-xl border flex gap-3" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">
                     <div class="w-6 h-6 rounded-md border flex items-center justify-center font-bold text-[10px]"
                          style="border-color: var(--panel-border); background-color: var(--panel-bg); color: var(--text-main);">AI</div>
                     <div class="space-y-2 flex-1 leading-relaxed">
                         <p class="font-bold" style="color: var(--text-main);">Mazzaroth Librarian Online.</p>
-                        <p style="color: var(--text-secondary);">Conversation buffer reset. Query the local knowledge vault with citations.</p>
+                        <p style="color: var(--text-secondary);">Specialist buffer reset. Query the local knowledge vault with citations.</p>
                     </div>
                 </div>
             `;
@@ -3798,11 +3974,24 @@ export function initLibrarian() {
     }
 }
 
-export function submitLibrarianQuery(question) {
+export function submitLibrarianQuery(rawQuestion) {
     const chatLog = document.getElementById('librarian-chat-log');
     const input = document.getElementById('librarian-input');
     if (!chatLog) return;
+
+    const routed = resolveMentionWorker(rawQuestion);
+    if (routed.workerId) {
+        librarianOffice.selectWorker(routed.workerId);
+    }
+    const question = routed.question;
+    if (!question) return;
+
     if (input) input.value = '';
+    if (activeAskController) {
+        activeAskController.abort(new Error('Superseded'));
+    }
+    activeAskController = new AbortController();
+    setQueryStreamingUI(true);
 
     const userMsg = document.createElement('div');
     userMsg.className = 'p-3 rounded-xl border flex gap-2.5 font-mono text-xs min-w-0 max-w-full';
@@ -3822,8 +4011,12 @@ export function submitLibrarianQuery(question) {
     const tokenContainerId = `ai-tokens-${Date.now()}`;
     const citationContainerId = `ai-cits-${Date.now()}`;
 
+    const activeWorker = librarianOffice.getSelectedWorker();
+    const workerTag = activeWorker ? activeWorker.shortName.toUpperCase() : 'AI';
+    const workerColor = activeWorker ? activeWorker.shirt : 'var(--text-main)';
+
     aiMsg.innerHTML = `
-        <div class="w-6 h-6 rounded-md border flex items-center justify-center font-bold text-[10px] shrink-0" style="border-color: var(--panel-border); background-color: var(--panel-bg); color: var(--text-main);">AI</div>
+        <div class="px-1.5 h-6 rounded-md border flex items-center justify-center font-bold text-[9px] shrink-0" style="border-color: ${workerColor}; background-color: var(--panel-bg); color: ${workerColor};">${escapeHtml(workerTag)}</div>
         <div class="space-y-2 flex-1 min-w-0 leading-relaxed overflow-hidden">
             <div id="${tokenContainerId}" class="break-words whitespace-pre-wrap min-w-0" style="color: var(--text-main); overflow-wrap: anywhere; word-break: break-word; line-height: 1.6;"></div>
             <div id="${citationContainerId}" class="flex flex-wrap gap-1.5 pt-2 hidden"></div>
@@ -3834,10 +4027,13 @@ export function submitLibrarianQuery(question) {
 
     const tokenSpan = document.getElementById(tokenContainerId);
     const citSpan = document.getElementById(citationContainerId);
+    const pipelineEl = document.getElementById('office-pipeline-status');
+    const actEl = document.getElementById('inspector-activity');
 
     let accumulatedResponse = '';
-    const outgoingHistory = [...librarianConversationHistory];
-    librarianConversationHistory.push({ role: 'user', content: question });
+    const workerHistory = getWorkerHistory(activeOfficeWorkerId);
+    const outgoingHistory = [...workerHistory];
+    workerHistory.push({ role: 'user', content: question });
 
     askStream(
         question,
@@ -3872,17 +4068,60 @@ export function submitLibrarianQuery(question) {
             }
         },
         () => {
+            activeAskController = null;
+            setQueryStreamingUI(false);
             if (accumulatedResponse.trim()) {
-                librarianConversationHistory.push({ role: 'assistant', content: accumulatedResponse.trim() });
+                workerHistory.push({ role: 'assistant', content: accumulatedResponse.trim() });
             }
+            if (pipelineEl) pipelineEl.innerText = 'Click any worker to assign & query your local Ollama vault';
         },
         (err) => {
+            activeAskController = null;
+            setQueryStreamingUI(false);
+            const isAbort = err && (err.name === 'AbortError' || String(err.message).includes('Cancelled'));
             if (tokenSpan) {
-                tokenSpan.innerText += `\n[Librarian Offline: ${err.message}]`;
+                tokenSpan.innerText += isAbort ? '\n[Cancelled by user]' : `\n[Librarian Offline: ${err.message}]`;
             }
+            librarianOffice.handleBackendEvent({
+                stage: 'done',
+                worker: activeOfficeWorkerId,
+                detail: isAbort ? 'Cancelled' : 'Connection error'
+            });
         },
         currentLlmModel,
-        outgoingHistory
+        outgoingHistory,
+        (verification) => {
+            if (citSpan && verification) {
+                citSpan.classList.remove('hidden');
+                const badge = document.createElement('span');
+                badge.className = "px-2 py-0.5 rounded border text-[9px] font-mono font-bold flex items-center gap-1";
+                if (verification.is_exact) {
+                    badge.style.backgroundColor = "rgba(40, 167, 69, 0.15)";
+                    badge.style.borderColor = "#28a745";
+                    badge.style.color = "#28a745";
+                    badge.innerHTML = `✓ ${escapeHtml(verification.citation.raw_citation)} [VERBATIM]`;
+                    badge.title = "QuoteGuard verified: Canonical exact match with 0% divergence";
+                } else {
+                    badge.style.backgroundColor = "rgba(255, 193, 7, 0.15)";
+                    badge.style.borderColor = "#ffc107";
+                    badge.style.color = "#ffc107";
+                    badge.innerHTML = `⚠ ${escapeHtml(verification.citation.raw_citation)} [${Math.round(verification.divergence_ratio * 100)}% DIVERGENCE]`;
+                    badge.title = "QuoteGuard alert: Passage diverges from canonical database record";
+                }
+                citSpan.appendChild(badge);
+            }
+        },
+        activeOfficeWorkerId,
+        (officeEv) => {
+            librarianOffice.handleBackendEvent(officeEv);
+            if (pipelineEl && officeEv.detail) {
+                pipelineEl.innerText = `[${(officeEv.worker || activeOfficeWorkerId).toUpperCase()}] ${officeEv.detail}`;
+            }
+            if (actEl && officeEv.detail && (officeEv.worker || activeOfficeWorkerId) === activeOfficeWorkerId) {
+                actEl.innerText = officeEv.detail;
+            }
+        },
+        activeAskController.signal
     );
 }
 

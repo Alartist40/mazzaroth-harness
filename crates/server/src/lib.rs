@@ -39,6 +39,7 @@ pub fn create_app(state: ServerState) -> Router {
         .route("/read/{doc_id}", get(routes::read::handle_get_document))
         .route("/sky", get(routes::sky::handle_sky_projection))
         .route("/ask", post(routes::ask::handle_ask))
+        .route("/warm", post(routes::ask::handle_warm))
         .route("/models", get(routes::models::handle_list_models))
         .route("/scripture/meta", get(routes::scripture::handle_scripture_meta))
         .route("/scripture", get(routes::scripture::handle_scripture_chapter))

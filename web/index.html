@@ -630,59 +630,188 @@
                     </div>
                 </div>
 
-                <!-- VIEW C: LIBRARIAN (LOCAL OLLAMA AI) -->
-                <div id="view-librarian" class="view-panel relative w-full h-full hidden flex-col p-6 overflow-hidden"
+                <!-- VIEW C: LIBRARIAN (VIRTUAL OFFICE + LOCAL OLLAMA AI) -->
+                <div id="view-librarian" class="view-panel relative w-full h-full hidden flex-col p-4 gap-3 overflow-hidden"
                      style="background-color: var(--panel-bg);">
                     
-                    <div class="flex items-center justify-between pb-3 border-b" style="border-color: var(--border-subtle);">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 rounded-lg border flex items-center justify-center font-mono font-bold text-xs"
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b shrink-0" style="border-color: var(--border-subtle);">
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-7 h-7 rounded-lg border flex items-center justify-center font-mono font-bold text-xs"
                                  style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
                                 Ω
                             </div>
                             <div>
-                                <h3 class="font-bold text-sm uppercase" style="color: var(--text-main);">LIBRARIAN // LOCAL OLLAMA VAULT</h3>
-                                <p class="font-mono text-[10px]" style="color: var(--text-muted);">Host: http://127.0.0.1:8080 (Sovereign Local Knowledge)</p>
+                                <h3 class="font-bold text-xs uppercase" style="color: var(--text-main);">LIBRARIAN // SOVEREIGN OFFICE</h3>
+                                <p id="office-pipeline-status" class="font-mono text-[10px]" style="color: var(--text-muted);">Click any worker to assign &amp; query your local Ollama vault</p>
                             </div>
                         </div>
-                        <span class="font-mono text-[10px] px-2 py-0.5 rounded border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
-                            OFFLINE ENGINE
-                        </span>
+                        <div id="office-worker-roster" class="flex flex-wrap items-center gap-1.5 font-mono text-[10px]"></div>
+                        <div class="flex items-center gap-1.5">
+                            <button id="btn-office-sound" class="font-mono text-[10px] px-2 py-0.5 rounded border hover:opacity-80 transition-opacity"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);"
+                                    title="Toggle Offline Office Ambience Sounds">
+                                SOUND: OFF
+                            </button>
+                            <button id="btn-open-studio" class="font-mono text-[10px] px-2 py-0.5 rounded border hover:opacity-80 transition-opacity font-bold"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--accent-primary); color: var(--accent-primary);"
+                                    title="Open Pixel Character & Environment Art Studio">
+                                PIXEL STUDIO
+                            </button>
+                            <button id="btn-toggle-office" class="font-mono text-[10px] px-2 py-0.5 rounded border hover:opacity-80 transition-opacity"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);"
+                                    title="Toggle Office Stage">
+                                HIDE OFFICE
+                            </button>
+                        </div>
                     </div>
 
-                    <div id="librarian-chat-log" class="flex-1 overflow-y-auto reader-scroll py-4 space-y-4 font-mono text-xs pr-2">
-                        <div class="p-4 rounded-xl border flex gap-3" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">
-                            <div class="w-6 h-6 rounded-md border flex items-center justify-center font-bold text-[10px]"
-                                 style="border-color: var(--panel-border); background-color: var(--panel-bg); color: var(--text-main);">AI</div>
-                            <div class="space-y-2 flex-1 leading-relaxed">
-                                <p class="font-bold" style="color: var(--text-main);">Mazzaroth Librarian Online.</p>
-                                <p style="color: var(--text-secondary);">I index your offline memory stars, constellation mythologies, and cartographic notes. I connect directly to Ollama running locally on your hardware.</p>
-                                <div class="flex flex-wrap gap-2 pt-2">
-                                    <button class="prompt-chip px-2.5 py-1 rounded border text-[10px] hover:opacity-80 transition-opacity"
-                                            style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-main);">
-                                        "Explain the Orion Constellation asterism"
-                                    </button>
-                                    <button class="prompt-chip px-2.5 py-1 rounded border text-[10px] hover:opacity-80 transition-opacity"
-                                            style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-main);">
-                                        "Summarize the Perseus Arm memory clusters"
-                                    </button>
-                                    <button class="prompt-chip px-2.5 py-1 rounded border text-[10px] hover:opacity-80 transition-opacity"
-                                            style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-main);">
-                                        "What is stored inside Prime Core Nexus?"
-                                    </button>
+                    <!-- VIRTUAL OFFICE STAGE -->
+                    <div id="librarian-office-stage" class="relative w-full h-[58%] min-h-[340px] rounded-xl border overflow-hidden shrink-0"
+                         style="border-color: var(--panel-border); background-color: var(--panel-bg-subtle);">
+                        <canvas id="librarian-office-canvas" class="w-full h-full block"></canvas>
+
+                        <!-- Multi-Room Switcher (Claude-Office style) -->
+                        <div id="office-room-tabs" class="absolute top-2.5 left-2.5 z-10 flex flex-wrap gap-1 font-mono text-[9px]"></div>
+
+                        <!-- Selected Worker Inspector Card (Claude-Office style) -->
+                        <div id="office-inspector-card" class="absolute top-2.5 right-2.5 z-10 w-64 rounded-xl border p-2.5 font-mono text-[10px] shadow-md backdrop-blur-sm"
+                             style="background-color: var(--panel-bg); border-color: var(--panel-border); opacity: 0.94;">
+                            <div class="flex items-center justify-between gap-2 pb-1.5 border-b" style="border-color: var(--border-subtle);">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span id="inspector-dot" class="w-2 h-2 rounded-full shrink-0" style="background-color: var(--accent-primary);"></span>
+                                    <span id="inspector-name" class="font-bold truncate" style="color: var(--text-main);">Chief Librarian</span>
                                 </div>
+                                <span id="inspector-role" class="text-[9px] px-1.5 py-0.5 rounded border shrink-0"
+                                      style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-muted);">Coordinator</span>
+                            </div>
+                            <p id="inspector-specialty" class="mt-1.5 text-[9px] leading-snug" style="color: var(--text-secondary);">All archives &amp; cross-domain synthesis</p>
+                            <div id="inspector-activity" class="mt-1.5 px-2 py-1 rounded border text-[9px] truncate"
+                                 style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);">
+                                Ready at desk
+                            </div>
+                            <div id="inspector-prompts" class="mt-2 flex flex-col gap-1"></div>
+                        </div>
+
+                        <!-- Bottom-left Interactive Hint -->
+                        <div class="absolute bottom-2 left-2.5 z-10 px-2 py-0.5 rounded border font-mono text-[9px] pointer-events-none"
+                             style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-muted); opacity: 0.9;">
+                            Click or drag workers · Click bookshelf, orrery, fireplace, server rack, or coffee bar
+                        </div>
+                    </div>
+
+                    <!-- CHAT LOG -->
+                    <div id="librarian-chat-log" class="flex-1 min-h-0 overflow-y-auto reader-scroll py-2 space-y-3 font-mono text-xs pr-2">
+                        <div class="p-3 rounded-xl border flex gap-3" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">
+                            <div class="w-6 h-6 rounded-md border flex items-center justify-center font-bold text-[10px] shrink-0"
+                                 style="border-color: var(--panel-border); background-color: var(--panel-bg); color: var(--text-main);">AI</div>
+                            <div class="space-y-1.5 flex-1 leading-relaxed">
+                                <p class="font-bold" style="color: var(--text-main);">Mazzaroth Librarian Office Online.</p>
+                                <p style="color: var(--text-secondary);">Select any specialist in the office above or ask below. Watch them search the FTS5 vault and work with your local Ollama SLM in real time.</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="pt-3 border-t flex gap-2" style="border-color: var(--border-subtle);">
-                        <input id="librarian-input" type="text" placeholder="Query the local knowledge graph..." 
-                                class="flex-1 px-4 py-2.5 rounded-xl border font-mono text-xs outline-none transition-all"
+                    <!-- BOTTOM CHATBOX -->
+                    <div class="pt-2 border-t flex gap-2 shrink-0" style="border-color: var(--border-subtle);">
+                        <span id="librarian-active-worker-tag" class="px-2.5 py-2 rounded-xl border font-mono text-[10px] font-bold uppercase flex items-center shrink-0"
+                              style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--accent-primary);">
+                            @Chief
+                        </span>
+                        <input id="librarian-input" type="text" placeholder="Ask Chief Librarian about the local vault..." 
+                                class="flex-1 px-4 py-2 rounded-xl border font-mono text-xs outline-none transition-all"
                                 style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
-                        <button id="btn-librarian-send" class="px-5 py-2.5 rounded-xl border font-mono text-xs font-bold uppercase transition-all hover:opacity-90 active:scale-95 shadow-sm"
+                        <button id="btn-librarian-send" class="px-5 py-2 rounded-xl border font-mono text-xs font-bold uppercase transition-all hover:opacity-90 active:scale-95 shadow-sm"
                                 style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
                             QUERY
                         </button>
+                    </div>
+
+                    <!-- PIXEL & ENVIRONMENT ART STUDIO MODAL -->
+                    <div id="pixel-studio-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background-color: rgba(0,0,0,0.72);">
+                        <div class="w-full max-w-3xl rounded-2xl border p-4 font-mono text-xs shadow-2xl flex flex-col gap-3"
+                             style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);">
+                            <div class="flex items-center justify-between pb-2 border-b" style="border-color: var(--border-subtle);">
+                                <div>
+                                    <h4 class="font-bold text-sm uppercase">PIXEL &amp; ENVIRONMENT ART STUDIO (16x24)</h4>
+                                    <p class="text-[10px]" style="color: var(--text-muted);">Draw pixel characters, import PNG sprites, or upload custom Day/Night room backdrops</p>
+                                </div>
+                                <button id="btn-close-studio" class="px-2.5 py-1 rounded border text-[10px] hover:opacity-80"
+                                        style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">CLOSE</button>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                <!-- Left: 16x24 Drawing Grid -->
+                                <div class="md:col-span-5 flex flex-col items-center gap-2">
+                                    <div class="flex gap-1 w-full justify-center">
+                                        <button class="studio-frame-btn px-2 py-1 rounded border text-[10px]" data-frame="idle" style="border-color: var(--accent-primary);">IDLE</button>
+                                        <button class="studio-frame-btn px-2 py-1 rounded border text-[10px]" data-frame="walk1" style="border-color: var(--border-subtle);">WALK 1</button>
+                                        <button class="studio-frame-btn px-2 py-1 rounded border text-[10px]" data-frame="walk2" style="border-color: var(--border-subtle);">WALK 2</button>
+                                        <button class="studio-frame-btn px-2 py-1 rounded border text-[10px]" data-frame="work" style="border-color: var(--border-subtle);">WORK</button>
+                                    </div>
+                                    <canvas id="studio-grid-canvas" width="224" height="336" class="rounded border cursor-crosshair" style="border-color: var(--panel-border);"></canvas>
+                                    <div class="flex gap-2">
+                                        <button id="studio-copy-idle" class="px-2 py-1 rounded border text-[9px]" style="border-color: var(--border-subtle);">COPY IDLE → FRAME</button>
+                                        <button id="studio-clear-frame" class="px-2 py-1 rounded border text-[9px]" style="border-color: var(--border-subtle);">CLEAR FRAME</button>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Tools, Palette, Worker & Room Upload -->
+                                <div class="md:col-span-7 flex flex-col gap-3">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <button class="studio-tool-btn px-2 py-1 rounded border text-[10px]" data-tool="pencil" style="border-color: var(--accent-primary);">PENCIL</button>
+                                        <button class="studio-tool-btn px-2 py-1 rounded border text-[10px]" data-tool="eraser" style="border-color: var(--border-subtle);">ERASER</button>
+                                        <button class="studio-tool-btn px-2 py-1 rounded border text-[10px]" data-tool="fill" style="border-color: var(--border-subtle);">FILL</button>
+                                        <button class="studio-tool-btn px-2 py-1 rounded border text-[10px]" data-tool="eyedropper" style="border-color: var(--border-subtle);">PICK</button>
+                                        <button id="studio-mirror-btn" class="px-2 py-1 rounded border text-[10px]" style="border-color: var(--border-subtle);">MIRROR X: OFF</button>
+                                    </div>
+
+                                    <div class="flex items-center gap-3">
+                                        <div id="studio-palette" class="flex flex-wrap gap-1.5 flex-1"></div>
+                                        <input id="studio-custom-color" type="color" value="#3b82f6" class="w-8 h-8 rounded cursor-pointer border" style="border-color: var(--border-subtle);">
+                                        <canvas id="studio-preview-canvas" width="48" height="72" class="rounded border shrink-0" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);"></canvas>
+                                    </div>
+
+                                    <div class="p-2.5 rounded-xl border space-y-2" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">
+                                        <div class="font-bold text-[10px] uppercase" style="color: var(--text-muted);">CHARACTER SPRITE TARGET</div>
+                                        <div class="flex flex-wrap gap-2 items-center">
+                                            <select id="studio-worker-select" class="flex-1 px-2 py-1 rounded border text-[10px]" style="background-color: var(--panel-bg); border-color: var(--border-subtle);"></select>
+                                            <button id="studio-apply-worker" class="px-3 py-1 rounded border font-bold text-[10px]" style="background-color: var(--contrast-ink); color: var(--contrast-paper); border-color: var(--panel-border);">APPLY TO WORKER</button>
+                                        </div>
+                                        <div class="flex flex-wrap gap-2 items-center text-[10px]">
+                                            <label class="px-2 py-1 rounded border cursor-pointer hover:opacity-80" style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                                                IMPORT PNG SPRITE
+                                                <input id="studio-import-sprite" type="file" accept="image/*" class="hidden">
+                                            </label>
+                                            <button id="studio-export-png" class="px-2 py-1 rounded border" style="background-color: var(--panel-bg); border-color: var(--border-subtle);">EXPORT PNG</button>
+                                            <button id="studio-reset-worker" class="px-2 py-1 rounded border" style="background-color: var(--panel-bg); border-color: var(--border-subtle);">RESET DEFAULT</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-2.5 rounded-xl border space-y-2" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">
+                                        <div class="font-bold text-[10px] uppercase" style="color: var(--text-muted);">CUSTOM ROOM ENVIRONMENT BACKDROP</div>
+                                        <div class="flex flex-wrap gap-2 items-center text-[10px]">
+                                            <select id="studio-room-select" class="flex-1 px-2 py-1 rounded border" style="background-color: var(--panel-bg); border-color: var(--border-subtle);"></select>
+                                            <select id="studio-room-tod" class="px-2 py-1 rounded border" style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                                                <option value="night">NIGHT</option>
+                                                <option value="day">DAY</option>
+                                            </select>
+                                            <label class="px-2.5 py-1 rounded border cursor-pointer font-bold hover:opacity-80" style="background-color: var(--panel-bg); border-color: var(--accent-primary); color: var(--accent-primary);">
+                                                UPLOAD ROOM ART
+                                                <input id="studio-room-upload" type="file" accept="image/*" class="hidden">
+                                            </label>
+                                            <button id="studio-reset-room" class="px-2 py-1 rounded border" style="background-color: var(--panel-bg); border-color: var(--border-subtle);">RESET</button>
+                                        </div>
+                                        <div class="flex flex-wrap gap-2 items-center pt-1.5 border-t text-[10px]" style="border-color: var(--border-subtle);">
+                                            <button id="studio-export-pack" class="px-2.5 py-1 rounded border font-bold hover:opacity-80" style="background-color: var(--panel-bg); border-color: var(--border-subtle);">EXPORT ART PACK (.JSON)</button>
+                                            <label class="px-2.5 py-1 rounded border cursor-pointer hover:opacity-80" style="background-color: var(--panel-bg); border-color: var(--border-subtle);">
+                                                IMPORT ART PACK
+                                                <input id="studio-import-pack" type="file" accept=".json,application/json" class="hidden">
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

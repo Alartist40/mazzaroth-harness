@@ -58,6 +58,18 @@
   - Ingested into `data/mazzaroth.db` SQLite FTS5 database (`total_docs=4, total_chunks=18`).
 - **Interactive Deep Reader Hierarchy Explorer (`web/js/app.js`, `web/css/app.css`)**:
   - Overhauled Deep Reader with an interactive Category Hierarchy Explorer when `#NEXUS-0` is focused.
+
+## [2026-11-17] Librarian Virtual Office & Ollama SLM Pipeline Telemetry
+- **Category-Scoped FTS5 Retrieval (`crates/core/src/db.rs`)**:
+  - Added `LibrarianDb::search_by_categories` (reusing parameterized `execute_fts_query`) so specialist workers prioritize domain-relevant archives with automatic global FTS5 fallback.
+- **Real-Time Office SSE Telemetry (`crates/server/src/routes/ask.rs`)**:
+  - Extended `AskRequest` with `worker` (`coordinator`, `archivist`, `astronomer`, `medic`, `chronicler`).
+  - Added `event: office` SSE stream emissions (`dispatch`, `search`, `found`, `think`, `stream`, `verify`, `done`) backed by real SQLite FTS5 timings and Ollama SLM streaming state, plus a compact SLM-friendly system prompt.
+- **Isometric Pixel-Art Office (`web/js/office.js`, `web/index.html`, `web/js/api.js`, `web/js/sections.js`)**:
+  - Built zero-dependency Canvas 2D isometric office (`LibrarianOffice`) inspired by `Claude-Office`, featuring 5 animated specialist workers, interactive furniture (bookshelf, orrery, map table, server rack, clickable coffee machine, whiteboard), theme-synced Light/Dark palettes, Worker Inspector Card, and bottom chatbox integration.
+- **Multi-Room Living Office, Pixel Studio & SLM Optimizations (`web/js/office.js`, `web/js/sprite_studio.js`, `web/assets/office/`, `crates/server/src/routes/ask.rs`, `crates/server/src/lib.rs`)**:
+  - Added 6th specialist (`The Pathfinder` for `survival`/`pathfinders`/`youth`), MIT-licensed `Claude-Office` 5-room Day/Night backdrops + 4-direction animated character sprites, autonomous wandering & cross-room Corridor walking, and drag-and-drop worker placement.
+  - Added `POST /api/warm` keep-alive pre-warming, dynamic SLM `num_ctx` + top-4 concise passage budgeting, `STOP` abort button, `@mention` routing, per-specialist conversation history, offline WebAudio ambience (`OfficeAudio`), and 16×24 Pixel & Environment Art Studio with `.json` Art Pack export/import.
   - Added visual drilldown: `Theme (Astronomy, Survival, Medical, Scripture, Cognitive) > Language > Document/Book > Chapter > Passage`.
   - Added interactive breadcrumbs (`#reader-breadcrumbs`) with direct jump buttons back to any level in the knowledge tree.
 - **Sky Deck UI Canvas & Controls (`web/js/sections.js`, `web/index.html`)**:
@@ -134,4 +146,13 @@
   - Zero-Copy In-Memory LRU Tile Cache (`TILE_CACHE`, max 512 entries, up to 512KB ranges) returning `X-Cache: HIT/MISS` headers.
   - Sovereign Snapshot CLI (`mazzaroth snapshot export/import`) with SHA-256 header verification ensuring vault portability.
 - **Verification**: 18/18 Cargo unit/integration tests passing; 4/4 web scripts passing `node --check`.
+
+## [2026-11-14] Corpus Expansion: armandoh.org Medical & Biological Knowledge
+- **Scraper & Compiler (`tools/scrape_armandoh.py`)**:
+  - Fetched all published `disease` (327), `clinical` (40), `video` (642), and `glossary` (1,338) entries plus 6 taxonomy maps (`specialty`, `body_system`, `knowledge_domain`, `subject`, `anatomical_region`, `clinical_context`) from `https://armandoh.org/wp-json/wp/v2/`.
+  - Scraped all 642 public video lecture pages for `nav.mux-chapters`, `div.mux-transcript` (630 full lecture transcripts), and YouTube embed links.
+  - Compiled 40 structured `ContentDocument` JSON files in `content/armandoh/` (`category: "medical"`, `license: "personal-use-only"`, `personal_use_only: true`) totaling 111 chapters and 2,343 sections.
+- **Database Ingestion (`data/mazzaroth.db`)**:
+  - Removed superseded single-file `armandoh-video-lectures` and ran `./target/release/mazzaroth ingest content/armandoh`: ingested 40 `armandoh-*` documents and 5,576 searchable FTS5 chunks.
+  - Verified with `sqlite3` (`armandoh_docs=40`, `armandoh_chunks=5576`, FTS5 `fascial` hits=19, `PRAGMA integrity_check=ok`) and `./target/release/mazzaroth doctor` (63 docs, 6,825 total chunks, integrity OK).
 

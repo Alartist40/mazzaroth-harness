@@ -37,7 +37,21 @@ export async function getModels() {
     return await res.json();
 }
 
-export async function askStream(question, onToken, onCitations, onDone, onError, model = null, history = []) {
+export async function warmModel(model = null) {
+    try {
+        const res = await fetchWithTimeout('/api/warm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model })
+        }, 15000);
+        if (!res.ok) return null;
+        return await res.json();
+    } catch {
+        return null;
+    }
+}
+
+export async function askStream(question, onToken, onCitations, onDone, onError, model = null, history = [], onVerification = null, worker = null, onOfficeEvent = null, externalSignal = null) {
     let doneCalled = false;
     const safeDone = () => {
         if (!doneCalled) {
@@ -47,6 +61,13 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
     };
 
     const controller = new AbortController();
+    if (externalSignal) {
+        if (externalSignal.aborted) {
+            controller.abort(externalSignal.reason);
+        } else {
+            externalSignal.addEventListener('abort', () => controller.abort(externalSignal.reason), { once: true });
+        }
+    }
     let idleTimer = null;
     const resetIdleTimer = () => {
         if (idleTimer) clearTimeout(idleTimer);
@@ -59,6 +80,7 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
         const payload = { question: question.trim() };
         if (model) payload.model = model;
         if (history && history.length > 0) payload.history = history;
+        if (worker) payload.worker = worker;
 
         const connectTimer = setTimeout(() => {
             controller.abort(new Error('Librarian connection timeout (30s)'));
@@ -114,6 +136,20 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
                             if (onCitations) onCitations(citationsArray);
                         } catch (e) {
                             if (onCitations) onCitations([dataStr]);
+                        }
+                    } else if (currentEvent === 'verification') {
+                        try {
+                            const parsed = JSON.parse(dataStr);
+                            if (onVerification) onVerification(parsed);
+                        } catch (e) {
+                            console.warn('Verification parse error', e);
+                        }
+                    } else if (currentEvent === 'office') {
+                        try {
+                            const parsed = JSON.parse(dataStr);
+                            if (onOfficeEvent) onOfficeEvent(parsed);
+                        } catch (e) {
+                            console.warn('Office event parse error', e);
                         }
                     } else if (currentEvent === 'done') {
                         safeDone();

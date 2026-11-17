@@ -317,3 +317,19 @@ M7 doctor+installer (L7). Backend of record.
 - **Partial C-build** (rejected 2026-09-29 by user): broken dark-mode parity,
   empty constellations, no MapLibre — superseded by copy-exact approach; archived
   to `_trash/c-partial/`.
+
+## I. Corpus Expansion — armandoh.org Medical & Biological Knowledge (2026-11-14)
+
+- **Stage 1: Scrape & Compile (`OWNS: tools/scrape_armandoh.py`, `content/armandoh/*.json`)** — GATES: L9_SCRAPE
+  - Fetch all published items from `https://armandoh.org/wp-json/wp/v2/` (`disease`, `clinical`, `video`, `glossary`) plus taxonomy maps (`specialty`, `body_system`, `knowledge_domain`, `tags`).
+  - Convert HTML to clean Markdown without duplicating nested elements; preserve headings, lists, definition lists, and tables.
+  - Group into structured Mazzaroth `ContentDocument` JSON files under `content/armandoh/` with `category: "medical"`, `language: "en"`, and `personal_use_only: true`, `license: "personal-use-only"`.
+- **Stage 2: Ingest & Verify (`OWNS: data/mazzaroth.db`, `GATES.md`, `IMPLEMENT.md`)** — GATES: L9_INGEST
+  - Run `./target/release/mazzaroth ingest content/armandoh` and verify document/chunk counts, FTS5 search, and `mazzaroth doctor` integrity.
+
+## J. Librarian Virtual Office & Local SLM Engine (2026-11-17)
+
+- **Backend (`OWNS: crates/core/src/db.rs`, `crates/server/src/routes/ask.rs`, `crates/server/src/lib.rs`)** — GATES: L10_LIBRARIAN_OFFICE
+  - Category-scoped FTS5 search (`search_by_categories`) with global fallback, 6 domain specialists, real-time `event: office` SSE stages, `POST /api/warm` keep-alive pre-warming, and dynamic `num_ctx` / top-4 passage budgeting for local SLMs (`1B–4B`).
+- **Frontend (`OWNS: web/js/office.js`, `web/js/sprite_studio.js`, `web/js/api.js`, `web/js/sections.js`, `web/index.html`, `web/assets/office/`)** — GATES: L10_LIBRARIAN_OFFICE
+  - 5-room MIT-licensed `Claude-Office` pixel-art environment synced to Mazzaroth Day/Night themes, autonomous & cross-room walking, drag-and-drop workers, clickable hotspots, offline WebAudio ambience, `@mention` routing, per-specialist history, Stop/Cancel button, and 16×24 Pixel & Environment Art Studio with `.json` Art Pack export/import.
