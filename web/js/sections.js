@@ -3803,6 +3803,121 @@ function syncWorkerInspectorUI(worker) {
     }
 }
 
+function renderMarkdownSafe(raw) {
+    let text = escapeHtml(raw || '');
+    const codeBlocks = [];
+    text = text.replace(/```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+        const idx = codeBlocks.length;
+        const cleanCode = code.trim();
+        codeBlocks.push(
+            `<div class="my-2 rounded-lg border overflow-hidden" style="border-color:var(--panel-border);background-color:var(--panel-bg);">` +
+            `<div class="flex items-center justify-between px-2.5 py-1 border-b text-[9px]" style="border-color:var(--border-subtle);color:var(--text-muted);">` +
+            `<span>${lang || 'PASSAGE'}</span>` +
+            `<button type="button" class="copy-code-btn px-1.5 py-0.5 rounded border hover:opacity-80" style="border-color:var(--border-subtle);color:var(--text-main);">COPY</button>` +
+            `</div><pre class="p-2.5 overflow-x-auto text-[11px] leading-relaxed"><code>${cleanCode}</code></pre></div>`
+        );
+        return `@@CODEBLOCK_${idx}@@`;
+    });
+
+    const lines = text.split('\n').map(line => {
+        if (/^###\s+(.+)/.test(line)) {
+            return `<div class="font-bold text-xs mt-2 mb-1" style="color:var(--accent-primary);">${line.replace(/^###\s+/, '')}</div>`;
+        }
+        if (/^##\s+(.+)/.test(line)) {
+            return `<div class="font-bold text-sm mt-2 mb-1" style="color:var(--text-main);">${line.replace(/^##\s+/, '')}</div>`;
+        }
+        if (/^#\s+(.+)/.test(line)) {
+            return `<div class="font-bold text-sm uppercase mt-2 mb-1" style="color:var(--text-main);">${line.replace(/^#\s+/, '')}</div>`;
+        }
+        if (/^\s*[-*]\s+(.+)/.test(line)) {
+            return `<div class="pl-3 flex gap-1.5"><span style="color:var(--accent-primary);">•</span><span>${line.replace(/^\s*[-*]\s+/, '')}</span></div>`;
+        }
+        if (/^\s*(\d+)\.\s+(.+)/.test(line)) {
+            const m = line.match(/^\s*(\d+)\.\s+(.+)/);
+            return `<div class="pl-3 flex gap-1.5"><span class="font-bold" style="color:var(--accent-primary);">${m[1]}.</span><span>${m[2]}</span></div>`;
+        }
+        return line;
+    });
+
+    let html = lines.join('<br>');
+    html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong style="color:var(--text-main);">$1</strong>');
+    html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+    html = html.replace(/`([^`\n]+)`/g, '<code class="px-1 py-0.5 rounded border text-[10px]" style="background-color:var(--panel-bg);border-color:var(--border-subtle);">$1</code>');
+    html = html.replace(/\[(\d+)\]/g, '<span class="px-1 rounded text-[9px] font-bold" style="background-color:var(--panel-bg);color:var(--accent-primary);">[$1]</span>');
+    html = html.replace(/@@CODEBLOCK_(\d+)@@/g, (_, i) => codeBlocks[Number(i)] || '');
+    return html;
+}
+
+function openCompareSourcesModal(citations) {
+    const modal = document.getElementById('compare-sources-modal');
+    const grid = document.getElementById('compare-sources-grid');
+    if (!modal || !grid || !Array.isArray(citations) || citations.length === 0) return;
+
+    const top = citations.slice(0, 3);
+    // Compute shared significant words (>= 4 chars) across >= 2 sources for Paraclea-style term highlighting
+    const termCounts = new Map();
+    top.forEach(c => {
+        const plain = String(c.snippet || '').replace(/<[^>]+>/g, ' ').toLowerCase();
+        const words = new Set(plain.match(/[a-z]{4,}/g) || []);
+        words.forEach(w => termCounts.set(w, (termCounts.get(w) || 0) + 1));
+    });
+    const sharedTerms = new Set([...termCounts.entries()].filter(([, cnt]) => cnt >= 2).map(([w]) => w));
+
+    grid.innerHTML = '';
+    top.forEach((c, idx) => {
+        const col = document.createElement('div');
+        col.className = 'rounded-xl border p-3 flex flex-col gap-2 min-w-0';
+        col.style.backgroundColor = 'var(--panel-bg-subtle)';
+        col.style.borderColor = 'var(--panel-border)';
+
+        const rawSnippet = String(c.snippet || '').replace(/<\/?b>/g, '');
+        const highlighted = escapeHtml(rawSnippet).replace(/\b([a-zA-Z]{4,})\b/g, (m) =>
+            sharedTerms.has(m.toLowerCase())
+                ? `<mark class="px-0.5 rounded" style="background-color:rgba(245,158,11,0.28);color:var(--text-main);">${m}</mark>`
+                : m
+        );
+
+        col.innerHTML = `
+            <div class="flex items-center justify-between gap-2 pb-1.5 border-b" style="border-color:var(--border-subtle);">
+                <span class="font-bold truncate" style="color:var(--accent-primary);">[${idx + 1}] ${escapeHtml(c.title || c.doc_title || 'Source')}</span>
+                <span class="text-[9px] px-1.5 py-0.5 rounded border shrink-0" style="border-color:var(--border-subtle);color:var(--text-muted);">${escapeHtml(c.license || 'vault')}</span>
+            </div>
+            <div class="text-[9px] truncate" style="color:var(--text-muted);">${escapeHtml(c.title_path || '')}</div>
+            <div class="text-[11px] leading-relaxed flex-1 overflow-y-auto" style="color:var(--text-main);">${highlighted}</div>
+            <button class="compare-open-btn mt-1 py-1 rounded border text-[9px] font-bold uppercase hover:opacity-80" style="background-color:var(--panel-bg);border-color:var(--accent-primary);color:var(--accent-primary);">OPEN IN DEEP READER</button>
+        `;
+        col.querySelector('.compare-open-btn')?.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            if (window.inspectCitationPassage) window.inspectCitationPassage(c);
+        });
+        grid.appendChild(col);
+    });
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function renderOfficeMiniMap() {
+    const el = document.getElementById('office-minimap');
+    if (!el) return;
+    const activeId = librarianOffice.activeRoomId;
+    el.innerHTML = `<div class="grid grid-cols-3 gap-1 w-36"></div>`;
+    const grid = el.firstElementChild;
+    OFFICE_ROOMS.forEach(r => {
+        const workersHere = librarianOffice.workers.filter(w => w.room === r.id);
+        const btn = document.createElement('button');
+        btn.className = 'p-1 rounded border text-left transition-all hover:opacity-90 flex flex-col gap-0.5';
+        btn.style.borderColor = r.id === activeId ? 'var(--accent-primary)' : 'var(--border-subtle)';
+        btn.style.backgroundColor = r.id === activeId ? 'var(--panel-bg-subtle)' : 'transparent';
+        btn.title = `${r.name} (${workersHere.length} active)`;
+        const dots = workersHere.map(w => `<span class="w-1.5 h-1.5 rounded-full inline-block" style="background-color:${w.shirt}"></span>`).join('');
+        btn.innerHTML = `<span class="truncate font-bold" style="color:var(--text-main);">${escapeHtml(r.name.split(' ')[0])}</span><div class="flex gap-0.5 min-h-[6px]">${dots}</div>`;
+        btn.addEventListener('click', () => librarianOffice.setRoom(r.id));
+        grid.appendChild(btn);
+    });
+}
+
 export function initLibrarian() {
     const input = document.getElementById('librarian-input');
     const sendBtn = document.getElementById('btn-librarian-send');
@@ -3828,7 +3943,25 @@ export function initLibrarian() {
     if (officeCanvas) {
         librarianOffice.mount(officeCanvas, {
             onSelectWorker: (worker) => syncWorkerInspectorUI(worker),
-            onRoomChange: (roomId) => syncRoomTabs(roomId)
+            onRoomChange: (roomId) => {
+                syncRoomTabs(roomId);
+                renderOfficeMiniMap();
+            }
+        });
+    }
+
+    renderOfficeMiniMap();
+    setInterval(() => {
+        const view = document.getElementById('view-librarian');
+        if (view && !view.classList.contains('hidden')) renderOfficeMiniMap();
+    }, 500);
+
+    const closeCompareBtn = document.getElementById('btn-close-compare');
+    const compareModal = document.getElementById('compare-sources-modal');
+    if (closeCompareBtn && compareModal) {
+        closeCompareBtn.addEventListener('click', () => {
+            compareModal.classList.add('hidden');
+            compareModal.classList.remove('flex');
         });
     }
 
@@ -4097,13 +4230,16 @@ export function submitLibrarianQuery(rawQuestion) {
         (token) => {
             if (firstTokenAt === null) firstTokenAt = performance.now();
             tokenCount++;
+            accumulatedResponse += token;
             if (tokenSpan) {
-                tokenSpan.innerText += token;
-                accumulatedResponse += token;
+                tokenSpan.innerHTML = renderMarkdownSafe(accumulatedResponse);
                 chatLog.scrollTop = chatLog.scrollHeight;
             }
         },
         (citations) => {
+            if (tokenSpan && firstTokenAt === null && citations && citations.length > 0) {
+                tokenSpan.innerHTML = `<span class="animate-pulse text-[10px]" style="color:var(--accent-primary);">Reading ${citations.length} grounded passage(s) from vault...</span>`;
+            }
             if (citSpan && citations && citations.length > 0) {
                 citSpan.classList.remove('hidden');
                 citSpan.innerHTML = `<span class="text-[9px] font-bold uppercase mr-1" style="color: var(--text-muted);">GROUNDED SOURCES:</span>`;
@@ -4124,11 +4260,36 @@ export function submitLibrarianQuery(rawQuestion) {
                     });
                     citSpan.appendChild(btn);
                 });
+                if (citations.length >= 2) {
+                    const cmpBtn = document.createElement('button');
+                    cmpBtn.className = "px-2 py-0.5 rounded border text-[9px] font-mono font-bold uppercase transition-all hover:opacity-85";
+                    cmpBtn.style.backgroundColor = "var(--contrast-ink)";
+                    cmpBtn.style.borderColor = "var(--panel-border)";
+                    cmpBtn.style.color = "var(--contrast-paper)";
+                    cmpBtn.innerText = "COMPARE SOURCES";
+                    cmpBtn.title = "Compare retrieved sources side-by-side";
+                    cmpBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openCompareSourcesModal(citations);
+                    });
+                    citSpan.appendChild(cmpBtn);
+                }
             }
         },
         () => {
             activeAskController = null;
             setQueryStreamingUI(false);
+            if (tokenSpan && accumulatedResponse) {
+                tokenSpan.innerHTML = renderMarkdownSafe(accumulatedResponse);
+                tokenSpan.querySelectorAll('.copy-code-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const code = btn.closest('div')?.nextElementSibling?.innerText || '';
+                        navigator.clipboard?.writeText(code);
+                        btn.innerText = 'COPIED';
+                        setTimeout(() => { btn.innerText = 'COPY'; }, 1000);
+                    });
+                });
+            }
             if (telemetryEl && firstTokenAt !== null && tokenCount > 0) {
                 const now = performance.now();
                 const evalSec = ((firstTokenAt - queryStartAt) / 1000).toFixed(1);

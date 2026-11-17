@@ -70,6 +70,7 @@
 - **Multi-Room Living Office, Pixel Studio & SLM Optimizations (`web/js/office.js`, `web/js/sprite_studio.js`, `web/assets/office/`, `crates/server/src/routes/ask.rs`, `crates/server/src/lib.rs`)**:
   - Added 6th specialist (`The Pathfinder` for `survival`/`pathfinders`/`youth`), MIT-licensed `Claude-Office` 5-room Day/Night backdrops + 4-direction animated character sprites, autonomous wandering & cross-room Corridor walking, and drag-and-drop worker placement.
   - Added `POST /api/warm` keep-alive pre-warming, dynamic SLM `num_ctx` + top-4 concise passage budgeting, `STOP` abort button, `@mention` routing, per-specialist conversation history, offline WebAudio ambience (`OfficeAudio`), and 16×24 Pixel & Environment Art Studio with `.json` Art Pack export/import.
+  - Added Paraclea-style Side-by-Side Source Compare modal (`openCompareSourcesModal`), XSS-safe Markdown & code-block renderer (`renderMarkdownSafe`), live 5-room Mini-Map floorplan (`renderOfficeMiniMap`), and streaming retrieval preview shimmer.
   - Added visual drilldown: `Theme (Astronomy, Survival, Medical, Scripture, Cognitive) > Language > Document/Book > Chapter > Passage`.
   - Added interactive breadcrumbs (`#reader-breadcrumbs`) with direct jump buttons back to any level in the knowledge tree.
 - **Sky Deck UI Canvas & Controls (`web/js/sections.js`, `web/index.html`)**:
