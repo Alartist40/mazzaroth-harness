@@ -3,6 +3,17 @@ import { askStream, saveVaultNote, warmModel, getPacks, getCustomLlmEndpoint, ge
 import { librarianOffice, officeAudio, OFFICE_WORKERS, OFFICE_ROOMS, PLACEABLE_PROPS } from './office.js';
 import { PixelStudioModal } from './sprite_studio.js';
 import { I18N, getActiveLang, setActiveLang } from './i18n.js';
+import {
+    HEX_LAYERS,
+    EMPIRE_META,
+    RELIGION_META,
+    SURVIVAL_META,
+    SCRIPTURE_ISO_MAP,
+    TRADE_ROUTES,
+    getEmpireForHex,
+    getReligionForHex,
+    getSurvivalForHex
+} from './hex_layers.js';
 
 
 /* ========================================================================= */
@@ -1765,6 +1776,7 @@ let currentHistoricalEra = 'MODERN'; // '100', '500', '1500', 'MODERN'
 export function setHistoricalEra(era) {
     currentHistoricalEra = era;
     recomputeHexIntensities();
+    renderHexLegend();
     renderMap();
 }
 
@@ -1801,6 +1813,129 @@ function recomputeHexIntensities() {
     }
 }
 
+let activeHexLayer = 'empires'; // 'empires' | 'religions' | 'scripture' | 'survival' | 'vault'
+let activeHexFilter = null;
+let showTradeRoutes = true;
+
+function getHexCategoryKey(hex) {
+    const iso = hex.iso || hex.country || '';
+    if (activeHexLayer === 'empires') return getEmpireForHex(iso, currentHistoricalEra);
+    if (activeHexLayer === 'religions') return getReligionForHex(iso, hex.region, currentHistoricalEra);
+    if (activeHexLayer === 'survival') return getSurvivalForHex(iso, hex.lat);
+    if (activeHexLayer === 'scripture') return SCRIPTURE_ISO_MAP[iso] ? 'COVERED' : 'NONE';
+    return null;
+}
+
+function describeHexLayer(hex) {
+    const iso = hex.iso || hex.country || '';
+    const emp = EMPIRE_META[getEmpireForHex(iso, currentHistoricalEra)]?.name || 'Sovereign';
+    const rel = RELIGION_META[getReligionForHex(iso, hex.region, currentHistoricalEra)]?.name || 'Traditional';
+    const surv = SURVIVAL_META[getSurvivalForHex(iso, hex.lat)]?.name || 'Temperate';
+    const scr = SCRIPTURE_ISO_MAP[iso];
+    let activeText = emp;
+    if (activeHexLayer === 'religions') activeText = rel;
+    else if (activeHexLayer === 'survival') activeText = surv;
+    else if (activeHexLayer === 'scripture') activeText = scr ? scr.label : 'Not yet indexed';
+    else if (activeHexLayer === 'vault') activeText = `Vault Intensity ${(hex.intensity * 100).toFixed(0)}%`;
+    return { iso, emp, rel, surv, scr, activeText };
+}
+
+function renderHexLayerBar() {
+    const bar = document.getElementById('hex-layer-bar');
+    if (!bar) return;
+    bar.innerHTML = '';
+    const lang = getActiveLang();
+    HEX_LAYERS.forEach(l => {
+        const btn = document.createElement('button');
+        btn.className = 'px-2 py-0.5 rounded border text-[8.5px] font-bold transition-all';
+        const isAct = l.id === activeHexLayer;
+        btn.style.borderColor = isAct ? 'var(--accent-primary)' : 'var(--border-subtle)';
+        btn.style.backgroundColor = isAct ? 'var(--panel-bg)' : 'var(--panel-bg-subtle)';
+        btn.style.color = isAct ? 'var(--accent-primary)' : 'var(--text-secondary)';
+        btn.innerText = lang === 'ja' ? l.ja : l.label;
+        btn.addEventListener('click', () => {
+            activeHexLayer = l.id;
+            activeHexFilter = null;
+            renderHexLayerBar();
+            renderHexLegend();
+            renderMap();
+        });
+        bar.appendChild(btn);
+    });
+    const rBtn = document.createElement('button');
+    rBtn.className = 'px-2 py-0.5 rounded border text-[8.5px] font-bold transition-all';
+    rBtn.style.borderColor = showTradeRoutes ? '#f59e0b' : 'var(--border-subtle)';
+    rBtn.style.backgroundColor = 'var(--panel-bg-subtle)';
+    rBtn.style.color = showTradeRoutes ? '#f59e0b' : 'var(--text-muted)';
+    rBtn.innerText = lang === 'ja' ? '航路' : 'ROUTES';
+    rBtn.title = 'Toggle Ancient Trade & Maritime Star-Navigation Routes';
+    rBtn.addEventListener('click', () => {
+        showTradeRoutes = !showTradeRoutes;
+        renderHexLayerBar();
+        renderMap();
+    });
+    bar.appendChild(rBtn);
+}
+
+function renderHexLegend() {
+    const leg = document.getElementById('hex-layer-legend');
+    if (!leg) return;
+    if (mapOperatingMode !== 'HEXAGON' || activeHexLayer === 'vault') {
+        leg.classList.add('hidden');
+        return;
+    }
+    leg.classList.remove('hidden');
+
+    let meta = {};
+    if (activeHexLayer === 'empires') meta = EMPIRE_META;
+    else if (activeHexLayer === 'religions') meta = RELIGION_META;
+    else if (activeHexLayer === 'survival') meta = SURVIVAL_META;
+    else if (activeHexLayer === 'scripture') {
+        meta = {
+            COVERED: { name: 'Scripture in Vault (66 Langs)', color: '#f59e0b' },
+            NONE: { name: 'Not Yet Indexed', color: '#334155' }
+        };
+    }
+
+    const total = Math.max(1, hexWorldGrid.length);
+    const counts = {};
+    hexWorldGrid.forEach(h => {
+        const k = getHexCategoryKey(h);
+        counts[k] = (counts[k] || 0) + 1;
+    });
+
+    leg.innerHTML = `<div class="flex items-center justify-between pb-1 mb-1 border-b" style="border-color:var(--border-subtle);">
+        <span class="font-bold uppercase">${escapeHtml(activeHexLayer)} (${escapeHtml(currentHistoricalEra)})</span>
+        ${activeHexFilter ? `<button id="hex-legend-clear" class="text-[8px] underline" style="color:var(--accent-primary);">ALL</button>` : ''}
+    </div><div class="space-y-1 max-h-48 overflow-y-auto"></div>`;
+    const list = leg.querySelector('div.space-y-1');
+
+    Object.entries(meta)
+        .filter(([k]) => (counts[k] || 0) > 0)
+        .sort((a, b) => (counts[b[0]] || 0) - (counts[a[0]] || 0))
+        .forEach(([k, info]) => {
+            const pct = (((counts[k] || 0) / total) * 100).toFixed(1);
+            const isSel = activeHexFilter === k;
+            const row = document.createElement('button');
+            row.className = 'w-full flex items-center justify-between gap-1.5 px-1.5 py-0.5 rounded border text-left transition-all hover:opacity-90';
+            row.style.borderColor = isSel ? info.color : 'transparent';
+            row.style.backgroundColor = isSel ? 'var(--panel-bg-subtle)' : 'transparent';
+            row.innerHTML = `<span class="flex items-center gap-1.5 truncate"><span class="w-2 h-2 rounded-sm shrink-0" style="background-color:${info.color}"></span><span class="truncate">${escapeHtml(info.name)}</span></span><span class="shrink-0 opacity-75">${pct}%</span>`;
+            row.addEventListener('click', () => {
+                activeHexFilter = (activeHexFilter === k) ? null : k;
+                renderHexLegend();
+                renderMap();
+            });
+            list.appendChild(row);
+        });
+
+    leg.querySelector('#hex-legend-clear')?.addEventListener('click', () => {
+        activeHexFilter = null;
+        renderHexLegend();
+        renderMap();
+    });
+}
+
 export function initMap(canvas, onSelectGeocache) {
     mCanvas = canvas;
     mCtx = mCanvas.getContext('2d', { alpha: false });
@@ -1809,6 +1944,31 @@ export function initMap(canvas, onSelectGeocache) {
     loadSavedCustomDatasets();
     setupDataMatrixModal();
     generateHexWorldGrid();
+    fetch('/assets/hex-world-land.json')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+            if (data && Array.isArray(data.hexes) && data.hexes.length > 500) {
+                hexWorldGrid = data.hexes.map(([lon, lat, iso, region, name]) => ({
+                    lon,
+                    lat,
+                    x: lon * 2.4,
+                    y: -lat * 2.4,
+                    radius: 3.85,
+                    iso,
+                    region,
+                    country: iso,
+                    name,
+                    intensity: 0.55
+                }));
+                recomputeHexIntensities();
+                renderHexLegend();
+                renderMap();
+            }
+        })
+        .catch(() => {});
+
+    renderHexLayerBar();
+    renderHexLegend();
     setupMapInteractions();
     resizeMap();
     bootMapLibre();
@@ -3058,100 +3218,114 @@ function renderHexDataMap() {
         let fillColor = hexBase;
         let strokeColor = hexStroke;
 
-        // Precise Color Grading Translation Across Themes and Custom Presets
-        if (preset === 'crimson') {
-            // Explicit Crimson Heat preset
-            if (cellIntensity >= 0.75) {
-                fillColor = '#e11d48';
-                strokeColor = '#fb7185';
-            } else if (cellIntensity >= 0.52) {
-                fillColor = '#f59e0b';
-                strokeColor = '#fef08a';
-            } else if (cellIntensity >= 0.30) {
-                fillColor = '#0284c7';
-                strokeColor = '#38bdf8';
-            } else {
-                fillColor = '#0f172a';
-                strokeColor = '#1e293b';
-            }
-        } else if (preset === 'mono' || (preset === 'adaptive' && (theme === 'obsidian-mono' || theme === 'dark'))) {
-            // Obsidian Mono: Pure Luminous White -> Silver Light Gray -> Mid Slate Gray -> Charcoal Obsidian Base
-            if (cellIntensity >= 0.75) {
-                fillColor = '#ffffff';
-                strokeColor = '#f8fafc';
-            } else if (cellIntensity >= 0.52) {
-                fillColor = '#cbd5e1';
-                strokeColor = '#e2e8f0';
-            } else if (cellIntensity >= 0.30) {
-                fillColor = '#64748b';
-                strokeColor = '#94a3b8';
-            } else {
-                fillColor = '#18181b';
-                strokeColor = '#27272a';
-            }
-        } else if (preset === 'neon' || (preset === 'adaptive' && theme === 'synth-magenta')) {
-            // Synth Magenta: Hot Neon Pink/Fuchsia -> Electric Neon Magenta -> Neon Cyan -> Deep Synth Void
-            if (cellIntensity >= 0.75) {
-                fillColor = '#ff007f';
-                strokeColor = '#ff77c6';
-            } else if (cellIntensity >= 0.52) {
-                fillColor = '#d946ef';
-                strokeColor = '#f472b6';
-            } else if (cellIntensity >= 0.30) {
-                fillColor = '#00f0ff';
-                strokeColor = '#67e8f9';
-            } else {
-                fillColor = '#121424';
-                strokeColor = '#1e2238';
-            }
-        } else if (preset === 'emerald') {
-            // Emerald Oasis: Vibrant Emerald -> Leaf Lime -> Deep Teal -> Dark Pine
-            if (cellIntensity >= 0.75) {
-                fillColor = '#059669';
-                strokeColor = '#34d399';
-            } else if (cellIntensity >= 0.52) {
-                fillColor = '#84cc16';
-                strokeColor = '#a3e635';
-            } else if (cellIntensity >= 0.30) {
-                fillColor = '#0d9488';
-                strokeColor = '#2dd4bf';
-            } else {
-                fillColor = '#06281e';
-                strokeColor = '#0f3d2f';
-            }
-        } else if (isLight || (preset === 'adaptive' && theme === 'technical-paper')) {
-            // Technical Paper: Dark Crimson Red -> Warm Sepia Ochre -> Steel Drafting Blue -> Crisp Vellum Linen
-            if (cellIntensity >= 0.75) {
-                fillColor = '#991b1b';
-                strokeColor = '#b91c1c';
-            } else if (cellIntensity >= 0.52) {
-                fillColor = '#b45309';
-                strokeColor = '#d97706';
-            } else if (cellIntensity >= 0.30) {
-                fillColor = '#0369a1';
-                strokeColor = '#0284c7';
-            } else {
-                fillColor = '#e2e8f0';
-                strokeColor = '#cbd5e1';
-            }
+        if (activeHexLayer !== 'vault') {
+            const catKey = getHexCategoryKey(hex);
+            let metaColor = hexBase;
+            if (activeHexLayer === 'empires') metaColor = EMPIRE_META[catKey]?.color || hexBase;
+            else if (activeHexLayer === 'religions') metaColor = RELIGION_META[catKey]?.color || hexBase;
+            else if (activeHexLayer === 'survival') metaColor = SURVIVAL_META[catKey]?.color || hexBase;
+            else if (activeHexLayer === 'scripture') metaColor = catKey === 'COVERED' ? '#f59e0b' : (isLight ? '#cbd5e1' : '#1e293b');
+            fillColor = metaColor;
+            strokeColor = isLight ? 'rgba(15,23,42,0.18)' : 'rgba(255,255,255,0.16)';
+            mCtx.globalAlpha = (activeHexFilter && catKey !== activeHexFilter) ? 0.16 : 0.92;
         } else {
-            // Midnight Gold & default adaptive: Crimson Red -> Amber Gold -> Cyan Blue -> Deep Midnight Slate
-            if (cellIntensity >= 0.75) {
-                fillColor = '#e11d48';
-                strokeColor = '#fb7185';
-            } else if (cellIntensity >= 0.52) {
-                fillColor = '#f59e0b';
-                strokeColor = '#fef08a';
-            } else if (cellIntensity >= 0.30) {
-                fillColor = '#0284c7';
-                strokeColor = '#38bdf8';
+            mCtx.globalAlpha = 1.0;
+            // Precise Color Grading Translation Across Themes and Custom Presets
+            if (preset === 'crimson') {
+                // Explicit Crimson Heat preset
+                if (cellIntensity >= 0.75) {
+                    fillColor = '#e11d48';
+                    strokeColor = '#fb7185';
+                } else if (cellIntensity >= 0.52) {
+                    fillColor = '#f59e0b';
+                    strokeColor = '#fef08a';
+                } else if (cellIntensity >= 0.30) {
+                    fillColor = '#0284c7';
+                    strokeColor = '#38bdf8';
+                } else {
+                    fillColor = '#0f172a';
+                    strokeColor = '#1e293b';
+                }
+            } else if (preset === 'mono' || (preset === 'adaptive' && (theme === 'obsidian-mono' || theme === 'dark'))) {
+                // Obsidian Mono: Pure Luminous White -> Silver Light Gray -> Mid Slate Gray -> Charcoal Obsidian Base
+                if (cellIntensity >= 0.75) {
+                    fillColor = '#ffffff';
+                    strokeColor = '#f8fafc';
+                } else if (cellIntensity >= 0.52) {
+                    fillColor = '#cbd5e1';
+                    strokeColor = '#e2e8f0';
+                } else if (cellIntensity >= 0.30) {
+                    fillColor = '#64748b';
+                    strokeColor = '#94a3b8';
+                } else {
+                    fillColor = '#18181b';
+                    strokeColor = '#27272a';
+                }
+            } else if (preset === 'neon' || (preset === 'adaptive' && theme === 'synth-magenta')) {
+                // Synth Magenta: Hot Neon Pink/Fuchsia -> Electric Neon Magenta -> Neon Cyan -> Deep Synth Void
+                if (cellIntensity >= 0.75) {
+                    fillColor = '#ff007f';
+                    strokeColor = '#ff77c6';
+                } else if (cellIntensity >= 0.52) {
+                    fillColor = '#d946ef';
+                    strokeColor = '#f472b6';
+                } else if (cellIntensity >= 0.30) {
+                    fillColor = '#00f0ff';
+                    strokeColor = '#67e8f9';
+                } else {
+                    fillColor = '#121424';
+                    strokeColor = '#1e2238';
+                }
+            } else if (preset === 'emerald') {
+                // Emerald Oasis: Vibrant Emerald -> Leaf Lime -> Deep Teal -> Dark Pine
+                if (cellIntensity >= 0.75) {
+                    fillColor = '#059669';
+                    strokeColor = '#34d399';
+                } else if (cellIntensity >= 0.52) {
+                    fillColor = '#84cc16';
+                    strokeColor = '#a3e635';
+                } else if (cellIntensity >= 0.30) {
+                    fillColor = '#0d9488';
+                    strokeColor = '#2dd4bf';
+                } else {
+                    fillColor = '#06281e';
+                    strokeColor = '#0f3d2f';
+                }
+            } else if (isLight || (preset === 'adaptive' && theme === 'technical-paper')) {
+                // Technical Paper: Dark Crimson Red -> Warm Sepia Ochre -> Steel Drafting Blue -> Crisp Vellum Linen
+                if (cellIntensity >= 0.75) {
+                    fillColor = '#991b1b';
+                    strokeColor = '#b91c1c';
+                } else if (cellIntensity >= 0.52) {
+                    fillColor = '#b45309';
+                    strokeColor = '#d97706';
+                } else if (cellIntensity >= 0.30) {
+                    fillColor = '#0369a1';
+                    strokeColor = '#0284c7';
+                } else {
+                    fillColor = '#e2e8f0';
+                    strokeColor = '#cbd5e1';
+                }
             } else {
-                fillColor = '#0f172a';
-                strokeColor = '#1e293b';
+                // Midnight Gold & default adaptive: Crimson Red -> Amber Gold -> Cyan Blue -> Deep Midnight Slate
+                if (cellIntensity >= 0.75) {
+                    fillColor = '#e11d48';
+                    strokeColor = '#fb7185';
+                } else if (cellIntensity >= 0.52) {
+                    fillColor = '#f59e0b';
+                    strokeColor = '#fef08a';
+                } else if (cellIntensity >= 0.30) {
+                    fillColor = '#0284c7';
+                    strokeColor = '#38bdf8';
+                } else {
+                    fillColor = '#0f172a';
+                    strokeColor = '#1e293b';
+                }
             }
         }
 
         if (isSelected) {
+            mCtx.globalAlpha = 1.0;
             if (theme === 'obsidian-mono' || theme === 'dark') {
                 fillColor = '#ffffff';
                 strokeColor = '#94a3b8';
@@ -3166,12 +3340,40 @@ function renderHexDataMap() {
                 strokeColor = '#ffffff';
             }
         } else if (isHovered) {
+            mCtx.globalAlpha = 1.0;
             strokeColor = '#ffffff';
         }
 
         // Volumetric 3D extrusion height based on demographic intensity
-        const extrusionHeight = cellIntensity >= 0.52 ? (cellIntensity - 0.45) * 4.2 : 0;
+        const extrusionHeight = (activeHexLayer === 'vault' && cellIntensity >= 0.52) ? (cellIntensity - 0.45) * 4.2 : 0;
         drawHexagon(mCtx, hex.x, hex.y, hex.radius, fillColor, strokeColor, extrusionHeight);
+    }
+    mCtx.globalAlpha = 1.0;
+
+    // 2b. Ancient Trade & Maritime Star-Navigation Routes
+    if (showTradeRoutes && Array.isArray(TRADE_ROUTES)) {
+        mCtx.save();
+        mCtx.setLineDash([4 / Math.sqrt(mapZoom), 3 / Math.sqrt(mapZoom)]);
+        mCtx.lineWidth = 1.35 / Math.sqrt(mapZoom);
+        for (const route of TRADE_ROUTES) {
+            if (!route.pts || route.pts.length < 2) continue;
+            mCtx.strokeStyle = route.color || '#f59e0b';
+            mCtx.globalAlpha = 0.72;
+            mCtx.beginPath();
+            route.pts.forEach(([lon, lat], idx) => {
+                const px = lon * scaleX;
+                const py = -lat * scaleY;
+                if (idx === 0) mCtx.moveTo(px, py);
+                else mCtx.lineTo(px, py);
+            });
+            mCtx.stroke();
+            const mid = route.pts[Math.floor(route.pts.length / 2)];
+            mCtx.globalAlpha = 0.85;
+            mCtx.fillStyle = route.color || '#f59e0b';
+            mCtx.font = `bold ${Math.max(6, 7.5 / Math.sqrt(mapZoom))}px monospace`;
+            mCtx.fillText(route.name, mid[0] * scaleX + 4, -mid[1] * scaleY - 4);
+        }
+        mCtx.restore();
     }
 
     // 3. Country Beacons & Regional Nodes
@@ -3590,10 +3792,26 @@ function setupMapInteractions() {
                 }
             }
 
-            if (clickedHex && clickedHex.country) {
-                selectCountry(clickedHex.country);
-            } else if (clickedHex && clickedHex.region) {
-                selectDataMapRegion(clickedHex.region);
+            if (clickedHex) {
+                const info = describeHexLayer(clickedHex);
+                if (activeHexLayer === 'vault' && clickedHex.country && COUNTRY_DATA[clickedHex.country]) {
+                    selectCountry(clickedHex.country);
+                } else if (onSelectGeocacheCallback) {
+                    const countryName = clickedHex.name || info.iso || clickedHex.region;
+                    onSelectGeocacheCallback({
+                        id: `HEX-${info.iso || clickedHex.region}-${currentHistoricalEra}`,
+                        name: `${countryName} (${info.iso}) — ${currentHistoricalEra}`,
+                        tags: ['GEO_HISTORY', activeHexLayer.toUpperCase(), currentHistoricalEra, clickedHex.region],
+                        chapters: [
+                            `Territory: ${countryName} (${info.iso}) at ${clickedHex.lat.toFixed(1)}° Lat, ${clickedHex.lon.toFixed(1)}° Lon [Region: ${clickedHex.region}].`,
+                            `Political / Colonial Control (${currentHistoricalEra}): ${info.emp}. Dominant Religious / Philosophical Tradition (${currentHistoricalEra}): ${info.rel}.`,
+                            `Survival Biome & Hazard Profile: ${info.surv}. Scripture Vault Coverage: ${info.scr ? `${info.scr.label} (ISO 639-3: ${info.scr.code})` : 'Not yet indexed for this territory'}.`
+                        ],
+                        connections: ['NEXUS-0']
+                    });
+                } else if (clickedHex.region) {
+                    selectDataMapRegion(clickedHex.region);
+                }
             } else {
                 selectedCountry = null;
                 selectedMapRegion = null;
@@ -3679,6 +3897,19 @@ function setupMapInteractions() {
                     if (foundHex !== hoveredHex || foundCountry !== hoveredCountry) {
                         hoveredHex = foundHex;
                         hoveredCountry = foundCountry;
+                        const coordsEl = document.getElementById('map-cursor-coords');
+                        if (coordsEl) {
+                            if (foundHex) {
+                                const info = describeHexLayer(foundHex);
+                                coordsEl.innerText = `${foundHex.name || info.iso} (${info.iso}) · ${info.activeText}`;
+                            } else {
+                                const lon = mx / scaleX;
+                                const lat = -my / scaleY;
+                                if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
+                                    coordsEl.innerText = `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? 'E' : 'W'}`;
+                                }
+                            }
+                        }
                         renderMap();
                     }
                 } else {

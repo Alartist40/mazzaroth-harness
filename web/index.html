@@ -899,32 +899,38 @@
                              style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-muted);">
                             <span>0.00° N, 0.00° E</span>
                         </div>
+                        <!-- Hex Layer Switcher & Trade Routes Toggle -->
+                        <div id="hex-layer-bar" class="pointer-events-auto flex flex-wrap items-center gap-1 mt-0.5"></div>
                     </div>
+
+                    <!-- Interactive Hex Filter Legend (Top-Right) -->
+                    <div id="hex-layer-legend" class="hidden absolute top-4 right-4 z-20 w-56 rounded-xl border p-2.5 font-mono text-[9px] shadow-xl backdrop-blur-md"
+                         style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);"></div>
 
                     <div id="maplibre-status" class="hidden absolute top-4 right-4 z-20 pointer-events-none font-mono text-[10px] px-3 py-1.5 rounded-lg border shadow-sm"
                          style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-secondary);"></div>
 
                     <!-- Historical Timeline Era Slider (Active in Hexagon Mode) -->
-                    <div id="map-timeline-dock" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-4 py-2 rounded-2xl border shadow-2xl font-mono text-[10px] backdrop-blur-xl"
+                    <div id="map-timeline-dock" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3.5 py-2 rounded-2xl border shadow-2xl font-mono text-[10px] backdrop-blur-xl"
                          style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);">
-                        <span class="text-[8px] font-bold tracking-widest uppercase" style="color: var(--text-muted);">HISTORICAL EPOCH:</span>
-                        <div class="flex items-center gap-1.5" id="timeline-era-buttons">
-                            <button data-era="100" class="timeline-era-btn px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all opacity-70 hover:opacity-100"
-                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
-                                100 AD
-                            </button>
-                            <button data-era="500" class="timeline-era-btn px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all opacity-70 hover:opacity-100"
-                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
-                                500 AD
-                            </button>
-                            <button data-era="1500" class="timeline-era-btn px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all opacity-70 hover:opacity-100"
-                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
-                                1500 AD
-                            </button>
-                            <button data-era="MODERN" class="timeline-era-btn active-era px-2.5 py-1 rounded-lg border text-[9px] font-bold transition-all"
-                                    style="background-color: var(--contrast-ink); border-color: var(--accent-primary); color: var(--contrast-paper);">
-                                MODERN
-                            </button>
+                        <span class="text-[8px] font-bold tracking-widest uppercase" style="color: var(--text-muted);">EPOCH:</span>
+                        <div class="flex flex-wrap items-center gap-1" id="timeline-era-buttons">
+                            <button data-era="100" class="timeline-era-btn px-2 py-1 rounded-lg border text-[9px] font-bold transition-all opacity-70 hover:opacity-100"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">100 AD</button>
+                            <button data-era="500" class="timeline-era-btn px-2 py-1 rounded-lg border text-[9px] font-bold transition-all opacity-70 hover:opacity-100"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">500 AD</button>
+                            <button data-era="1500" class="timeline-era-btn px-2 py-1 rounded-lg border text-[9px] font-bold transition-all opacity-70 hover:opacity-100"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">1500 AD</button>
+                            <button data-era="1700" class="timeline-era-btn px-2 py-1 rounded-lg border text-[9px] font-bold transition-all opacity-70 hover:opacity-100"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">1700</button>
+                            <button data-era="1815" class="timeline-era-btn px-2 py-1 rounded-lg border text-[9px] font-bold transition-all opacity-70 hover:opacity-100"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">1815</button>
+                            <button data-era="1914" class="timeline-era-btn px-2 py-1 rounded-lg border text-[9px] font-bold transition-all opacity-70 hover:opacity-100"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">1914</button>
+                            <button data-era="1945" class="timeline-era-btn px-2 py-1 rounded-lg border text-[9px] font-bold transition-all opacity-70 hover:opacity-100"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">1945</button>
+                            <button data-era="MODERN" class="timeline-era-btn active-era px-2 py-1 rounded-lg border text-[9px] font-bold transition-all"
+                                    style="background-color: var(--contrast-ink); border-color: var(--accent-primary); color: var(--contrast-paper);">MODERN</button>
                         </div>
                     </div>
 

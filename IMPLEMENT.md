@@ -176,3 +176,11 @@
   - Removed superseded single-file `armandoh-video-lectures` and ran `./target/release/mazzaroth ingest content/armandoh`: ingested 40 `armandoh-*` documents and 5,576 searchable FTS5 chunks.
   - Verified with `sqlite3` (`armandoh_docs=40`, `armandoh_chunks=5576`, FTS5 `fascial` hits=19, `PRAGMA integrity_check=ok`) and `./target/release/mazzaroth doctor` (63 docs, 6,825 total chunks, integrity OK).
 
+## [2026-11-18] Hex Data-Map Overhaul: Natural Earth Grid, Historical Empires, Religions & Survival Layers
+- **Accurate Land Hex Grid (`tools/gen-hex-world.py`, `web/assets/hex-world-land.json`)**:
+  - Baked 1,780 accurate Natural Earth 110m land hexes `[lon, lat, iso, region, name]` into `web/assets/hex-world-land.json` (59 KB), replacing inaccurate hand-coded continent polygons.
+- **Geo-Historical & Cross-Module Layers (`web/js/hex_layers.js`, `web/js/sections.js`, `web/index.html`)**:
+  - Added 5 switchable hex layers (`EMPIRES`, `RELIGIONS`, `SCRIPTURE`, `SURVIVAL`, `VAULT`) plus toggleable `ROUTES` (Silk Road, Maritime Spice Route, Manila–Acapulco Galleon, Trans-Saharan Gold & Salt, Polynesian & Polaris Nav).
+  - Expanded `#timeline-era-buttons` to 8 historical epochs (`100`, `500`, `1500`, `1700`, `1815`, `1914`, `1945`, `MODERN`) tracking colonial/imperial territories and religious spread across eras.
+  - Added interactive percentage filter legend (`#hex-layer-legend`) and live hover/click Geo-Historical Dossier inspection into Deep Reader.
+
