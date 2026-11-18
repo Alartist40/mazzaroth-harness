@@ -2,6 +2,7 @@
 import { askStream, warmModel, getStatus, getMaps, startMapFetch, getMapFetchStatus, deleteMapRegion, getSkyProjection, getModels } from './api.js';
 import { librarianOffice, officeAudio, OFFICE_WORKERS, OFFICE_ROOMS, PLACEABLE_PROPS } from './office.js';
 import { PixelStudioModal } from './sprite_studio.js';
+import { I18N, getActiveLang, setActiveLang } from './i18n.js';
 
 
 /* ========================================================================= */
@@ -3753,9 +3754,18 @@ function resolveMentionWorker(rawText) {
     return { workerId: found.id, question: rest };
 }
 
+function getLocalizedWorker(worker) {
+    const lang = getActiveLang();
+    const loc = I18N[lang]?.workers?.[worker.id];
+    return loc ? { ...worker, ...loc } : worker;
+}
+
 function syncWorkerInspectorUI(worker) {
     if (!worker) return;
     activeOfficeWorkerId = worker.id;
+    const lang = getActiveLang();
+    const t = I18N[lang];
+    const lw = getLocalizedWorker(worker);
 
     const nameEl = document.getElementById('inspector-name');
     const roleEl = document.getElementById('inspector-role');
@@ -3766,16 +3776,16 @@ function syncWorkerInspectorUI(worker) {
     const inputEl = document.getElementById('librarian-input');
     const promptsEl = document.getElementById('inspector-prompts');
 
-    if (nameEl) nameEl.innerText = worker.name;
-    if (roleEl) roleEl.innerText = worker.role;
-    if (specEl) specEl.innerText = worker.specialty;
+    if (nameEl) nameEl.innerText = lw.name;
+    if (roleEl) roleEl.innerText = lw.role;
+    if (specEl) specEl.innerText = lw.specialty;
     if (actEl) actEl.innerText = worker.lastAction || 'Ready at desk';
     if (dotEl) dotEl.style.backgroundColor = worker.shirt;
     if (tagEl) {
-        tagEl.innerText = `@${worker.shortName}`;
+        tagEl.innerText = `@${lw.shortName}`;
         tagEl.style.color = worker.shirt;
     }
-    if (inputEl) inputEl.placeholder = `Ask ${worker.name} about the local vault...`;
+    if (inputEl) inputEl.placeholder = t.askPlaceholder(lw.name);
 
     // Update roster pill highlights
     document.querySelectorAll('.office-roster-pill').forEach(btn => {
@@ -3785,9 +3795,9 @@ function syncWorkerInspectorUI(worker) {
         btn.style.color = isMatch ? 'var(--text-main)' : 'var(--text-muted)';
     });
 
-    if (promptsEl && Array.isArray(worker.prompts)) {
+    if (promptsEl && Array.isArray(lw.prompts)) {
         promptsEl.innerHTML = '';
-        worker.prompts.forEach(pText => {
+        lw.prompts.forEach(pText => {
             const btn = document.createElement('button');
             btn.className = 'text-left px-2 py-1 rounded border text-[9px] truncate hover:opacity-80 transition-opacity';
             btn.style.backgroundColor = 'var(--panel-bg-subtle)';
@@ -3801,6 +3811,57 @@ function syncWorkerInspectorUI(worker) {
             promptsEl.appendChild(btn);
         });
     }
+}
+
+function applyLanguageUI() {
+    const lang = getActiveLang();
+    const t = I18N[lang];
+
+    const langBtn = document.getElementById('btn-lang-toggle');
+    if (langBtn) langBtn.innerText = lang === 'ja' ? '日本語 / EN' : 'EN / 日本語';
+
+    // Nav deck labels
+    document.querySelectorAll('.nav-deck-item').forEach(item => {
+        const view = item.getAttribute('data-view');
+        const label = t.nav[view];
+        const span = item.querySelector('span.font-bold');
+        if (label && span) span.innerText = label;
+    });
+
+    const titleEl = document.querySelector('#view-librarian h3');
+    if (titleEl) titleEl.innerText = t.officeTitle;
+    const subEl = document.getElementById('office-pipeline-status');
+    if (subEl) subEl.innerText = t.officeSubtitle;
+
+    const studioBtn = document.getElementById('btn-open-studio');
+    if (studioBtn) studioBtn.innerText = t.studioBtn;
+    const soundBtn = document.getElementById('btn-office-sound');
+    if (soundBtn) soundBtn.innerText = officeAudio.enabled ? t.soundOn : t.soundOff;
+    const toggleBtn = document.getElementById('btn-toggle-office');
+    const stageEl = document.getElementById('librarian-office-stage');
+    if (toggleBtn && stageEl) {
+        toggleBtn.innerText = stageEl.classList.contains('hidden') ? t.showOffice : t.hideOffice;
+    }
+    const sendBtn = document.getElementById('btn-librarian-send');
+    if (sendBtn && !activeAskController) sendBtn.innerText = t.queryBtn;
+
+    // Update room tabs & roster pills
+    document.querySelectorAll('.office-room-tab').forEach(btn => {
+        const rid = btn.getAttribute('data-room');
+        if (t.rooms[rid]) btn.innerText = t.rooms[rid].toUpperCase();
+    });
+    document.querySelectorAll('.office-roster-pill').forEach(btn => {
+        const wid = btn.getAttribute('data-worker');
+        const w = OFFICE_WORKERS.find(x => x.id === wid);
+        if (w) {
+            const lw = getLocalizedWorker(w);
+            const txtSpan = btn.querySelector('span:last-child');
+            if (txtSpan) txtSpan.innerText = lw.shortName;
+        }
+    });
+
+    syncWorkerInspectorUI(librarianOffice.getSelectedWorker());
+    renderOfficeMiniMap();
 }
 
 function renderMarkdownSafe(raw) {
@@ -4000,6 +4061,16 @@ export function initLibrarian() {
         });
     }
     syncWorkerInspectorUI(librarianOffice.getSelectedWorker());
+
+    const langToggleBtn = document.getElementById('btn-lang-toggle');
+    if (langToggleBtn) {
+        langToggleBtn.addEventListener('click', () => {
+            const next = getActiveLang() === 'ja' ? 'en' : 'ja';
+            setActiveLang(next);
+            applyLanguageUI();
+        });
+    }
+    applyLanguageUI();
 
     if (toggleOfficeBtn && officeStage) {
         toggleOfficeBtn.addEventListener('click', () => {

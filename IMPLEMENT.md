@@ -72,6 +72,15 @@
   - Added `POST /api/warm` keep-alive pre-warming, dynamic SLM `num_ctx` + top-4 concise passage budgeting, `STOP` abort button, `@mention` routing, per-specialist conversation history, offline WebAudio ambience (`OfficeAudio`), and 16×24 Pixel & Environment Art Studio with `.json` Art Pack export/import.
   - Added Paraclea-style Side-by-Side Source Compare modal (`openCompareSourcesModal`), XSS-safe Markdown & code-block renderer (`renderMarkdownSafe`), live 5-room Mini-Map floorplan (`renderOfficeMiniMap`), and streaming retrieval preview shimmer.
   - Switched default Ollama SLM to `lfm3:1.7b` (`crates/cli/src/main.rs`, `crates/core/src/config.rs`), added `"think": false` to `POST /api/ask` for instant streaming on reasoning SLMs, and prioritized `LFM3` / `SPARK4B` in the UI model toggle (`web/js/sections.js`).
+
+## [2026-11-18] Phase 1: Bilingual EN / 日本語 Foundation
+- **Japanese Trigram FTS5 (`crates/core/src/db.rs`)**:
+  - Added `chunks_fts_ja` (`tokenize='trigram'`) with `chunks_ai_ja` / `chunks_ad_ja` triggers and startup backfill for existing databases, plus `search_by_categories_and_lang` with 1–2 char CJK `LIKE` fallback.
+- **Bilingual Grounded Ask (`crates/server/src/routes/ask.rs`)**:
+  - Added `lang` to `AskRequest` prioritizing `language='ja'` hits with cross-lingual fallback and Japanese output instructions.
+- **Curated Japanese Corpus (`content/ja/`) & UI i18n (`web/js/i18n.js`, `web/index.html`, `web/js/sections.js`, `web/js/api.js`)**:
+  - Authored and ingested `disaster-survival-ja.json`, `astronomy-ja.json`, and `medical-ja.json` (`total_docs=66`).
+  - Added `EN / 日本語` toggle in header translating nav tabs, 6 office specialists, 5 rooms, and chat prompts live.
   - Added visual drilldown: `Theme (Astronomy, Survival, Medical, Scripture, Cognitive) > Language > Document/Book > Chapter > Passage`.
   - Added interactive breadcrumbs (`#reader-breadcrumbs`) with direct jump buttons back to any level in the knowledge tree.
 - **Sky Deck UI Canvas & Controls (`web/js/sections.js`, `web/index.html`)**:

@@ -136,6 +136,13 @@ impl LibrarianDb {
                 tokenize='porter unicode61'
             );
 
+            CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts_ja USING fts5(
+                text,
+                title_path,
+                doc_title,
+                tokenize='trigram'
+            );
+
             CREATE TABLE IF NOT EXISTS notes (
                 id TEXT PRIMARY KEY,
                 title TEXT NOT NULL,
@@ -191,8 +198,33 @@ impl LibrarianDb {
             CREATE TRIGGER IF NOT EXISTS chunks_ad AFTER DELETE ON chunks BEGIN
                 DELETE FROM chunks_fts WHERE rowid = old.id;
             END;
+
+            CREATE TRIGGER IF NOT EXISTS chunks_ai_ja AFTER INSERT ON chunks BEGIN
+                INSERT INTO chunks_fts_ja(rowid, text, title_path, doc_title)
+                VALUES (new.id, new.text, new.title_path, (SELECT title FROM documents WHERE id = new.doc_id));
+            END;
+
+            CREATE TRIGGER IF NOT EXISTS chunks_ad_ja AFTER DELETE ON chunks BEGIN
+                DELETE FROM chunks_fts_ja WHERE rowid = old.id;
+            END;
             "#,
         )?;
+
+        // Backfill Japanese trigram index once for pre-existing databases
+        let chunk_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM chunks", [], |r| r.get(0))
+            .unwrap_or(0);
+        let ja_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM chunks_fts_ja", [], |r| r.get(0))
+            .unwrap_or(0);
+        if chunk_count > 0 && ja_count == 0 {
+            let _ = conn.execute(
+                "INSERT INTO chunks_fts_ja(rowid, text, title_path, doc_title)
+                 SELECT c.id, c.text, c.title_path, d.title
+                 FROM chunks c JOIN documents d ON c.doc_id = d.id",
+                [],
+            );
+        }
 
         Ok(())
     }
@@ -368,8 +400,17 @@ impl LibrarianDb {
         Ok(count)
     }
 
+    fn contains_cjk(text: &str) -> bool {
+        text.chars().any(|c| {
+            matches!(
+                c,
+                '\u{3040}'..='\u{30ff}' | '\u{4e00}'..='\u{9fff}' | '\u{ff66}'..='\u{ff9f}'
+            )
+        })
+    }
+
     pub fn search(&self, query: &str, limit: usize) -> Result<Vec<SearchHit>> {
-        self.search_by_categories(query, &[], limit)
+        self.search_by_categories_and_lang(query, &[], None, limit)
     }
 
     /// Searches chunks via FTS5, optionally restricting to specific document categories.
@@ -379,7 +420,54 @@ impl LibrarianDb {
         categories: &[&str],
         limit: usize,
     ) -> Result<Vec<SearchHit>> {
+        self.search_by_categories_and_lang(query, categories, None, limit)
+    }
+
+    /// Searches chunks via FTS5 (auto-routing CJK queries to the trigram index),
+    /// optionally filtering by document categories and language.
+    pub fn search_by_categories_and_lang(
+        &self,
+        query: &str,
+        categories: &[&str],
+        lang: Option<&str>,
+        limit: usize,
+    ) -> Result<Vec<SearchHit>> {
         let conn = self.conn.lock().unwrap();
+
+        if Self::contains_cjk(query) {
+            // Split on whitespace & common Japanese particles/punctuation for trigram matching
+            let tokens: Vec<String> = query
+                .split(|c: char| {
+                    c.is_whitespace()
+                        || matches!(
+                            c,
+                            '、' | '。' | '？' | '！' | '「' | '」' | '・' | '?' | '!' | ',' | '.' | 'は' | 'が' | 'を' | 'に' | 'の' | 'で' | 'と' | 'も' | 'か'
+                        )
+                })
+                .map(|s| s.trim().replace('"', ""))
+                .filter(|s| !s.is_empty())
+                .collect();
+
+            let tri_terms: Vec<String> = tokens
+                .iter()
+                .filter(|t| t.chars().count() >= 3)
+                .map(|t| format!("\"{}\"", t))
+                .collect();
+
+            if !tri_terms.is_empty() {
+                let fts_q = tri_terms.join(" OR ");
+                let hits = Self::execute_fts_query(&conn, "chunks_fts_ja", &fts_q, categories, lang, limit)?;
+                if !hits.is_empty() {
+                    return Ok(hits);
+                }
+            }
+
+            // Fallback for 1-2 char CJK terms (trigram requires >= 3 chars)
+            if let Some(tok) = tokens.iter().max_by_key(|t| t.chars().count()) {
+                return Self::execute_like_query(&conn, tok, categories, lang, limit);
+            }
+            return Ok(Vec::new());
+        }
 
         let terms: Vec<String> = query
             .split_whitespace()
@@ -403,25 +491,27 @@ impl LibrarianDb {
             if fallback_terms.is_empty() {
                 return Ok(Vec::new());
             }
-            return Self::execute_fts_query(&conn, &fallback_terms.join(" OR "), categories, limit);
+            return Self::execute_fts_query(&conn, "chunks_fts", &fallback_terms.join(" OR "), categories, lang, limit);
         }
 
         // Try strict AND query first for highest relevance
         let and_query = terms.join(" AND ");
-        let and_hits = Self::execute_fts_query(&conn, &and_query, categories, limit)?;
+        let and_hits = Self::execute_fts_query(&conn, "chunks_fts", &and_query, categories, lang, limit)?;
         if !and_hits.is_empty() || terms.len() <= 1 {
             return Ok(and_hits);
         }
 
         // Fallback to OR query if AND returns no results
         let or_query = terms.join(" OR ");
-        Self::execute_fts_query(&conn, &or_query, categories, limit)
+        Self::execute_fts_query(&conn, "chunks_fts", &or_query, categories, lang, limit)
     }
 
     fn execute_fts_query(
         conn: &Connection,
+        fts_table: &str,
         fts_query: &str,
         categories: &[&str],
+        lang: Option<&str>,
         limit: usize,
     ) -> Result<Vec<SearchHit>> {
         let mut params_vec: Vec<rusqlite::types::Value> = vec![
@@ -433,13 +523,19 @@ impl LibrarianDb {
         } else {
             let placeholders: Vec<String> = categories
                 .iter()
-                .enumerate()
-                .map(|(idx, cat)| {
+                .map(|cat| {
                     params_vec.push(rusqlite::types::Value::Text((*cat).to_string()));
-                    format!("?{}", idx + 2)
+                    format!("?{}", params_vec.len())
                 })
                 .collect();
             format!("AND d.category IN ({})", placeholders.join(", "))
+        };
+
+        let lang_clause = if let Some(l) = lang {
+            params_vec.push(rusqlite::types::Value::Text(l.to_string()));
+            format!("AND d.language = ?{}", params_vec.len())
+        } else {
+            String::new()
         };
 
         let limit_idx = params_vec.len() + 1;
@@ -450,12 +546,12 @@ impl LibrarianDb {
             SELECT 
                 c.id, c.doc_id, d.title, d.category, d.license, d.retrieved_date,
                 c.section_id, c.title_path, c.text,
-                snippet(chunks_fts, 0, '<b>', '</b>', '...', 24) as snippet,
-                bm25(chunks_fts) as rank
-            FROM chunks_fts
-            JOIN chunks c ON chunks_fts.rowid = c.id
+                snippet({fts_table}, 0, '<b>', '</b>', '...', 24) as snippet,
+                bm25({fts_table}) as rank
+            FROM {fts_table}
+            JOIN chunks c ON {fts_table}.rowid = c.id
             JOIN documents d ON c.doc_id = d.id
-            WHERE chunks_fts MATCH ?1 {cat_clause}
+            WHERE {fts_table} MATCH ?1 {cat_clause} {lang_clause}
             ORDER BY rank
             LIMIT ?{limit_idx}
             "#
@@ -483,6 +579,74 @@ impl LibrarianDb {
             hits.push(r?);
         }
 
+        Ok(hits)
+    }
+
+    fn execute_like_query(
+        conn: &Connection,
+        term: &str,
+        categories: &[&str],
+        lang: Option<&str>,
+        limit: usize,
+    ) -> Result<Vec<SearchHit>> {
+        let mut params_vec: Vec<rusqlite::types::Value> = vec![
+            rusqlite::types::Value::Text(format!("%{}%", term)),
+        ];
+        let cat_clause = if categories.is_empty() {
+            String::new()
+        } else {
+            let placeholders: Vec<String> = categories
+                .iter()
+                .map(|cat| {
+                    params_vec.push(rusqlite::types::Value::Text((*cat).to_string()));
+                    format!("?{}", params_vec.len())
+                })
+                .collect();
+            format!("AND d.category IN ({})", placeholders.join(", "))
+        };
+        let lang_clause = if let Some(l) = lang {
+            params_vec.push(rusqlite::types::Value::Text(l.to_string()));
+            format!("AND d.language = ?{}", params_vec.len())
+        } else {
+            String::new()
+        };
+        let limit_idx = params_vec.len() + 1;
+        params_vec.push(rusqlite::types::Value::Integer(limit as i64));
+
+        let sql = format!(
+            r#"
+            SELECT c.id, c.doc_id, d.title, d.category, d.license, d.retrieved_date,
+                   c.section_id, c.title_path, c.text
+            FROM chunks c
+            JOIN documents d ON c.doc_id = d.id
+            WHERE c.text LIKE ?1 {cat_clause} {lang_clause}
+            LIMIT ?{limit_idx}
+            "#
+        );
+
+        let mut stmt = conn.prepare(&sql)?;
+        let rows = stmt.query_map(rusqlite::params_from_iter(params_vec), |row| {
+            let text: String = row.get(8)?;
+            let snippet: String = text.chars().take(160).collect();
+            Ok(SearchHit {
+                chunk_id: row.get(0)?,
+                doc_id: row.get(1)?,
+                doc_title: row.get(2)?,
+                category: row.get(3)?,
+                license: row.get(4)?,
+                retrieved_date: row.get(5)?,
+                section_id: row.get(6)?,
+                title_path: row.get(7)?,
+                text,
+                snippet,
+                rank: 0.0,
+            })
+        })?;
+
+        let mut hits = Vec::new();
+        for r in rows {
+            hits.push(r?);
+        }
         Ok(hits)
     }
 

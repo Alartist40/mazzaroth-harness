@@ -1,0 +1,48 @@
+{
+  "id": "disaster-survival-ja",
+  "title": "防災・サバイバル技術教範（水質浄化・避難・保温）",
+  "category": "survival",
+  "language": "ja",
+  "provenance": {
+    "source": "FM 21-76 Survival Manual & Public Disaster Preparedness Standards",
+    "publisher": "Mazzaroth Sovereign Archive (Japanese Edition)",
+    "license": "public-domain",
+    "license_url": "https://www.usa.gov/government-works",
+    "retrieved_date": "2026-11-18",
+    "notes": "Curated Japanese survival & disaster field reference covering water purification, shelter, hypothermia prevention, and earthquake/tsunami evacuation."
+  },
+  "structure": [
+    {
+      "id": "ja-surv-ch1",
+      "title": "第1章：飲料水の確保と浄化方法",
+      "sections": [
+        {
+          "id": "ja-surv-s1",
+          "title": "煮沸消毒（最も確実な殺菌法）",
+          "text": "飲料水の浄化において最も確実な方法は煮沸消毒である。濁りがある場合は、清潔な布や砂利・木炭を用いた簡易濾過器で浮遊物を除去した後に煮沸する。\n\n1. 沸騰時間：激しく沸騰した状態を最低1分間維持する（標高2,000m以上の高地では沸点が下がるため3分間沸騰させる）。\n2. 冷却と保存：蓋をした清潔な容器で自然に冷まし、酸素を含ませるために清潔な容器間で数回移し替えると飲みやすくなる。\n3. 注意点：化学物質や重金属による汚染が疑われる工業排水・農業用水は、煮沸や簡易濾過では除去できないため避けること。"
+        },
+        {
+          "id": "ja-surv-s2",
+          "title": "濾過と塩素消毒の併用",
+          "text": "火が使えない場合は、ペットボトルを用いた砂・小石・活性炭（木炭）の多層フィルターで濁りを除き、次亜塩素酸ナトリウム（無香料の家庭用塩素系漂白剤または浄水錠）で消毒する。\n\n- 透明な水1リットルに対し、6%次亜塩素酸ナトリウム溶液を約2滴（濁りがある場合は4滴）加え、よく混ぜて30分間静置する。\n- わずかに塩素臭が感じられれば消毒完了の目安となる。"
+        }
+      ]
+    },
+    {
+      "id": "ja-surv-ch2",
+      "title": "第2章：シェルター・保温・地震避難",
+      "sections": [
+        {
+          "id": "ja-surv-s3",
+          "title": "低体温症の予防とシェルター構築",
+          "text": "サバイバルにおける優先順位（3の法則）は、空気（3分）・体温維持/シェルター（3時間）・水（3日）・食料（3週間）である。\n\n- 地面からの伝導冷却を防ぐため、段ボール、乾いた落ち葉、松葉などを最低10〜15cm敷き詰めて断熱層を作る。\n- 風と雨を遮るため、尾根の上や谷底（鉄砲水や冷気が溜まる場所）を避け、水はけの良い平坦地を選ぶ。"
+        },
+        {
+          "id": "ja-surv-s4",
+          "title": "地震・津波発生時の行動原則",
+          "text": "強い揺れまたは長い揺れを感じた場合：\n1. まず机の下などで頭部と首を保護し、落下物から身を守る。\n2. 揺れが収まったら火元を確認し、靴を履いてガラス片による足の負傷を防ぐ。\n3. 沿岸部では警報を待たずに直ちに高台または津波避難ビルへ避難する（津波は第1波より第2波・第3波が高くなることがある）。"
+        }
+      ]
+    }
+  ]
+}

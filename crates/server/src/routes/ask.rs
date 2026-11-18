@@ -20,6 +20,7 @@ pub struct AskRequest {
     pub history: Option<Vec<ChatMessage>>,
     pub model: Option<String>,
     pub worker: Option<String>,
+    pub lang: Option<String>,
 }
 
 struct WorkerProfile {
@@ -228,19 +229,27 @@ pub async fn handle_ask(
     }
 
     let worker = resolve_worker_profile(req.worker.as_deref());
+    let is_ja = req
+        .lang
+        .as_deref()
+        .is_some_and(|l| l.eq_ignore_ascii_case("ja"));
+    let pref_lang = if is_ja { Some("ja") } else { None };
 
-    // 1. Retrieve top chunks from SQLite FTS5 (scoped to worker's specialty first, fallback to global)
+    // 1. Retrieve top chunks from SQLite FTS5 (scoped to worker's specialty + language first, fallback to global)
     let top_k = state.config.profile.top_k();
     let search_start = std::time::Instant::now();
-    let mut hits = if worker.categories.is_empty() {
-        state.db.search(&q, top_k).unwrap_or_default()
-    } else {
-        state
-            .db
-            .search_by_categories(&q, worker.categories, top_k)
-            .unwrap_or_default()
-    };
+    let mut hits = state
+        .db
+        .search_by_categories_and_lang(&q, worker.categories, pref_lang, top_k)
+        .unwrap_or_default();
     let mut scoped_fallback = false;
+    if hits.is_empty() && pref_lang.is_some() {
+        // Cross-lingual fallback: search all languages in worker's categories
+        hits = state
+            .db
+            .search_by_categories_and_lang(&q, worker.categories, None, top_k)
+            .unwrap_or_default();
+    }
     if hits.is_empty() && !worker.categories.is_empty() {
         hits = state.db.search(&q, top_k).unwrap_or_default();
         scoped_fallback = true;
@@ -435,16 +444,23 @@ pub async fn handle_ask(
             yield Ok(ev);
         }
 
+        let lang_rule = if is_ja {
+            "\n- LANGUAGE: Respond in natural, clear Japanese (日本語). Translate English passages accurately if needed while keeping [1], [2] citations."
+        } else {
+            ""
+        };
+
         let system_prompt = format!(
             "{persona}\n\
 You reside in Mazzaroth, a private offline knowledge vault.\n\n\
 RULES:\n\
 - Be direct, natural, and concise. No AI clichés or filler.\n\
 - Lead with verified facts and cite retrieved passages using [1], [2], etc.\n\
-- Quote passages verbatim; do not invent quotes or facts outside the passages/catalog.\n\
+- Quote passages verbatim; do not invent quotes or facts outside the passages/catalog.{lang_rule}\n\
 - If nothing relevant exists in the vault, say: \"I don't have that in the library.\"\n\n\
 {context}",
             persona = worker.persona,
+            lang_rule = lang_rule,
             context = context_text
         );
 

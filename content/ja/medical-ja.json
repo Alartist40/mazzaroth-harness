@@ -1,0 +1,48 @@
+{
+  "id": "medical-ja",
+  "title": "救急・トリアージ基本プロトコル",
+  "category": "medical",
+  "language": "ja",
+  "provenance": {
+    "source": "Emergency Medical Field Protocols & Clinical Triage Standards",
+    "publisher": "Mazzaroth Sovereign Archive (Japanese Edition)",
+    "license": "public-domain",
+    "license_url": "https://www.usa.gov/government-works",
+    "retrieved_date": "2026-11-18",
+    "notes": "Curated Japanese emergency medical reference covering airway management, hemorrhage control, dehydration/heatstroke, and START triage."
+  },
+  "structure": [
+    {
+      "id": "ja-med-ch1",
+      "title": "第1章：気道確保と止血の基本",
+      "sections": [
+        {
+          "id": "ja-med-s1",
+          "title": "気道確保（頭部後屈あご先挙上法）と回復体位",
+          "text": "意識がない傷病者では舌根沈下による気道閉塞が起こりやすい。\n\n1. 頭部後屈あご先挙上法：片手を額に当てて頭を後ろに傾け、もう一方の手の指先であご先（骨の部分）を持ち上げて気道を開く（頸椎損傷が疑われる場合は下顎挙上法を用いる）。\n2. 回復体位：呼吸はあるが意識がない場合は、嘔吐物による窒息を防ぐため傷病者を横向きに寝かせる。"
+        },
+        {
+          "id": "ja-med-s2",
+          "title": "直接圧迫止血法とショック対応",
+          "text": "大量出血は生命に直結するため最優先で対処する。\n\n- 清潔なガーゼや布を傷口に直接当て、手のひらで体重をかけて強く継続的に圧迫する（直接圧迫止血法）。\n- 血が滲んでも最初のガーゼは剥がさず、上から新しいガーゼを重ねて圧迫を続ける。\n- ショック兆候（顔面蒼白、冷汗、脈拍微弱・頻脈）がある場合は、毛布等で保温し、下肢を約20〜30cm挙上する（頭部・胸部外傷や呼吸困難がある場合を除く）。"
+        }
+      ]
+    },
+    {
+      "id": "ja-med-ch2",
+      "title": "第2章：熱中症・脱水症とSTART式トリアージ",
+      "sections": [
+        {
+          "id": "ja-med-s3",
+          "title": "熱中症と経口補水",
+          "text": "めまい・大量発汗・筋肉痛が見られる場合は涼しい日陰へ移動し、衣服を緩めて首・脇の下・鼠径部（太ももの付け根）を冷却する。\n\n- 意識がはっきりしている場合のみ水分と塩分（経口補水液：水1リットルに食塩3g・砂糖40gが目安）を少量ずつ摂取させる。意識障害や嘔吐がある場合は誤嚥の危険があるため経口摂取させない。"
+        },
+        {
+          "id": "ja-med-s4",
+          "title": "START式トリアージ（災害時優先順位判定）",
+          "text": "多数傷病者発生時の30秒判定基準：\n- 緑（軽処置群）：自力歩行が可能。\n- 赤（最優先治療群）：歩行不能で、呼吸数30回/分以上または9回/分以下、毛細血管再充満時間（CRT）2秒以上、または簡単な指示に従えない。\n- 黄（待機群）：歩行不能だが、呼吸・循環・意識が上記基準内で安定している。\n- 黒（不処置群）：気道確保後も自発呼吸がない。"
+        }
+      ]
+    }
+  ]
+}

@@ -188,4 +188,9 @@ copy-exact definitions below.
   EXPECT: 0 exit code across all targets
   EVIDENCE: 2026-11-17 — `JS OK` across all 4 modules; `cargo test --workspace` all test suites passed; live `POST /api/ask` SSE verified with `qwen2.5:3b-instruct`.
 
+- [x] L11_BILINGUAL_JA: Japanese `trigram` FTS5 (`chunks_fts_ja`), `lang` routing in `/api/ask`, `content/ja/` ingested, and `EN / 日本語` UI toggle
+  CHECK: cargo test --workspace && node --check web/js/i18n.js && python3 -c "import sqlite3; c=sqlite3.connect('data/mazzaroth.db'); assert c.execute(\"SELECT COUNT(*) FROM chunks_fts_ja WHERE chunks_fts_ja MATCH '\\\"北極星\\\"'\").fetchone()[0] >= 1"
+  EXPECT: 0 exit code
+  EVIDENCE: 2026-11-18 — 23/23 cargo tests passed; `content/ja/` ingested (`total_docs=66`, `ja=3`); trigram hits: `北極星=3`, `煮沸消毒=1`.
+
 

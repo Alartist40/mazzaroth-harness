@@ -1,0 +1,43 @@
+{
+  "id": "astronomy-ja",
+  "title": "天文航法と星座案内（北極星・主要星座ガイド）",
+  "category": "astronomy",
+  "language": "ja",
+  "provenance": {
+    "source": "US Naval Observatory & Stellarium Sky Culture Archives",
+    "publisher": "Mazzaroth Sovereign Archive (Japanese Edition)",
+    "license": "public-domain",
+    "license_url": "https://www.usa.gov/government-works",
+    "retrieved_date": "2026-11-18",
+    "notes": "Curated Japanese celestial navigation and constellation reference covering Polaris, Ursa Major, Cassiopeia, Orion, and Vega."
+  },
+  "structure": [
+    {
+      "id": "ja-astro-ch1",
+      "title": "第1章：北極星を用いた方位と緯度の測定",
+      "sections": [
+        {
+          "id": "ja-astro-s1",
+          "title": "北斗七星とカシオペヤ座から北極星を探す",
+          "text": "北半球において真北を知る最も確実な方法は、天の北極から約0.7度以内に位置する北極星（ポラリス：こぐま座α星）を見つけることである。\n\n1. 北斗七星（おおぐま座）を使う方法：ひしゃくの先端にある2つの星（メラクとドゥベ）を結ぶ線を、柄と反対側へ約5倍延長すると北極星に到達する。\n2. カシオペヤ座を使う方法：秋など北斗七星が地平線下に沈んでいる時は、W字型の両端の辺を延長して交わる点と中央の星（γ星）を結ぶ線を約5倍伸ばすと北極星が見つかる。\n3. 緯度の概算：地平線から北極星までの高度角（度）は、観測者の北緯とほぼ等しい（緯度 ≈ 北極星の高度 ± 0.7°）。"
+        }
+      ]
+    },
+    {
+      "id": "ja-astro-ch2",
+      "title": "第2章：主要な航法星座（オリオン座・夏の大三角）",
+      "sections": [
+        {
+          "id": "ja-astro-s2",
+          "title": "オリオン座（冬の基準星座）",
+          "text": "オリオン座は天の赤道上に位置するため、南北両半球から観測でき、東西の方位把握に優れている。\n\n- 三つ星（ミンタカ、アルニラム、アルニタク）のうち、西端のミンタカはほぼ真東から昇り、ほぼ真西に沈む。\n- 左上の赤い1等星ベテルギウス、右下の青い1等星リゲルは、いずれも夜間航法の重要な基準星である。"
+        },
+        {
+          "id": "ja-astro-s3",
+          "title": "夏の大三角とベガ（こと座）",
+          "text": "夏から秋にかけて天頂付近に輝く夏の大三角は、こと座のベガ（0等星）、わし座のアルタイル（1等星）、はくちょう座のデネブ（1等星）から成る。約1万2000年前（および約1万4000年後）には地球の歳差運動によりベガが北極星となる。"
+        }
+      ]
+    }
+  ]
+}

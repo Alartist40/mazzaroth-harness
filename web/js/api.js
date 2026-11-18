@@ -1,4 +1,5 @@
 // MAZZAROTH Sovereign API Contract Layer (PLAN.md §D)
+import { getActiveLang } from './i18n.js';
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 20000) {
     const signal = options.signal || (typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(timeoutMs) : undefined);
@@ -77,7 +78,7 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
     };
 
     try {
-        const payload = { question: question.trim() };
+        const payload = { question: question.trim(), lang: getActiveLang() };
         if (model) payload.model = model;
         if (history && history.length > 0) payload.history = history;
         if (worker) payload.worker = worker;
