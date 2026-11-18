@@ -38,12 +38,22 @@ export async function getModels() {
     return await res.json();
 }
 
+export function getCustomLlmEndpoint() {
+    return localStorage.getItem('mazzaroth_llm_endpoint') || null;
+}
+
+export async function getPacks() {
+    const res = await fetchWithTimeout('/api/packs');
+    if (!res.ok) throw new Error(`packs failed: ${res.status}`);
+    return await res.json();
+}
+
 export async function warmModel(model = null) {
     try {
         const res = await fetchWithTimeout('/api/warm', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model })
+            body: JSON.stringify({ model, llm_endpoint: getCustomLlmEndpoint() })
         }, 15000);
         if (!res.ok) return null;
         return await res.json();
@@ -79,6 +89,8 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
 
     try {
         const payload = { question: question.trim(), lang: getActiveLang() };
+        const customHost = getCustomLlmEndpoint();
+        if (customHost) payload.llm_endpoint = customHost;
         if (model) payload.model = model;
         if (history && history.length > 0) payload.history = history;
         if (worker) payload.worker = worker;

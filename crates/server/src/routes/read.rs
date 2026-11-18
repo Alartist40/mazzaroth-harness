@@ -171,7 +171,7 @@ pub async fn handle_get_knowledge_tree(
     let scripture_langs = state.scripture.get_languages_detailed();
     for lang_info in &scripture_langs {
         let lang_code = &lang_info.code;
-        if lang_code == "eng" || lang_code == "en" {
+        if lang_code == "eng" || lang_code == "en" || lang_code == "jpn" || lang_code == "ja" {
             for ver in &lang_info.versions {
                 if let Ok(meta) = state.scripture.get_metadata(lang_code, ver) {
                     let books_as_chapters: Vec<KnowledgeTreeChapter> = meta
@@ -230,5 +230,50 @@ pub async fn handle_get_knowledge_tree(
     }
 
     Ok(Json(result))
+}
+
+#[derive(Debug, Serialize)]
+pub struct CuratedPackInfo {
+    pub id: String,
+    pub path: String,
+    pub files: usize,
+    pub bytes: u64,
+}
+
+/// Lists curated content packs under `content_dir` for SBC pack management.
+pub async fn handle_list_packs(
+    State(state): State<ServerState>,
+) -> Result<Json<Vec<CuratedPackInfo>>, StatusCode> {
+    let mut packs = Vec::new();
+    let dir = &state.config.content_dir;
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if p.is_dir() {
+                let id = p.file_name().and_then(|n| n.to_str()).unwrap_or("pack").to_string();
+                let mut files = 0usize;
+                let mut bytes = 0u64;
+                if let Ok(sub) = std::fs::read_dir(&p) {
+                    for f in sub.flatten() {
+                        let fp = f.path();
+                        if fp.extension().and_then(|e| e.to_str()) == Some("json") {
+                            files += 1;
+                            bytes += f.metadata().map(|m| m.len()).unwrap_or(0);
+                        }
+                    }
+                }
+                if files > 0 {
+                    packs.push(CuratedPackInfo {
+                        id: id.clone(),
+                        path: format!("content/{}", id),
+                        files,
+                        bytes,
+                    });
+                }
+            }
+        }
+    }
+    packs.sort_by(|a, b| a.id.cmp(&b.id));
+    Ok(Json(packs))
 }
 

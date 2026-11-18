@@ -81,6 +81,15 @@
 - **Curated Japanese Corpus (`content/ja/`) & UI i18n (`web/js/i18n.js`, `web/index.html`, `web/js/sections.js`, `web/js/api.js`)**:
   - Authored and ingested `disaster-survival-ja.json`, `astronomy-ja.json`, and `medical-ja.json` (`total_docs=66`).
   - Added `EN / 日本語` toggle in header translating nav tabs, 6 office specialists, 5 rooms, and chat prompts live.
+
+## [2026-11-18] Phase 2: System-Wide i18n & SBC-Lite Mode
+- **System-Wide Bilingual i18n (`web/js/i18n.js`, `web/index.html`, `web/js/sections.js`)**:
+  - Added `data-i18n` attributes across the header, 4 system section nav cards (`銀河`, `星座`, `司書室`, `地図`) + subtitles, and tool decks; `applyLanguageUI()` updates all `[data-i18n]` elements live.
+  - Added Japanese scripture (`jpn`/`ja`) support in `/api/tree` (`crates/server/src/routes/read.rs`).
+- **SBC-Lite Mode (`crates/core/src/config.rs`, `crates/core/src/db.rs`, `crates/server/src/routes/ask.rs`, `crates/server/src/routes/read.rs`, `web/js/office.js`)**:
+  - Added `--profile auto` (`HardwareProfile::detect_auto()` via `/proc/meminfo`).
+  - Added SD-card-safe SQLite PRAGMAs (`temp_store = MEMORY`, `cache_size = -16000`).
+  - Added optional `ECO: ON/OFF` toggle (`LibrarianOffice.setEcoMode` 15 FPS cap, preserving 3D Galaxy), Remote LAN Ollama `HOST` override (`llm_endpoint` in `/api/ask` and `/api/warm`), and `GET /api/packs` (`PACKS` button).
   - Added visual drilldown: `Theme (Astronomy, Survival, Medical, Scripture, Cognitive) > Language > Document/Book > Chapter > Passage`.
   - Added interactive breadcrumbs (`#reader-breadcrumbs`) with direct jump buttons back to any level in the knowledge tree.
 - **Sky Deck UI Canvas & Controls (`web/js/sections.js`, `web/index.html`)**:

@@ -21,6 +21,17 @@ pub struct AskRequest {
     pub model: Option<String>,
     pub worker: Option<String>,
     pub lang: Option<String>,
+    pub llm_endpoint: Option<String>,
+}
+
+fn resolve_llm_endpoint(override_url: Option<&str>, default_url: &str) -> String {
+    if let Some(raw) = override_url {
+        let trimmed = raw.trim();
+        if trimmed.starts_with("http://") || trimmed.starts_with("https://") {
+            return trimmed.trim_end_matches('/').to_string();
+        }
+    }
+    default_url.to_string()
 }
 
 struct WorkerProfile {
@@ -178,6 +189,7 @@ fn is_small_model(model: &str) -> bool {
 #[derive(Debug, Deserialize)]
 pub struct WarmRequest {
     pub model: Option<String>,
+    pub llm_endpoint: Option<String>,
 }
 
 /// Pre-warms the selected Ollama model with a 10m keep_alive so cold-load latency disappears.
@@ -185,7 +197,7 @@ pub async fn handle_warm(
     State(state): State<ServerState>,
     Json(req): Json<WarmRequest>,
 ) -> Json<serde_json::Value> {
-    let endpoint = state.config.llm_endpoint.clone();
+    let endpoint = resolve_llm_endpoint(req.llm_endpoint.as_deref(), &state.config.llm_endpoint);
     let requested_model = req
         .model
         .as_ref()
@@ -290,8 +302,20 @@ pub async fn handle_ask(
         })
         .collect();
 
-    let is_reachable = state.is_llm_reachable().await;
-    let endpoint = state.config.llm_endpoint.clone();
+    let endpoint = resolve_llm_endpoint(req.llm_endpoint.as_deref(), &state.config.llm_endpoint);
+    let is_reachable = if req.llm_endpoint.is_some() {
+        let probe_client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(2))
+            .build()
+            .unwrap_or_default();
+        probe_client
+            .get(format!("{}/api/tags", endpoint.trim_end_matches('/')))
+            .send()
+            .await
+            .is_ok_and(|r| r.status().is_success())
+    } else {
+        state.is_llm_reachable().await
+    };
     let requested_model = req
         .model
         .as_ref()

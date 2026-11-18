@@ -1,4 +1,4 @@
-// MAZZAROTH Bilingual i18n Layer (EN / JA)
+// MAZZAROTH Bilingual i18n Layer (System-Wide EN / JA)
 
 const LANG_KEY = 'mazzaroth_lang_v1';
 
@@ -14,7 +14,28 @@ export function setActiveLang(lang) {
 
 export const I18N = {
     en: {
-        nav: { galaxy: 'GALAXY', constellations: 'CONSTELLATIONS', librarian: 'LIBRARIAN', map: 'MAP' },
+        ui: {
+            offlineBadge: '100% OFFLINE-FIRST',
+            sectionsHeader: 'SYSTEM SECTIONS',
+            navGalaxy: 'GALAXY',
+            navGalaxySub: 'Logarithmic Spiral Stipple',
+            navConstellations: 'CONSTELLATIONS',
+            navConstellationsSub: 'Zodiac, Asterisms & Sky Dome',
+            navLibrarian: 'LIBRARIAN',
+            navLibrarianSub: 'Local Ollama AI Engine',
+            navMap: 'MAP',
+            navMapSub: 'Offline Vector Cartography',
+            activeBadge: 'ACTIVE',
+            viewBadge: 'VIEW',
+            toolLayout: 'LAYOUT',
+            toolTime: 'TIME',
+            toolSeason: 'SEASON',
+            toolCoord: 'COORD',
+            toolModel: 'MODEL',
+            toolLocal: 'LOCAL',
+            toolLayer: 'LAYER',
+            toolLlmHost: 'HOST'
+        },
         officeTitle: 'LIBRARIAN // SOVEREIGN OFFICE',
         officeSubtitle: 'Click any worker to assign & query your local Ollama vault',
         studioBtn: 'PIXEL STUDIO',
@@ -25,8 +46,6 @@ export const I18N = {
         queryBtn: 'QUERY',
         stopBtn: 'STOP',
         askPlaceholder: (name) => `Ask ${name} about the local vault...`,
-        welcomeTitle: 'Mazzaroth Librarian Office Online.',
-        welcomeDesc: 'Select any specialist in the office above or ask below. Watch them search the FTS5 vault and work with your local Ollama SLM in real time.',
         rooms: {
             office: 'Archive Hall',
             'meeting-room': 'Study & Maps',
@@ -37,7 +56,28 @@ export const I18N = {
         workers: {}
     },
     ja: {
-        nav: { galaxy: '銀河', constellations: '星座', librarian: '司書室', map: '地図' },
+        ui: {
+            offlineBadge: '100% オフライン駆動',
+            sectionsHeader: 'システム機能',
+            navGalaxy: '銀河',
+            navGalaxySub: '対数螺旋ナレッジ星図',
+            navConstellations: '星座',
+            navConstellationsSub: '黄道十二宮・全天ドーム',
+            navLibrarian: '司書室',
+            navLibrarianSub: 'ローカルOllama AI知識庫',
+            navMap: '地図',
+            navMapSub: 'オフライン・ベクトル地図',
+            activeBadge: '稼働中',
+            viewBadge: '表示',
+            toolLayout: '表示',
+            toolTime: '時刻',
+            toolSeason: '季節',
+            toolCoord: '方位',
+            toolModel: 'モデル',
+            toolLocal: '接続',
+            toolLayer: '切替',
+            toolLlmHost: 'ホスト'
+        },
         officeTitle: '司書室 // SOVEREIGN OFFICE',
         officeSubtitle: '担当者をクリックしてローカルOllama知識庫へ質問できます',
         studioBtn: 'アートスタジオ',
@@ -48,8 +88,6 @@ export const I18N = {
         queryBtn: '質問',
         stopBtn: '停止',
         askPlaceholder: (name) => `${name}にローカル知識庫について質問する...`,
-        welcomeTitle: 'マザロス司書オフィス 起動完了。',
-        welcomeDesc: '上のオフィスから担当者を選ぶか、下のチャット欄から質問してください。ローカルOllama SLMとFTS5検索がリアルタイムで動作します。',
         rooms: {
             office: '書庫ホール',
             'meeting-room': '研究室・地図',

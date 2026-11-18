@@ -119,13 +119,18 @@
                     MAZZAROTH // SOVEREIGN CELESTIAL GRAPH & KNOWLEDGE ENGINE
                 </span>
                 <span class="hidden md:inline opacity-30">|</span>
-                <span class="hidden md:inline text-[10px] tracking-tight uppercase" style="color: var(--text-muted);">
+                <span data-i18n="offlineBadge" class="hidden md:inline text-[10px] tracking-tight uppercase" style="color: var(--text-muted);">
                     100% OFFLINE-FIRST
                 </span>
             </div>
 
-            <!-- Top Controls: Language Toggle, Theme Switcher & Wireframe Guide -->
-            <div class="flex items-center space-x-3">
+            <!-- Top Controls: ECO Mode, Language Toggle, Theme Switcher & Wireframe Guide -->
+            <div class="flex items-center space-x-2.5">
+                <button id="btn-eco-mode" class="px-2.5 py-1 rounded-full border text-[10px] font-mono font-bold transition-all hover:opacity-90 active:scale-95"
+                        style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-muted);"
+                        title="SBC / Low-Power Mode (15 FPS Office + reduced GPU load)">
+                    ECO: OFF
+                </button>
                 <button id="btn-lang-toggle" class="px-2.5 py-1 rounded-full border text-[11px] font-mono font-bold transition-all hover:opacity-90 active:scale-95"
                         style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--accent-primary);"
                         title="Switch Language (English / 日本語)">
@@ -393,19 +398,34 @@
                     <!-- 3. LIBRARIAN (OLLAMA) TOOLS -->
                     <div id="tools-librarian" class="tool-deck hidden flex-col items-center gap-3 w-full">
                         <div class="flex flex-col items-center gap-1">
-                            <span class="text-[8px] font-mono uppercase font-bold" style="color: var(--text-muted);">MODEL</span>
+                            <span data-i18n="toolModel" class="text-[8px] font-mono uppercase font-bold" style="color: var(--text-muted);">MODEL</span>
                             <button id="btn-ollama-model" class="w-11 py-1 rounded-md border text-[8px] font-mono uppercase font-bold"
                                     style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);"
                                     title="Select Local Ollama Model">
-                                LLAMA3
+                                LFM3
                             </button>
                         </div>
 
                         <div class="flex flex-col items-center gap-1 mt-1">
                             <span id="ollama-status-dot" class="w-2.5 h-2.5 rounded-full inline-block border"
                                   style="background-color: #22c55e; border-color: var(--panel-border);" title="Ollama Daemon: Active"></span>
-                            <span class="text-[7px] font-mono" style="color: var(--text-muted);">LOCAL</span>
+                            <span data-i18n="toolLocal" class="text-[7px] font-mono" style="color: var(--text-muted);">LOCAL</span>
                         </div>
+
+                        <div class="flex flex-col items-center gap-1">
+                            <span data-i18n="toolLlmHost" class="text-[7px] font-mono uppercase font-bold" style="color: var(--text-muted);">HOST</span>
+                            <button id="btn-llm-host" class="w-11 py-1 rounded-md border text-[7.5px] font-mono uppercase font-bold"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);"
+                                    title="Set Remote LAN Ollama Host (e.g. http://192.168.1.50:11434)">
+                                127.0.0.1
+                            </button>
+                        </div>
+
+                        <button id="btn-packs-info" class="w-11 py-1 rounded-md border text-[7.5px] font-mono uppercase font-bold opacity-85 hover:opacity-100"
+                                style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);"
+                                title="Inspect Curated Knowledge Packs (SBC Pack Manager)">
+                            PACKS
+                        </button>
 
                         <button id="btn-clear-chat" class="w-9 h-9 rounded-xl border flex items-center justify-center mt-2 opacity-80 hover:opacity-100"
                                 style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);"
@@ -971,13 +991,13 @@
                                 </div>
                                 <div>
                                     <div class="font-bold text-xs flex items-center gap-1.5" style="color: var(--text-main);">
-                                        <span>GALAXY</span>
+                                        <span data-i18n="navGalaxy">GALAXY</span>
                                         <span class="w-1.5 h-1.5 rounded-full inline-block" style="background-color: var(--contrast-ink);"></span>
                                     </div>
-                                    <div class="font-mono text-[7.5px]" style="color: var(--text-secondary);">Logarithmic Spiral Stipple</div>
+                                    <div data-i18n="navGalaxySub" class="font-mono text-[7.5px]" style="color: var(--text-secondary);">Logarithmic Spiral Stipple</div>
                                 </div>
                             </div>
-                            <span class="font-mono text-[8px] px-1 py-0.2 rounded border" style="border-color: var(--border-subtle); color: var(--text-muted);">ACTIVE</span>
+                            <span data-i18n="activeBadge" class="font-mono text-[8px] px-1 py-0.2 rounded border" style="border-color: var(--border-subtle); color: var(--text-muted);">ACTIVE</span>
                         </div>
 
                         <!-- 2. Constellations Card -->
@@ -989,11 +1009,11 @@
                                     02
                                 </div>
                                 <div>
-                                    <div class="font-bold text-xs" style="color: var(--text-main);">CONSTELLATIONS</div>
-                                    <div class="font-mono text-[7.5px]" style="color: var(--text-muted);">Zodiac, Asterisms &amp; Sky Dome</div>
+                                    <div data-i18n="navConstellations" class="font-bold text-xs" style="color: var(--text-main);">CONSTELLATIONS</div>
+                                    <div data-i18n="navConstellationsSub" class="font-mono text-[7.5px]" style="color: var(--text-muted);">Zodiac, Asterisms &amp; Sky Dome</div>
                                 </div>
                             </div>
-                            <span class="font-mono text-[8px]" style="color: var(--text-muted);">VIEW</span>
+                            <span data-i18n="viewBadge" class="font-mono text-[8px]" style="color: var(--text-muted);">VIEW</span>
                         </div>
 
                         <!-- 3. Librarian Card -->
@@ -1005,11 +1025,11 @@
                                     03
                                 </div>
                                 <div>
-                                    <div class="font-bold text-xs" style="color: var(--text-main);">LIBRARIAN</div>
-                                    <div class="font-mono text-[7.5px]" style="color: var(--text-muted);">Local Ollama AI Engine</div>
+                                    <div data-i18n="navLibrarian" class="font-bold text-xs" style="color: var(--text-main);">LIBRARIAN</div>
+                                    <div data-i18n="navLibrarianSub" class="font-mono text-[7.5px]" style="color: var(--text-muted);">Local Ollama AI Engine</div>
                                 </div>
                             </div>
-                            <span class="font-mono text-[8px]" style="color: var(--text-muted);">VIEW</span>
+                            <span data-i18n="viewBadge" class="font-mono text-[8px]" style="color: var(--text-muted);">VIEW</span>
                         </div>
 
                         <!-- 4. Map Card -->
@@ -1021,11 +1041,11 @@
                                     04
                                 </div>
                                 <div>
-                                    <div class="font-bold text-xs" style="color: var(--text-main);">MAP</div>
-                                    <div class="font-mono text-[7.5px]" style="color: var(--text-muted);">Offline Vector Cartography</div>
+                                    <div data-i18n="navMap" class="font-bold text-xs" style="color: var(--text-main);">MAP</div>
+                                    <div data-i18n="navMapSub" class="font-mono text-[7.5px]" style="color: var(--text-muted);">Offline Vector Cartography</div>
                                 </div>
                             </div>
-                            <span class="font-mono text-[8px]" style="color: var(--text-muted);">VIEW</span>
+                            <span data-i18n="viewBadge" class="font-mono text-[8px]" style="color: var(--text-muted);">VIEW</span>
                         </div>
 
                     </div>

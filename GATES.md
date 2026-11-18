@@ -193,4 +193,9 @@ copy-exact definitions below.
   EXPECT: 0 exit code
   EVIDENCE: 2026-11-18 — 23/23 cargo tests passed; `content/ja/` ingested (`total_docs=66`, `ja=3`); trigram hits: `北極星=3`, `煮沸消毒=1`.
 
+- [x] L12_SBC_LITE_AND_SYSTEM_I18N: System-wide `EN / 日本語` i18n, `--profile auto`, SD-card SQLite PRAGMAs, `ECO` 15 FPS toggle, Remote Ollama Host, and `GET /api/packs`
+  CHECK: node --check web/js/i18n.js && node --check web/js/sprite_studio.js && node --check web/js/office.js && node --check web/js/api.js && node --check web/js/sections.js && node --check web/js/app.js && cargo test --workspace && cargo build --release --bin mazzaroth
+  EXPECT: 0 exit code across all targets
+  EVIDENCE: 2026-11-18 — All 6 JS OK; 23/23 cargo tests passed; `cargo build --release --bin mazzaroth` finished in `9.89s`.
+
 

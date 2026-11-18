@@ -1,5 +1,5 @@
 // MAZZAROTH Sections: Constellations, Sovereign Vector Cartography Map, Librarian AI, and Sky Deck
-import { askStream, warmModel, getStatus, getMaps, startMapFetch, getMapFetchStatus, deleteMapRegion, getSkyProjection, getModels } from './api.js';
+import { askStream, warmModel, getPacks, getCustomLlmEndpoint, getStatus, getMaps, startMapFetch, getMapFetchStatus, deleteMapRegion, getSkyProjection, getModels } from './api.js';
 import { librarianOffice, officeAudio, OFFICE_WORKERS, OFFICE_ROOMS, PLACEABLE_PROPS } from './office.js';
 import { PixelStudioModal } from './sprite_studio.js';
 import { I18N, getActiveLang, setActiveLang } from './i18n.js';
@@ -3820,12 +3820,10 @@ function applyLanguageUI() {
     const langBtn = document.getElementById('btn-lang-toggle');
     if (langBtn) langBtn.innerText = lang === 'ja' ? '日本語 / EN' : 'EN / 日本語';
 
-    // Nav deck labels
-    document.querySelectorAll('.nav-deck-item').forEach(item => {
-        const view = item.getAttribute('data-view');
-        const label = t.nav[view];
-        const span = item.querySelector('span.font-bold');
-        if (label && span) span.innerText = label;
+    // Translate all system-wide [data-i18n] elements (header, nav bar, tool decks)
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t.ui && t.ui[key]) el.innerText = t.ui[key];
     });
 
     const titleEl = document.querySelector('#view-librarian h3');
@@ -4087,6 +4085,77 @@ export function initLibrarian() {
             soundBtn.innerText = on ? 'SOUND: ON' : 'SOUND: OFF';
             soundBtn.style.borderColor = on ? 'var(--accent-primary)' : 'var(--border-subtle)';
             soundBtn.style.color = on ? 'var(--accent-primary)' : 'var(--text-secondary)';
+        });
+    }
+
+    // SBC / ECO Low-Power Mode Toggle (15 FPS Office, preserves 3D Galaxy)
+    const ecoBtn = document.getElementById('btn-eco-mode');
+    if (ecoBtn) {
+        const syncEco = (on) => {
+            librarianOffice.setEcoMode(on);
+            ecoBtn.innerText = on ? 'ECO: ON' : 'ECO: OFF';
+            ecoBtn.style.borderColor = on ? '#22c55e' : 'var(--border-subtle)';
+            ecoBtn.style.color = on ? '#22c55e' : 'var(--text-muted)';
+        };
+        syncEco(localStorage.getItem('mazzaroth_eco_mode') === '1');
+        ecoBtn.addEventListener('click', () => {
+            const next = localStorage.getItem('mazzaroth_eco_mode') !== '1';
+            localStorage.setItem('mazzaroth_eco_mode', next ? '1' : '0');
+            syncEco(next);
+        });
+    }
+
+    // Remote LAN Ollama Host Toggle (for SBC offloading)
+    const hostBtn = document.getElementById('btn-llm-host');
+    if (hostBtn) {
+        const syncHostBtn = () => {
+            const h = getCustomLlmEndpoint();
+            if (h) {
+                hostBtn.innerText = h.replace(/^https?:\/\//, '').split(':')[0].slice(0, 9);
+                hostBtn.style.borderColor = 'var(--accent-primary)';
+                hostBtn.style.color = 'var(--accent-primary)';
+                hostBtn.title = `Remote Ollama: ${h} (click to change/reset)`;
+            } else {
+                hostBtn.innerText = '127.0.0.1';
+                hostBtn.style.borderColor = 'var(--border-subtle)';
+                hostBtn.style.color = 'var(--text-secondary)';
+                hostBtn.title = 'Set Remote LAN Ollama Host (e.g. http://192.168.1.50:11434)';
+            }
+        };
+        syncHostBtn();
+        hostBtn.addEventListener('click', () => {
+            const cur = getCustomLlmEndpoint() || '';
+            const val = window.prompt('Ollama Endpoint URL (leave empty for local 127.0.0.1:11434):', cur);
+            if (val === null) return;
+            const trimmed = val.trim();
+            if (!trimmed) {
+                localStorage.removeItem('mazzaroth_llm_endpoint');
+            } else if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+                localStorage.setItem('mazzaroth_llm_endpoint', trimmed);
+            }
+            syncHostBtn();
+            warmModel(currentLlmModel);
+        });
+    }
+
+    // Curated Packs Inspector (SBC Pack Manager)
+    const packsBtn = document.getElementById('btn-packs-info');
+    if (packsBtn && chatLog) {
+        packsBtn.addEventListener('click', async () => {
+            try {
+                const packs = await getPacks();
+                const lines = packs.map(p => `- **${p.id}** (\`${p.path}\`): ${p.files} files · ${(p.bytes / 1024).toFixed(1)} KB`).join('\n');
+                const card = document.createElement('div');
+                card.className = 'p-3 rounded-xl border font-mono text-xs';
+                card.style.backgroundColor = 'var(--panel-bg-subtle)';
+                card.style.borderColor = 'var(--panel-border)';
+                card.innerHTML = `<div class="font-bold mb-1" style="color:var(--accent-primary);">CURATED KNOWLEDGE PACKS (${packs.length})</div>` +
+                    renderMarkdownSafe(lines || 'No packs found in content/.');
+                chatLog.appendChild(card);
+                chatLog.scrollTop = chatLog.scrollHeight;
+            } catch (e) {
+                console.warn('packs fetch error', e);
+            }
         });
     }
 

@@ -34,6 +34,7 @@ pub fn create_app(state: ServerState) -> Router {
         .route("/galaxy", get(routes::galaxy::handle_galaxy))
         .route("/search", get(routes::search::handle_search))
         .route("/documents", get(routes::read::handle_list_documents))
+        .route("/packs", get(routes::read::handle_list_packs))
         .route("/categories", get(routes::read::handle_list_categories))
         .route("/tree", get(routes::read::handle_get_knowledge_tree))
         .route("/read/{doc_id}", get(routes::read::handle_get_document))

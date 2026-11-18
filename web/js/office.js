@@ -288,6 +288,8 @@ class LibrarianOffice {
         this.dragState = null;
         this.dragPropState = null;
         this.idleWanderTimer = 2.5;
+        this.ecoMode = false;
+        this.ecoAccum = 0;
 
         this.workers = OFFICE_WORKERS.map((def, idx) => ({
             ...def,
@@ -363,14 +365,29 @@ class LibrarianOffice {
         if (!this.rafId) {
             this.lastTime = performance.now();
             const loop = (now) => {
-                const dt = Math.min(0.05, (now - this.lastTime) / 1000);
+                const rawDt = Math.min(0.1, (now - this.lastTime) / 1000);
                 this.lastTime = now;
-                this.update(dt);
-                this.render();
+                if (this.ecoMode) {
+                    this.ecoAccum += rawDt;
+                    if (this.ecoAccum >= 1 / 15) {
+                        const dt = Math.min(0.12, this.ecoAccum);
+                        this.ecoAccum = 0;
+                        this.update(dt);
+                        this.render();
+                    }
+                } else {
+                    this.update(Math.min(0.05, rawDt));
+                    this.render();
+                }
                 this.rafId = requestAnimationFrame(loop);
             };
             this.rafId = requestAnimationFrame(loop);
         }
+    }
+
+    setEcoMode(enabled) {
+        this.ecoMode = Boolean(enabled);
+        this.ecoAccum = 0;
     }
 
     async loadBundledArtPack() {
