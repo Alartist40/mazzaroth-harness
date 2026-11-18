@@ -1,5 +1,5 @@
 // MAZZAROTH Sections: Constellations, Sovereign Vector Cartography Map, Librarian AI, and Sky Deck
-import { askStream, warmModel, getPacks, getCustomLlmEndpoint, getStatus, getMaps, startMapFetch, getMapFetchStatus, deleteMapRegion, getSkyProjection, getModels } from './api.js';
+import { askStream, saveVaultNote, warmModel, getPacks, getCustomLlmEndpoint, getStatus, getMaps, startMapFetch, getMapFetchStatus, deleteMapRegion, getSkyProjection, getModels } from './api.js';
 import { librarianOffice, officeAudio, OFFICE_WORKERS, OFFICE_ROOMS, PLACEABLE_PROPS } from './office.js';
 import { PixelStudioModal } from './sprite_studio.js';
 import { I18N, getActiveLang, setActiveLang } from './i18n.js';
@@ -3715,6 +3715,9 @@ function setupMapInteractions() {
 let currentLlmModel = null;
 let installedLlmModels = [];
 let librarianHistoryByWorker = {};
+let pinnedDocByWorker = {};
+let crewSharedFacts = [];
+let checklistMode = false;
 let activeOfficeWorkerId = 'coordinator';
 let activeAskController = null;
 
@@ -3722,6 +3725,28 @@ function getWorkerHistory(workerId) {
     if (!librarianHistoryByWorker[workerId]) librarianHistoryByWorker[workerId] = [];
     return librarianHistoryByWorker[workerId];
 }
+
+// Auto-compacting: keeps recent 4 messages and condenses older turns so SLMs stay fast
+function compactWorkerHistory(history) {
+    if (history.length <= 6) return;
+    const older = history.slice(0, history.length - 4);
+    const recent = history.slice(history.length - 4);
+    const summaryBits = older
+        .filter(m => m.role === 'assistant')
+        .map(m => m.content.replace(/\s+/g, ' ').slice(0, 110))
+        .slice(-2);
+    const summaryMsg = {
+        role: 'assistant',
+        content: `[Prior context summary: ${summaryBits.join(' | ')}]`
+    };
+    history.length = 0;
+    history.push(summaryMsg, ...recent);
+}
+
+window.pinDocumentToWorker = (docId, docTitle) => {
+    pinnedDocByWorker[activeOfficeWorkerId] = { id: docId, title: docTitle || docId };
+    syncWorkerInspectorUI(librarianOffice.getSelectedWorker());
+};
 
 function setQueryStreamingUI(isStreaming) {
     const sendBtn = document.getElementById('btn-librarian-send');
@@ -3786,6 +3811,23 @@ function syncWorkerInspectorUI(worker) {
         tagEl.style.color = worker.shirt;
     }
     if (inputEl) inputEl.placeholder = t.askPlaceholder(lw.name);
+
+    const pinnedEl = document.getElementById('inspector-pinned-doc');
+    if (pinnedEl) {
+        const pinned = pinnedDocByWorker[worker.id];
+        if (pinned) {
+            pinnedEl.classList.remove('hidden');
+            pinnedEl.classList.add('flex');
+            pinnedEl.innerHTML = `<span class="truncate">📌 ${escapeHtml(pinned.title)}</span><button type="button" class="unpin-doc-btn font-bold px-1 hover:opacity-75">✕</button>`;
+            pinnedEl.querySelector('.unpin-doc-btn')?.addEventListener('click', () => {
+                delete pinnedDocByWorker[worker.id];
+                syncWorkerInspectorUI(worker);
+            });
+        } else {
+            pinnedEl.classList.add('hidden');
+            pinnedEl.classList.remove('flex');
+        }
+    }
 
     // Update roster pill highlights
     document.querySelectorAll('.office-roster-pill').forEach(btn => {
@@ -4316,9 +4358,29 @@ export function initLibrarian() {
             `;
         });
     }
+
+    const checklistBtn = document.getElementById('btn-checklist-mode');
+    if (checklistBtn) {
+        checklistBtn.addEventListener('click', () => {
+            checklistMode = !checklistMode;
+            checklistBtn.style.borderColor = checklistMode ? 'var(--accent-primary)' : 'var(--border-subtle)';
+            checklistBtn.style.color = checklistMode ? 'var(--accent-primary)' : 'var(--text-muted)';
+            checklistBtn.innerText = checklistMode ? 'CHECKLIST: ON' : 'CHECKLIST';
+        });
+    }
 }
 
-export function submitLibrarianQuery(rawQuestion) {
+function buildChecklistSubqueries(q) {
+    const parts = q.split(/\s*(?:,|、|;| and | そして )\s*/i).map(s => s.trim()).filter(Boolean);
+    if (parts.length >= 2) return parts.slice(0, 3);
+    return [
+        `Key facts & overview: ${q}`,
+        `Step-by-step protocols or exact details: ${q}`,
+        `Warnings, edge cases & verified sources: ${q}`
+    ];
+}
+
+export function submitLibrarianQuery(rawQuestion, skipChecklist = false) {
     const chatLog = document.getElementById('librarian-chat-log');
     const input = document.getElementById('librarian-input');
     if (!chatLog) return;
@@ -4329,6 +4391,33 @@ export function submitLibrarianQuery(rawQuestion) {
     }
     const question = routed.question;
     if (!question) return;
+
+    if (checklistMode && !skipChecklist) {
+        if (input) input.value = '';
+        const steps = buildChecklistSubqueries(question);
+        const card = document.createElement('div');
+        card.className = 'p-3 rounded-xl border font-mono text-xs space-y-1.5';
+        card.style.backgroundColor = 'var(--panel-bg-subtle)';
+        card.style.borderColor = 'var(--accent-primary)';
+        card.innerHTML = `<div class="font-bold text-[10px] uppercase" style="color:var(--accent-primary);">MULTI-STEP CHECKLIST (${steps.length} FOCUSED SLM PASSES)</div>` +
+            steps.map((s, i) => `<div id="chk-step-${i}" class="text-[11px]" style="color:var(--text-secondary);">[ ] ${escapeHtml(s)}</div>`).join('');
+        chatLog.appendChild(card);
+        chatLog.scrollTop = chatLog.scrollHeight;
+        const runStep = (idx) => {
+            if (idx >= steps.length) return;
+            const row = card.querySelector(`#chk-step-${idx}`);
+            if (row) row.style.color = 'var(--text-main)';
+            submitLibrarianQuery(steps[idx], () => {
+                if (row) {
+                    row.innerText = row.innerText.replace('[ ]', '[✓]');
+                    row.style.color = '#22c55e';
+                }
+                runStep(idx + 1);
+            });
+        };
+        runStep(0);
+        return;
+    }
 
     if (input) input.value = '';
     if (activeAskController) {
@@ -4376,8 +4465,11 @@ export function submitLibrarianQuery(rawQuestion) {
 
     let accumulatedResponse = '';
     const workerHistory = getWorkerHistory(activeOfficeWorkerId);
+    compactWorkerHistory(workerHistory);
     const outgoingHistory = [...workerHistory];
     workerHistory.push({ role: 'user', content: question });
+    const pinnedId = pinnedDocByWorker[activeOfficeWorkerId]?.id || null;
+    const sharedFacts = [...crewSharedFacts];
 
     const queryStartAt = performance.now();
     let firstTokenAt = null;
@@ -4458,9 +4550,36 @@ export function submitLibrarianQuery(rawQuestion) {
                 telemetryEl.classList.remove('hidden');
             }
             if (accumulatedResponse.trim()) {
-                workerHistory.push({ role: 'assistant', content: accumulatedResponse.trim() });
+                const cleanReply = accumulatedResponse.trim();
+                workerHistory.push({ role: 'assistant', content: cleanReply });
+                const firstLine = cleanReply.replace(/\s+/g, ' ').slice(0, 120);
+                crewSharedFacts.push(`[${workerTag}] ${firstLine}`);
+                if (crewSharedFacts.length > 5) crewSharedFacts.shift();
+
+                if (citSpan) {
+                    citSpan.classList.remove('hidden');
+                    const saveBtn = document.createElement('button');
+                    saveBtn.className = "px-2 py-0.5 rounded border text-[9px] font-mono font-bold uppercase transition-all hover:opacity-85";
+                    saveBtn.style.backgroundColor = "var(--panel-bg)";
+                    saveBtn.style.borderColor = "var(--border-subtle)";
+                    saveBtn.style.color = "var(--text-main)";
+                    saveBtn.innerText = "SAVE NOTE";
+                    saveBtn.title = "Save this finding to Vault Notes";
+                    saveBtn.addEventListener('click', async () => {
+                        try {
+                            await saveVaultNote(`[${workerTag}] ${question.slice(0, 48)}`, cleanReply);
+                            saveBtn.innerText = "SAVED ✓";
+                            saveBtn.style.borderColor = "#22c55e";
+                            saveBtn.style.color = "#22c55e";
+                        } catch {
+                            saveBtn.innerText = "ERR";
+                        }
+                    });
+                    citSpan.appendChild(saveBtn);
+                }
             }
             if (pipelineEl) pipelineEl.innerText = 'Click any worker to assign & query your local Ollama vault';
+            if (typeof skipChecklist === 'function') skipChecklist();
         },
         (err) => {
             activeAskController = null;
@@ -4508,7 +4627,9 @@ export function submitLibrarianQuery(rawQuestion) {
                 actEl.innerText = officeEv.detail;
             }
         },
-        activeAskController.signal
+        activeAskController.signal,
+        pinnedId,
+        sharedFacts
     );
 }
 

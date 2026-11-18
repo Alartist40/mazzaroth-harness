@@ -62,7 +62,17 @@ export async function warmModel(model = null) {
     }
 }
 
-export async function askStream(question, onToken, onCitations, onDone, onError, model = null, history = [], onVerification = null, worker = null, onOfficeEvent = null, externalSignal = null) {
+export async function saveVaultNote(title, content) {
+    const res = await fetchWithTimeout('/api/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content })
+    });
+    if (!res.ok) throw new Error(`save note failed: ${res.status}`);
+    return await res.json();
+}
+
+export async function askStream(question, onToken, onCitations, onDone, onError, model = null, history = [], onVerification = null, worker = null, onOfficeEvent = null, externalSignal = null, pinnedDocId = null, crewFacts = []) {
     let doneCalled = false;
     const safeDone = () => {
         if (!doneCalled) {
@@ -94,6 +104,8 @@ export async function askStream(question, onToken, onCitations, onDone, onError,
         if (model) payload.model = model;
         if (history && history.length > 0) payload.history = history;
         if (worker) payload.worker = worker;
+        if (pinnedDocId) payload.pinned_doc_id = pinnedDocId;
+        if (crewFacts && crewFacts.length > 0) payload.crew_facts = crewFacts;
 
         const connectTimer = setTimeout(() => {
             controller.abort(new Error('Librarian connection timeout (30s)'));

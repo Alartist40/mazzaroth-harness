@@ -355,6 +355,20 @@ function setupReaderDeck() {
     }
 
     // Synoptic Multi-Translation Comparison Wiring
+    const pinWorkerBtn = document.getElementById('btn-pin-to-worker');
+    if (pinWorkerBtn) {
+        pinWorkerBtn.addEventListener('click', () => {
+            if (!currentNode || currentNode.id === 'NEXUS-0' || currentNode.id === 'core:librarian') {
+                showToast('Open a document first to pin it to a worker');
+                return;
+            }
+            if (typeof window.pinDocumentToWorker === 'function') {
+                window.pinDocumentToWorker(currentNode.id, currentNode.name || currentNode.id);
+                showToast(`Pinned "${(currentNode.name || currentNode.id).slice(0, 26)}" to active worker`);
+            }
+        });
+    }
+
     const synopticBtn = document.getElementById('btn-reader-synoptic');
     const synopticGrid = document.getElementById('reader-synoptic-grid');
     const synopticSelect = document.getElementById('synoptic-select-version');

@@ -22,6 +22,8 @@ pub struct AskRequest {
     pub worker: Option<String>,
     pub lang: Option<String>,
     pub llm_endpoint: Option<String>,
+    pub pinned_doc_id: Option<String>,
+    pub crew_facts: Option<Vec<String>>,
 }
 
 fn resolve_llm_endpoint(override_url: Option<&str>, default_url: &str) -> String {
@@ -247,22 +249,26 @@ pub async fn handle_ask(
         .is_some_and(|l| l.eq_ignore_ascii_case("ja"));
     let pref_lang = if is_ja { Some("ja") } else { None };
 
-    // 1. Retrieve top chunks from SQLite FTS5 (scoped to worker's specialty + language first, fallback to global)
+    // 1. Retrieve top chunks from SQLite FTS5 (pinned doc -> scoped category+lang -> global fallback)
     let top_k = state.config.profile.top_k();
     let search_start = std::time::Instant::now();
-    let mut hits = state
-        .db
-        .search_by_categories_and_lang(&q, worker.categories, pref_lang, top_k)
-        .unwrap_or_default();
     let mut scoped_fallback = false;
-    if hits.is_empty() && pref_lang.is_some() {
+    let mut hits = if let Some(doc_id) = req.pinned_doc_id.as_deref().filter(|s| !s.trim().is_empty()) {
+        state.db.search_in_document(&q, doc_id.trim(), top_k).unwrap_or_default()
+    } else {
+        state
+            .db
+            .search_by_categories_and_lang(&q, worker.categories, pref_lang, top_k)
+            .unwrap_or_default()
+    };
+    if hits.is_empty() && pref_lang.is_some() && req.pinned_doc_id.is_none() {
         // Cross-lingual fallback: search all languages in worker's categories
         hits = state
             .db
             .search_by_categories_and_lang(&q, worker.categories, None, top_k)
             .unwrap_or_default();
     }
-    if hits.is_empty() && !worker.categories.is_empty() {
+    if hits.is_empty() && !worker.categories.is_empty() && req.pinned_doc_id.is_none() {
         hits = state.db.search(&q, top_k).unwrap_or_default();
         scoped_fallback = true;
     }
@@ -426,6 +432,16 @@ pub async fn handle_ask(
         } else {
             format!("=== LIBRARY CATALOG MANIFEST ===\n{}\n\n", get_library_catalog_summary())
         };
+
+        if let Some(facts) = req.crew_facts.as_ref().filter(|f| !f.is_empty()) {
+            context_text.push_str("=== SHARED CREW NOTES ===\n");
+            for f in facts.iter().take(5) {
+                context_text.push_str("- ");
+                context_text.push_str(f);
+                context_text.push('\n');
+            }
+            context_text.push('\n');
+        }
 
         if !hits.is_empty() {
             context_text.push_str("=== RETRIEVED DOCUMENT PASSAGES ===\n");

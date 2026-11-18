@@ -415,6 +415,62 @@ impl LibrarianDb {
         self.search_by_categories_and_lang(query, &[], None, limit)
     }
 
+    /// Searches chunks strictly within a single pinned document ("Tentacle Scope").
+    pub fn search_in_document(
+        &self,
+        query: &str,
+        doc_id: &str,
+        limit: usize,
+    ) -> Result<Vec<SearchHit>> {
+        let conn = self.conn.lock().unwrap();
+        let fts_table = if Self::contains_cjk(query) { "chunks_fts_ja" } else { "chunks_fts" };
+        let clean: Vec<String> = query
+            .split_whitespace()
+            .map(|w| w.replace('"', ""))
+            .filter(|w| !w.is_empty())
+            .map(|w| if fts_table == "chunks_fts_ja" { format!("\"{}\"", w) } else { format!("\"{}\"*", w) })
+            .collect();
+        if clean.is_empty() {
+            return Ok(Vec::new());
+        }
+        let fts_q = clean.join(" OR ");
+        let sql = format!(
+            r#"
+            SELECT c.id, c.doc_id, d.title, d.category, d.license, d.retrieved_date,
+                   c.section_id, c.title_path, c.text,
+                   snippet({fts_table}, 0, '<b>', '</b>', '...', 24) as snippet,
+                   bm25({fts_table}) as rank
+            FROM {fts_table}
+            JOIN chunks c ON {fts_table}.rowid = c.id
+            JOIN documents d ON c.doc_id = d.id
+            WHERE {fts_table} MATCH ?1 AND c.doc_id = ?2
+            ORDER BY rank
+            LIMIT ?3
+            "#
+        );
+        let mut stmt = conn.prepare(&sql)?;
+        let rows = stmt.query_map(params![fts_q, doc_id, limit as i64], |row| {
+            Ok(SearchHit {
+                chunk_id: row.get(0)?,
+                doc_id: row.get(1)?,
+                doc_title: row.get(2)?,
+                category: row.get(3)?,
+                license: row.get(4)?,
+                retrieved_date: row.get(5)?,
+                section_id: row.get(6)?,
+                title_path: row.get(7)?,
+                text: row.get(8)?,
+                snippet: row.get(9)?,
+                rank: row.get(10)?,
+            })
+        })?;
+        let mut hits = Vec::new();
+        for r in rows {
+            hits.push(r?);
+        }
+        Ok(hits)
+    }
+
     /// Searches chunks via FTS5, optionally restricting to specific document categories.
     pub fn search_by_categories(
         &self,

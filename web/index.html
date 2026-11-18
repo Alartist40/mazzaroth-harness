@@ -720,6 +720,8 @@
                             </div>
                             <div id="inspector-telemetry" class="mt-1 px-2 py-0.5 rounded border text-[9px] hidden"
                                  style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--accent-primary);"></div>
+                            <div id="inspector-pinned-doc" class="mt-1 px-2 py-0.5 rounded border text-[9px] hidden items-center justify-between gap-1"
+                                 style="background-color: var(--panel-bg-subtle); border-color: var(--accent-primary); color: var(--accent-primary);"></div>
                             <div id="inspector-prompts" class="mt-2 flex flex-col gap-1"></div>
                         </div>
 
@@ -760,6 +762,11 @@
                         <input id="librarian-input" type="text" placeholder="Ask Chief Librarian about the local vault..." 
                                 class="flex-1 px-4 py-2 rounded-xl border font-mono text-xs outline-none transition-all"
                                 style="background-color: var(--panel-bg-subtle); border-color: var(--panel-border); color: var(--text-main);">
+                        <button id="btn-checklist-mode" class="px-2.5 py-2 rounded-xl border font-mono text-[10px] font-bold uppercase transition-all hover:opacity-90 shrink-0"
+                                style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-muted);"
+                                title="Checklist / Multi-Step Research Mode (splits complex prompt into 3 focused SLM steps)">
+                            CHECKLIST
+                        </button>
                         <button id="btn-librarian-send" class="px-5 py-2 rounded-xl border font-mono text-xs font-bold uppercase transition-all hover:opacity-90 active:scale-95 shadow-sm"
                                 style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
                             QUERY
@@ -1077,8 +1084,12 @@
                             </div>
                         </div>
 
-                        <!-- Reader Utility Buttons: Font Scaling, Synoptic Compare, & Expand Fullscreen -->
+                        <!-- Reader Utility Buttons: Pin to Worker, Font Scaling, Synoptic Compare, & Expand Fullscreen -->
                         <div class="flex items-center space-x-1 font-mono text-[10px] shrink-0">
+                            <button id="btn-pin-to-worker" class="px-1.5 py-0.5 rounded border hover:opacity-80 transition-all text-[9px] font-bold"
+                                    style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--accent-primary);" title="Pin active document to selected Librarian Office worker">
+                                PIN
+                            </button>
                             <button id="btn-reader-synoptic" data-i18n="synopticBtn" class="px-2 py-0.5 rounded border hover:opacity-80 transition-all text-[9px] font-bold"
                                     style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--accent-secondary);" title="Toggle Side-by-Side Synoptic Translation Comparison">
                                 SYNOPTIC
