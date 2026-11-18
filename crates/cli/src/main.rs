@@ -40,7 +40,7 @@ struct Cli {
     #[arg(long, global = true, default_value = "http://127.0.0.1:11434")]
     llm_endpoint: String,
 
-    #[arg(long, global = true, default_value = "ministral-3:3b")]
+    #[arg(long, global = true, default_value = "lfm3:1.7b")]
     llm_model: String,
 }
 

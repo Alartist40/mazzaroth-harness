@@ -169,7 +169,7 @@ async fn resolve_ollama_model(client: &reqwest::Client, endpoint: &str, requeste
 
 fn is_small_model(model: &str) -> bool {
     let m = model.to_lowercase();
-    [":0.5b", ":1b", ":1.5b", ":2b", ":3b", ":4b", "1b-", "3b-", "mini", "tiny", "nano", "phi3"]
+    [":0.5b", ":1b", ":1.5b", ":1.7b", ":2b", ":3b", "1b-", "3b-", "mini", "tiny", "nano", "phi3"]
         .iter()
         .any(|pat| m.contains(pat))
 }
@@ -478,6 +478,7 @@ RULES:\n\
             "model": resolved_model,
             "messages": messages,
             "stream": true,
+            "think": false,
             "keep_alive": "10m",
             "options": {
                 "temperature": if slm_mode { 0.4 } else { 0.6 },

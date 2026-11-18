@@ -71,6 +71,7 @@
   - Added 6th specialist (`The Pathfinder` for `survival`/`pathfinders`/`youth`), MIT-licensed `Claude-Office` 5-room Day/Night backdrops + 4-direction animated character sprites, autonomous wandering & cross-room Corridor walking, and drag-and-drop worker placement.
   - Added `POST /api/warm` keep-alive pre-warming, dynamic SLM `num_ctx` + top-4 concise passage budgeting, `STOP` abort button, `@mention` routing, per-specialist conversation history, offline WebAudio ambience (`OfficeAudio`), and 16×24 Pixel & Environment Art Studio with `.json` Art Pack export/import.
   - Added Paraclea-style Side-by-Side Source Compare modal (`openCompareSourcesModal`), XSS-safe Markdown & code-block renderer (`renderMarkdownSafe`), live 5-room Mini-Map floorplan (`renderOfficeMiniMap`), and streaming retrieval preview shimmer.
+  - Switched default Ollama SLM to `lfm3:1.7b` (`crates/cli/src/main.rs`, `crates/core/src/config.rs`), added `"think": false` to `POST /api/ask` for instant streaming on reasoning SLMs, and prioritized `LFM3` / `SPARK4B` in the UI model toggle (`web/js/sections.js`).
   - Added visual drilldown: `Theme (Astronomy, Survival, Medical, Scripture, Cognitive) > Language > Document/Book > Chapter > Passage`.
   - Added interactive breadcrumbs (`#reader-breadcrumbs`) with direct jump buttons back to any level in the knowledge tree.
 - **Sky Deck UI Canvas & Controls (`web/js/sections.js`, `web/index.html`)**:

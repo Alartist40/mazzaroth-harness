@@ -4071,6 +4071,16 @@ export function initLibrarian() {
         });
     }
 
+    const formatModelLabel = (name) => {
+        if (!name) return 'LFM3';
+        const lower = name.toLowerCase();
+        if (lower.includes('lfm3')) return 'LFM3';
+        if (lower.includes('spark-x2.6-4b')) return 'SPARK4B';
+        if (lower.includes('spark-x2.6-1.7b')) return 'SPARK1.7';
+        const base = name.includes('/') ? name.split('/').pop() : name;
+        return base.toUpperCase().slice(0, 8);
+    };
+
     getStatus().then(status => {
         if (typeof status.total_docs === 'number' && typeof status.total_chunks === 'number') {
             librarianOffice.setDbStats(status.total_docs, status.total_chunks);
@@ -4079,8 +4089,8 @@ export function initLibrarian() {
             if (statusDot) statusDot.style.backgroundColor = '#22c55e';
             if (modelBtn && status.llm_model) {
                 if (!currentLlmModel) currentLlmModel = status.llm_model;
-                modelBtn.innerText = currentLlmModel.toUpperCase().slice(0, 8);
-                modelBtn.title = `Active Model: ${currentLlmModel}`;
+                modelBtn.innerText = formatModelLabel(currentLlmModel);
+                modelBtn.title = `Active Model: ${currentLlmModel} (click to toggle LFM3 / Spark-4B)`;
                 warmModel(currentLlmModel);
             }
         } else {
@@ -4090,13 +4100,21 @@ export function initLibrarian() {
 
     getModels().then(models => {
         if (models && models.length > 0) {
-            installedLlmModels = models.map(m => m.name || m.model);
+            const rawNames = models.map(m => m.name || m.model).filter(n => !n.includes('embed'));
+            const priority = (n) => {
+                const l = n.toLowerCase();
+                if (l.includes('lfm3')) return 0;
+                if (l.includes('spark-x2.6-4b')) return 1;
+                if (l.includes('spark-x2.6-1.7b')) return 2;
+                return 3;
+            };
+            installedLlmModels = rawNames.sort((a, b) => priority(a) - priority(b));
             if (!currentLlmModel && installedLlmModels.length > 0) {
                 currentLlmModel = installedLlmModels[0];
             }
             if (modelBtn && currentLlmModel) {
-                modelBtn.innerText = currentLlmModel.toUpperCase().slice(0, 8);
-                modelBtn.title = `Active Model: ${currentLlmModel} (click to cycle)`;
+                modelBtn.innerText = formatModelLabel(currentLlmModel);
+                modelBtn.title = `Active Model: ${currentLlmModel} (click to toggle LFM3 / Spark-4B)`;
             }
         }
     }).catch(() => {});
@@ -4107,7 +4125,7 @@ export function initLibrarian() {
                 const idx = installedLlmModels.indexOf(currentLlmModel);
                 const nextIdx = (idx + 1) % installedLlmModels.length;
                 currentLlmModel = installedLlmModels[nextIdx];
-                modelBtn.innerText = currentLlmModel.toUpperCase().slice(0, 8);
+                modelBtn.innerText = formatModelLabel(currentLlmModel);
                 modelBtn.title = `Active Model: ${currentLlmModel} (click to cycle)`;
                 warmModel(currentLlmModel);
             }
