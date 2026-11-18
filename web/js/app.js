@@ -1,4 +1,5 @@
 // MAZZAROTH Shell: 4-Module Controller, Real Reader Hierarchy Explorer, Telemetry, and Modals
+import { I18N, getActiveLang } from './i18n.js';
 import { 
     getStatus, 
     getDocument, 
@@ -873,13 +874,23 @@ async function loadDocumentIntoReader(docId, chapterIndex = 0) {
     }
 }
 
+window.refreshReaderI18n = () => {
+    if (!currentNode || currentNode.id === 'NEXUS-0' || currentNode.id === 'core:librarian') {
+        renderHierarchyExplorer();
+    }
+};
+
 function renderHierarchyExplorer() {
     const box = document.getElementById('reader-content-box');
     const counter = document.getElementById('chapter-counter');
     if (!box) return;
 
+    const lang = getActiveLang();
+    const ui = I18N[lang]?.ui || I18N.en.ui;
+    const catLoc = I18N[lang]?.categories || I18N.en.categories;
+
     updateBreadcrumbs();
-    if (counter) counter.innerText = 'THEME EXPLORER';
+    if (counter) counter.innerText = ui.themeExplorer;
 
     const tree = cachedKnowledgeTree || [
         {
@@ -906,37 +917,19 @@ function renderHierarchyExplorer() {
 
     // Category meta info (monospace design tokens)
     const categoryIcons = {
-        scripture: { 
-            icon: 'S', 
-            label: 'SCRIPTURE & SACRED TEXTS', 
-            desc: '66 Languages, 226 Translations & Thousands of Canonical Books' 
-        },
-        astronomy: { 
-            icon: 'A', 
-            label: 'ASTRONOMY & ASTROMETRY', 
-            desc: 'Star navigation handbook, celestial lore & ephemeris data' 
-        },
-        survival: { 
-            icon: 'V', 
-            label: 'SURVIVAL & EXPEDITION', 
-            desc: 'Field manual, water purification, shelter & wilderness tactics' 
-        },
-        medical: { 
-            icon: 'M', 
-            label: 'EMERGENCY MEDICAL', 
-            desc: 'First responder protocols, triage & wound intervention' 
-        },
-        cognitive: { 
-            icon: 'C', 
-            label: 'COGNITIVE MEMORY', 
-            desc: 'Sovereign neural memory stars & contextual linkages' 
-        }
+        scripture: { icon: 'S', ...(catLoc.scripture || {}) },
+        astronomy: { icon: 'A', ...(catLoc.astronomy || {}) },
+        survival: { icon: 'V', ...(catLoc.survival || {}) },
+        medical: { icon: 'M', ...(catLoc.medical || {}) },
+        cognitive: { icon: 'C', ...(catLoc.cognitive || {}) },
+        youth: { icon: 'Y', ...(catLoc.youth || {}) },
+        pathfinders: { icon: 'P', ...(catLoc.pathfinders || {}) }
     };
 
     // LEVEL 0: ROOT CATEGORIES
     if (hierarchyState.level === 'root') {
         const filter = (hierarchyState.filterText || '').trim().toLowerCase();
-        const orderedCategories = ['scripture', 'astronomy', 'survival', 'medical', 'cognitive'];
+        const orderedCategories = ['scripture', 'pathfinders', 'youth', 'astronomy', 'survival', 'medical', 'cognitive'];
         const renderedSet = new Set();
         const allCatNames = [];
 
@@ -960,13 +953,13 @@ function renderHierarchyExplorer() {
             <div class="space-y-3 font-mono">
                 <div class="flex items-center justify-between">
                     <span class="text-[11px] font-bold" style="color: var(--text-main);">
-                        KNOWLEDGE THEMES (${filteredCatNames.length} MATCHED)
+                        ${escapeHtml(ui.themesHeader)} (${filteredCatNames.length} ${escapeHtml(ui.matchedSuffix)})
                     </span>
-                    <span class="text-[9px]" style="color: var(--text-muted);">Mazzaroth Sovereign Vault</span>
+                    <span class="text-[9px]" style="color: var(--text-muted);">${escapeHtml(ui.vaultLabel)}</span>
                 </div>
 
                 <div class="relative">
-                    <input id="input-root-filter" type="text" placeholder="Filter knowledge themes... (e.g. scripture, astronomy, survival, medical, cognitive)"
+                    <input id="input-root-filter" type="text" placeholder="${escapeHtml(ui.filterPlaceholder)}"
                            value="${escapeHtml(hierarchyState.filterText || '')}"
                            class="w-full text-xs font-mono px-3 py-1.5 rounded-lg border outline-none transition-all"
                            style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-main);" />

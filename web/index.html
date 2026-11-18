@@ -115,7 +115,7 @@
             
             <div class="flex items-center space-x-3">
                 <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: var(--contrast-ink);"></span>
-                <span class="font-bold tracking-wider uppercase text-[11px]" style="color: var(--text-main);">
+                <span data-i18n="appTitle" class="font-bold tracking-wider uppercase text-[11px]" style="color: var(--text-main);">
                     MAZZAROTH // SOVEREIGN CELESTIAL GRAPH & KNOWLEDGE ENGINE
                 </span>
                 <span class="hidden md:inline opacity-30">|</span>
@@ -185,7 +185,7 @@
                         style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);"
                         title="Toggle Ambient Synthesizer & Tactile Audio Feedback">
                     <span id="audio-icon">🔇</span>
-                    <span>AUDIO: <strong id="audio-label" style="color: var(--text-main);">OFF</strong></span>
+                    <span><span data-i18n="audioPrefix">AUDIO:</span> <strong id="audio-label" style="color: var(--text-main);">OFF</strong></span>
                 </button>
 
                 <div class="hidden sm:block text-[11px] font-mono pl-2 border-l" style="border-color: var(--border-subtle); color: var(--text-muted);" id="offline-clock">
@@ -214,7 +214,7 @@
                             <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z"/>
                         </svg>
                     </button>
-                    <span class="text-[8px] font-mono tracking-tighter uppercase font-semibold" style="color: var(--text-muted);">SEARCH</span>
+                    <span data-i18n="searchLabel" class="text-[8px] font-mono tracking-tighter uppercase font-semibold" style="color: var(--text-muted);">SEARCH</span>
                 </div>
 
                 <!-- DYNAMIC TOOL CONTAINER: Content adapts based on active nav -->
@@ -303,7 +303,7 @@
                     <div id="tools-constellations" class="tool-deck hidden flex-col items-center gap-2.5 w-full px-1">
                         <!-- Mode: Dome vs Sphere vs Poster -->
                         <div class="flex flex-col items-center gap-1 w-full">
-                            <span class="text-[7.5px] font-mono uppercase font-bold" style="color: var(--text-muted);">LAYOUT</span>
+                            <span data-i18n="toolLayout" class="text-[7.5px] font-mono uppercase font-bold" style="color: var(--text-muted);">LAYOUT</span>
                             <button id="btn-const-mode" class="w-12 py-1.5 rounded-lg border text-[8.5px] font-mono font-bold uppercase transition-all"
                                     style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);"
                                     title="Switch Layout: Dome vs Sphere vs Poster">
@@ -313,14 +313,14 @@
 
                         <!-- Time Controls (for Dome Mode) -->
                         <div id="tool-const-time-group" class="flex flex-col items-center gap-1 w-full">
-                            <span class="text-[7.5px] font-mono uppercase font-bold" style="color: var(--text-muted);">TIME</span>
+                            <span data-i18n="toolTime" class="text-[7.5px] font-mono uppercase font-bold" style="color: var(--text-muted);">TIME</span>
                             <div class="flex items-center gap-1">
                                 <button id="tool-sky-prev-hour" class="px-1.5 py-1 rounded border text-[8px] font-mono hover:opacity-80"
                                         style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);" title="-1 Hour">-1H</button>
                                 <button id="tool-sky-next-hour" class="px-1.5 py-1 rounded border text-[8px] font-mono hover:opacity-80"
                                         style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);" title="+1 Hour">+1H</button>
                             </div>
-                            <button id="tool-sky-now" class="w-12 py-0.5 mt-0.5 rounded border text-[7.5px] font-mono font-bold uppercase transition-all"
+                            <button id="tool-sky-now" data-i18n="toolNow" class="w-12 py-0.5 mt-0.5 rounded border text-[7.5px] font-mono font-bold uppercase transition-all"
                                     style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);"
                                     title="Set Sky to Real-Time Now">
                                 NOW
@@ -329,7 +329,7 @@
 
                         <!-- Season Selector Trigger -->
                         <div class="flex flex-col items-center gap-1 w-full">
-                            <span class="text-[7.5px] font-mono uppercase font-bold" style="color: var(--text-muted);">SEASON</span>
+                            <span data-i18n="toolSeason" class="text-[7.5px] font-mono uppercase font-bold" style="color: var(--text-muted);">SEASON</span>
                             <button id="btn-season-cycle" class="w-12 py-1.5 rounded-lg border text-[8.5px] font-mono font-bold uppercase transition-all"
                                     style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);"
                                     title="Filter by Season: Winter, Spring, Summer, Autumn">
@@ -339,7 +339,7 @@
 
                         <!-- Position / Direction Selector Trigger -->
                         <div class="flex flex-col items-center gap-1 w-full">
-                            <span class="text-[7.5px] font-mono uppercase font-bold" style="color: var(--text-muted);">COORD</span>
+                            <span data-i18n="toolCoord" class="text-[7.5px] font-mono uppercase font-bold" style="color: var(--text-muted);">COORD</span>
                             <button id="btn-position-cycle" class="w-12 py-1.5 rounded-lg border text-[8.5px] font-mono font-bold uppercase transition-all"
                                     style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);"
                                     title="Filter by Position: North, South, East, West">
@@ -603,9 +603,9 @@
                             <div class="flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full" style="background-color: #38bdf8;"></span>
                                 <select id="const-mode-select" class="sky-hud-input rounded px-1.5 py-0.5 text-[9.5px] font-bold outline-none cursor-pointer">
-                                    <option value="DOME">01 // CELESTIAL DOME (LIVE)</option>
-                                    <option value="SPHERE">02 // SPHERE DOME (3D)</option>
-                                    <option value="POSTER">03 // POSTER CATALOG (GRID)</option>
+                                    <option data-i18n="domeOpt" value="DOME">01 // CELESTIAL DOME (LIVE)</option>
+                                    <option data-i18n="sphereOpt" value="SPHERE">02 // SPHERE DOME (3D)</option>
+                                    <option data-i18n="posterOpt" value="POSTER">03 // POSTER CATALOG (GRID)</option>
                                 </select>
                             </div>
                             <span id="const-lst-display" class="text-[9px]" style="color: var(--text-muted);">LST: 0.0°</span>
@@ -614,7 +614,7 @@
                         <!-- Dome-specific controls (visible when in DOME mode) -->
                         <div id="const-dome-controls" class="grid grid-cols-2 gap-2">
                             <div>
-                                <label class="text-[8px] uppercase block" style="color: var(--text-muted);">LOCATION PRESET</label>
+                                <label data-i18n="locPresetLabel" class="text-[8px] uppercase block" style="color: var(--text-muted);">LOCATION PRESET</label>
                                 <select id="const-preset-select" class="sky-hud-input w-full rounded px-1.5 py-1 text-[9px] outline-none">
                                     <option value="35.6762,139.6503">Tokyo (35.7°N, 139.7°E)</option>
                                     <option value="31.7683,35.2137">Jerusalem (31.8°N, 35.2°E)</option>
@@ -628,7 +628,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="text-[8px] uppercase block" style="color: var(--text-muted);">UTC DATE / TIME</label>
+                                <label data-i18n="utcTimeLabel" class="text-[8px] uppercase block" style="color: var(--text-muted);">UTC DATE / TIME</label>
                                 <input id="const-datetime-input" type="datetime-local" class="sky-hud-input w-full rounded px-1.5 py-0.5 text-[9px]">
                             </div>
                         </div>
@@ -636,10 +636,10 @@
                         <!-- Filter badges & status row -->
                         <div class="flex items-center justify-between text-[9px] pt-1" style="color: var(--text-secondary);">
                             <div class="flex items-center gap-1.5">
-                                <span>SEASON: <strong id="badge-active-season" class="underline">ALL</strong></span>
+                                <span><span data-i18n="toolSeason">SEASON</span>: <strong id="badge-active-season" class="underline">ALL</strong></span>
                                 <span class="opacity-40">•</span>
-                                <span>COORD: <strong id="badge-active-position" class="underline">ALL</strong></span>
-                                <button id="btn-reset-const-filter" class="ml-1 px-1.5 py-0.5 rounded border text-[8px] uppercase hover:opacity-80 transition-opacity"
+                                <span><span data-i18n="toolCoord">COORD</span>: <strong id="badge-active-position" class="underline">ALL</strong></span>
+                                <button id="btn-reset-const-filter" data-i18n="resetBtn" class="ml-1 px-1.5 py-0.5 rounded border text-[8px] uppercase hover:opacity-80 transition-opacity"
                                         style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
                                     RESET
                                 </button>
@@ -923,7 +923,7 @@
 
                     <div class="absolute bottom-5 left-5 z-20 pointer-events-none font-mono text-[10px] px-3 py-1.5 rounded-lg border shadow-sm"
                          style="background-color: var(--panel-bg); border-color: var(--border-subtle); color: var(--text-secondary);">
-                        <span id="map-legend-text">DRAG: PAN • SCROLL: ZOOM • CLICK FLOATING BADGE / CELL TO READ RECORD</span>
+                        <span id="map-legend-text" data-i18n="mapLegend">DRAG: PAN • SCROLL: ZOOM • CLICK FLOATING BADGE / CELL TO READ RECORD</span>
                     </div>
 
                     <div id="map-download-panel" class="hidden absolute top-14 left-4 z-30 w-72 rounded-xl border shadow-lg p-3.5 font-mono text-[11px]"
@@ -973,9 +973,9 @@
                             <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-main);">
                                 <polygon points="12 2 19 21 12 17 5 21 12 2"></polygon>
                             </svg>
-                            <h2 class="font-bold text-[10px] uppercase tracking-wider" style="color: var(--text-main);">SYSTEM SECTIONS</h2>
+                            <h2 data-i18n="sectionsHeader" class="font-bold text-[10px] uppercase tracking-wider" style="color: var(--text-main);">SYSTEM SECTIONS</h2>
                         </div>
-                        <span class="font-mono text-[8px]" style="color: var(--text-muted);">4 MODULES</span>
+                        <span data-i18n="modulesCount" class="font-mono text-[8px]" style="color: var(--text-muted);">4 MODULES</span>
                     </div>
 
                     <!-- 4 Stacked Section Cards: Galaxy, Constellations, Librarian, Map -->
@@ -1079,7 +1079,7 @@
 
                         <!-- Reader Utility Buttons: Font Scaling, Synoptic Compare, & Expand Fullscreen -->
                         <div class="flex items-center space-x-1 font-mono text-[10px] shrink-0">
-                            <button id="btn-reader-synoptic" class="px-2 py-0.5 rounded border hover:opacity-80 transition-all text-[9px] font-bold"
+                            <button id="btn-reader-synoptic" data-i18n="synopticBtn" class="px-2 py-0.5 rounded border hover:opacity-80 transition-all text-[9px] font-bold"
                                     style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--accent-secondary);" title="Toggle Side-by-Side Synoptic Translation Comparison">
                                 SYNOPTIC
                             </button>
@@ -1173,10 +1173,10 @@
                             <div class="flex items-center justify-between">
                                 <button id="btn-toggle-synapses" class="flex items-center gap-1 font-mono text-[8px] uppercase tracking-wider hover:opacity-80 transition-opacity font-bold" style="color: var(--text-main);">
                                     <span id="synapse-toggle-arrow">▾</span>
-                                    <span>SYNAPSES</span>
+                                    <span data-i18n="synapsesLabel">SYNAPSES</span>
                                     <span id="synapse-count-badge" class="px-1 py-0.2 rounded border text-[7.5px]" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">(0)</span>
                                 </button>
-                                <span class="text-[7.5px] font-mono opacity-50" style="color: var(--text-muted);">CLICK STAR TO TRAVERSE</span>
+                                <span data-i18n="clickStarHint" class="text-[7.5px] font-mono opacity-50" style="color: var(--text-muted);">CLICK STAR TO TRAVERSE</span>
                             </div>
                             <div id="reader-synapse-pills" class="flex items-center gap-1 flex-wrap max-h-16 overflow-y-auto reader-scroll pr-1 transition-all">
                                 <!-- Dynamically populated -->
@@ -1185,12 +1185,12 @@
 
                         <div class="flex items-center justify-between font-mono text-[9px] pt-0.5">
                             <div class="flex items-center space-x-1">
-                                <button id="btn-chapter-prev" class="px-2 py-0.5 rounded border hover:opacity-80" style="border-color: var(--border-subtle); color: var(--text-main);">‹ PREV</button>
+                                <button id="btn-chapter-prev" data-i18n="prevBtn" class="px-2 py-0.5 rounded border hover:opacity-80" style="border-color: var(--border-subtle); color: var(--text-main);">‹ PREV</button>
                                 <span id="chapter-counter" style="color: var(--text-muted);">CH 1 OF 3</span>
-                                <button id="btn-chapter-next" class="px-2 py-0.5 rounded border hover:opacity-80" style="border-color: var(--border-subtle); color: var(--text-main);">NEXT ›</button>
+                                <button id="btn-chapter-next" data-i18n="nextBtn" class="px-2 py-0.5 rounded border hover:opacity-80" style="border-color: var(--border-subtle); color: var(--text-main);">NEXT ›</button>
                             </div>
 
-                            <button id="btn-target-lock" class="px-3 py-1 rounded border font-bold uppercase transition-all hover:opacity-80"
+                            <button id="btn-target-lock" data-i18n="targetLockBtn" class="px-3 py-1 rounded border font-bold uppercase transition-all hover:opacity-80"
                                     style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);">
                                 TARGET LOCK
                             </button>
@@ -1215,7 +1215,7 @@
                                 <line x1="9" y1="20" x2="9" y2="23"></line>
                                 <line x1="15" y1="20" x2="15" y2="23"></line>
                             </svg>
-                            <h4 class="font-bold text-[10px] uppercase tracking-wider" style="color: var(--text-main);">SYSTEM SPECS</h4>
+                            <h4 data-i18n="systemSpecs" class="font-bold text-[10px] uppercase tracking-wider" style="color: var(--text-main);">SYSTEM SPECS</h4>
                         </div>
                         <span class="font-mono text-[7.5px] px-1.5 py-0.5 rounded-full border"
                               style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
@@ -1226,11 +1226,11 @@
                     <!-- Metrics Grid -->
                     <div class="grid grid-cols-2 gap-2 my-0.5 font-mono">
                         <div>
-                            <span class="text-[7.5px] uppercase block" style="color: var(--text-muted);">ACTIVE STARS</span>
+                            <span data-i18n="activeStars" class="text-[7.5px] uppercase block" style="color: var(--text-muted);">ACTIVE STARS</span>
                             <span id="spec-star-count" class="text-[11px] font-bold tracking-wider" style="color: var(--text-main);">1,105</span>
                         </div>
                         <div>
-                            <span class="text-[7.5px] uppercase block" style="color: var(--text-muted);">SYNAPSE LINKS</span>
+                            <span data-i18n="synapseLinks" class="text-[7.5px] uppercase block" style="color: var(--text-muted);">SYNAPSE LINKS</span>
                             <span id="spec-link-count" class="text-[11px] font-bold tracking-wider" style="color: var(--text-main);">1,450+</span>
                         </div>
                     </div>
@@ -1238,8 +1238,8 @@
                     <!-- Local Storage & Engine Health -->
                     <div>
                         <div class="flex justify-between items-center text-[7.5px] font-mono mb-0.5" style="color: var(--text-muted);">
-                            <span>SOVEREIGN DATA REPO</span>
-                            <span style="color: var(--text-main);">66 LANGS / 226 VERSIONS</span>
+                            <span data-i18n="sovereignRepo">SOVEREIGN DATA REPO</span>
+                            <span data-i18n="langsVersions" style="color: var(--text-main);">66 LANGS / 226 VERSIONS</span>
                         </div>
                         <div class="w-full h-1 rounded-full overflow-hidden border" style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle);">
                             <div class="w-[100%] h-full rounded-full" style="background-color: var(--contrast-ink);"></div>

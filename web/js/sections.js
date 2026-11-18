@@ -3860,6 +3860,7 @@ function applyLanguageUI() {
 
     syncWorkerInspectorUI(librarianOffice.getSelectedWorker());
     renderOfficeMiniMap();
+    if (typeof window.refreshReaderI18n === 'function') window.refreshReaderI18n();
 }
 
 function renderMarkdownSafe(raw) {
