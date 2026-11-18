@@ -183,4 +183,7 @@
   - Added 5 switchable hex layers (`EMPIRES`, `RELIGIONS`, `SCRIPTURE`, `SURVIVAL`, `VAULT`) plus toggleable `ROUTES` (Silk Road, Maritime Spice Route, Manila–Acapulco Galleon, Trans-Saharan Gold & Salt, Polynesian & Polaris Nav).
   - Expanded `#timeline-era-buttons` to 8 historical epochs (`100`, `500`, `1500`, `1700`, `1815`, `1914`, `1945`, `MODERN`) tracking colonial/imperial territories and religious spread across eras.
   - Added interactive percentage filter legend (`#hex-layer-legend`) and live hover/click Geo-Historical Dossier inspection into Deep Reader.
+- **Historical Plagues & Epidemics Layer + Cleanup (`web/js/hex_layers.js`, `web/js/sections.js`, `web/index.html`)**:
+  - Removed the legacy `DATA INTENSITY` (`vault`) layer, `#deck-map-dataset-wrap`, and `#map-dataset-hud`.
+  - Added `PLAGUES & EPIDEMICS` (`plagues`) across all 8 eras (`100`–`MODERN`): Bubonic Plague (Justinian & Black Death), Smallpox & Measles (Antonine & Columbian Exchange), Chickenpox / Varicella, Cholera Pandemics, 1918 Influenza (H1N1), Malaria / Yellow Fever / Typhus, and Modern Respiratory Pandemics.
 

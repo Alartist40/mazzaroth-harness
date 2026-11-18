@@ -198,9 +198,9 @@ copy-exact definitions below.
   EXPECT: 0 exit code across all targets
   EVIDENCE: 2026-11-18 — All 6 JS OK; 23/23 cargo tests passed; `cargo build --release --bin mazzaroth` finished in `9.89s`.
 
-- [x] L13_HEX_DATA_MAP_OVERHAUL: Accurate Natural Earth 110m baked hex grid (1,780 land hexes), 8 historical eras (`100`..`MODERN`), Empires/Religions/Scripture/Survival/Vault layers, Trade Routes, interactive filter legend, and Deep Reader Geo-Historical dossier on click
+- [x] L13_HEX_DATA_MAP_OVERHAUL: Accurate Natural Earth 110m baked hex grid (1,780 land hexes), 8 historical eras (`100`..`MODERN`), Empires/Religions/Plagues/Scripture/Survival layers, Trade Routes, interactive filter legend, and Deep Reader Geo-Historical dossier on click
   CHECK: node --check web/js/hex_layers.js && node --check web/js/sections.js && cargo test --workspace
   EXPECT: 0 exit code across all targets
-  EVIDENCE: 2026-11-18 — `hex-world-land.json` (1,780 hexes, 59 KB); `hex_layers.js` & `sections.js` pass `node --check`; `cargo test --workspace` 22/22 tests passed.
+  EVIDENCE: 2026-11-18 — `hex-world-land.json` (1,780 hexes, 59 KB); `DATA INTENSITY` removed and replaced by `PLAGUES & EPIDEMICS`; `hex_layers.js` & `sections.js` pass `node --check`; `cargo test --workspace` 22/22 tests passed.
 
 

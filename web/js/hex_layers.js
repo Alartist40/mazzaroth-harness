@@ -10,9 +10,9 @@ export const HEX_ERAS = ['100', '500', '1500', '1700', '1815', '1914', '1945', '
 export const HEX_LAYERS = [
     { id: 'empires', label: 'EMPIRES & COLONIES', ja: '帝国・植民地史' },
     { id: 'religions', label: 'WORLD RELIGIONS', ja: '宗教の伝播' },
+    { id: 'plagues', label: 'PLAGUES & EPIDEMICS', ja: '疫病・パンデミック' },
     { id: 'scripture', label: '66-LANG SCRIPTURE', ja: '聖典翻訳分布' },
-    { id: 'survival', label: 'SURVIVAL & HAZARDS', ja: '防災・自然環境' },
-    { id: 'vault', label: 'DATA INTENSITY', ja: 'データ密度' }
+    { id: 'survival', label: 'SURVIVAL & HAZARDS', ja: '防災・自然環境' }
 ];
 
 export const EMPIRE_META = {
@@ -45,6 +45,17 @@ export const SURVIVAL_META = {
     TROPIC: { name: 'Tropical / Vector Hazard', color: '#10b981', stroke: '#6ee7b7' },
     COLD: { name: 'Subarctic / Hypothermia Zone', color: '#38bdf8', stroke: '#bae6fd' },
     TEMP: { name: 'Temperate Zone', color: '#475569', stroke: '#94a3b8' }
+};
+
+export const PLAGUE_META = {
+    BLACK_DEATH: { name: 'Bubonic Plague (Black Death / Justinian)', color: '#be123c', stroke: '#fda4af' },
+    SMALLPOX: { name: 'Smallpox & Measles (Variola)', color: '#ea580c', stroke: '#fdba74' },
+    CHICKENPOX: { name: 'Chickenpox / Varicella & Viral Exanthems', color: '#eab308', stroke: '#fef08a' },
+    CHOLERA: { name: 'Cholera Pandemics (Vibrio cholerae)', color: '#0284c7', stroke: '#7dd3fc' },
+    INFLUENZA: { name: '1918 Influenza Pandemic (H1N1)', color: '#9333ea', stroke: '#d8b4fe' },
+    TROPICAL_VECTOR: { name: 'Malaria, Yellow Fever & Typhus', color: '#16a34a', stroke: '#86efac' },
+    MODERN_RESP: { name: 'Modern Respiratory Pandemics (COVID-19 / SARS)', color: '#06b6d4', stroke: '#67e8f9' },
+    LOW_INCIDENCE: { name: 'Low / Sparse Epidemic Record', color: '#334155', stroke: '#64748b' }
 };
 
 export const SCRIPTURE_ISO_MAP = {
@@ -200,4 +211,64 @@ export function getSurvivalForHex(iso, lat) {
     if (TROPIC_ISOS.has(iso)) return 'TROPIC';
     if (COLD_ISOS.has(iso) || lat >= 58 || lat <= -48) return 'COLD';
     return 'TEMP';
+}
+
+const MED_PLAGUE_CORE = new Set(['IT', 'GR', 'TR', 'EG', 'SY', 'IL', 'PS', 'LB', 'IQ', 'IR', 'FR', 'ES', 'GB', 'DE', 'NL', 'BE', 'PL', 'RU', 'CN', 'MN', 'KZ', 'UZ']);
+const AMERICAS_ISOS = new Set(['US', 'CA', 'MX', 'GT', 'HN', 'SV', 'NI', 'CR', 'PA', 'CU', 'DO', 'HT', 'CO', 'VE', 'EC', 'PE', 'BO', 'CL', 'AR', 'PY', 'UY', 'BR']);
+const CHOLERA_BELT = new Set(['IN', 'BD', 'MM', 'TH', 'ID', 'PK', 'IR', 'IQ', 'EG', 'TR', 'RU', 'GB', 'FR', 'DE', 'IT', 'ES', 'US']);
+const H1N1_CORE = new Set(['US', 'CA', 'GB', 'FR', 'DE', 'ES', 'IT', 'RU', 'IN', 'CN', 'JP', 'KR', 'BR', 'ZA', 'AU', 'NZ', 'MX', 'AR']);
+const MODERN_HUBS = new Set(['US', 'CA', 'GB', 'FR', 'DE', 'IT', 'ES', 'BR', 'IN', 'CN', 'JP', 'KR', 'AU', 'ZA', 'RU', 'MX', 'TR', 'SA', 'ID', 'TH', 'VN']);
+
+export function getPlagueForHex(iso, region, lat, era) {
+    const isTropic = TROPIC_ISOS.has(iso) || (Math.abs(lat) <= 22 && (region === 'AF' || region === 'LA' || region === 'AP'));
+    if (era === '100') {
+        if (ROMAN_EMP.has(iso) || iso === 'IR' || iso === 'IQ') return 'SMALLPOX'; // Antonine Plague
+        if (iso === 'CN' || iso === 'IN') return 'CHICKENPOX';
+        if (isTropic) return 'TROPICAL_VECTOR';
+        return 'LOW_INCIDENCE';
+    }
+    if (era === '500') {
+        if (ROMAN_EMP.has(iso) || iso === 'IQ' || iso === 'IR' || iso === 'YE') return 'BLACK_DEATH'; // Plague of Justinian
+        if (iso === 'CN' || iso === 'JP' || iso === 'KR') return 'SMALLPOX';
+        if (isTropic) return 'TROPICAL_VECTOR';
+        return 'LOW_INCIDENCE';
+    }
+    if (era === '1500') {
+        if (AMERICAS_ISOS.has(iso)) return 'SMALLPOX'; // Columbian Exchange Smallpox & Measles
+        if (MED_PLAGUE_CORE.has(iso) || region === 'EU' || region === 'ME') return 'BLACK_DEATH';
+        if (iso === 'JP' || iso === 'KR' || iso === 'IN') return 'CHICKENPOX';
+        if (isTropic) return 'TROPICAL_VECTOR';
+        return 'LOW_INCIDENCE';
+    }
+    if (era === '1700') {
+        if (AMERICAS_ISOS.has(iso) || iso === 'GB' || iso === 'FR' || iso === 'ES' || iso === 'CN' || iso === 'JP') return 'SMALLPOX';
+        if (iso === 'RU' || iso === 'TR' || iso === 'EG' || iso === 'IR') return 'BLACK_DEATH';
+        if (iso === 'DE' || iso === 'IT' || iso === 'NL' || iso === 'SE') return 'CHICKENPOX';
+        if (isTropic) return 'TROPICAL_VECTOR';
+        return 'LOW_INCIDENCE';
+    }
+    if (era === '1815') {
+        if (CHOLERA_BELT.has(iso)) return 'CHOLERA'; // 1st–3rd Cholera Pandemics
+        if (iso === 'BR' || iso === 'CU' || iso === 'CO' || iso === 'NG' || iso === 'GH' || isTropic) return 'TROPICAL_VECTOR';
+        if (iso === 'MX' || iso === 'PE' || iso === 'ZA' || iso === 'AU') return 'SMALLPOX';
+        if (region === 'EU' || iso === 'US' || iso === 'CA' || iso === 'JP') return 'CHICKENPOX';
+        return 'LOW_INCIDENCE';
+    }
+    if (era === '1914') {
+        if (H1N1_CORE.has(iso)) return 'INFLUENZA'; // 1918 Spanish Flu
+        if (iso === 'MN' || iso === 'KZ' || iso === 'MG') return 'BLACK_DEATH';
+        if (isTropic) return 'TROPICAL_VECTOR';
+        return 'CHICKENPOX';
+    }
+    if (era === '1945') {
+        if (iso === 'PL' || iso === 'UA' || iso === 'DE' || iso === 'RU' || isTropic) return 'TROPICAL_VECTOR'; // Wartime Typhus & Malaria
+        if (iso === 'IN' || iso === 'BD' || iso === 'CN' || iso === 'EG') return 'CHOLERA';
+        if (region === 'EU' || region === 'NA' || iso === 'JP' || iso === 'AU') return 'CHICKENPOX'; // Pre-vaccine childhood varicella
+        return 'SMALLPOX';
+    }
+    // MODERN
+    if (MODERN_HUBS.has(iso)) return 'MODERN_RESP';
+    if (isTropic) return 'TROPICAL_VECTOR';
+    if (iso === 'YE' || iso === 'HT' || iso === 'SO' || iso === 'SD') return 'CHOLERA';
+    return 'CHICKENPOX';
 }

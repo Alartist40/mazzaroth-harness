@@ -449,23 +449,6 @@
                             </button>
                         </div>
 
-                        <!-- Dataset Switcher (Active in Hexagon Mode) -->
-                        <div id="deck-map-dataset-wrap" class="flex flex-col items-center gap-1 w-full">
-                            <span class="text-[7px] font-mono uppercase font-bold" style="color: var(--text-muted);">DATASET</span>
-                            <div class="flex items-center gap-1">
-                                <button id="btn-map-dataset" class="w-10 py-1 rounded border text-[7px] font-mono font-bold uppercase transition-all"
-                                        style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--accent-secondary);"
-                                        title="Cycle Global Demographics Dataset">
-                                    TOTAL
-                                </button>
-                                <button id="btn-map-add-dataset" class="w-5 py-1 rounded border text-[9px] font-mono font-bold flex items-center justify-center transition-all hover:scale-105"
-                                        style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--accent-primary);"
-                                        title="Create / Add New Custom Geodata Matrix">
-                                    +
-                                </button>
-                            </div>
-                        </div>
-
                         <button id="tool-map-download" class="w-9 h-9 rounded-xl border flex items-center justify-center shadow-sm hover:scale-105 transition-transform"
                                 style="background-color: var(--contrast-ink); border-color: var(--panel-border); color: var(--contrast-paper);"
                                 title="Download a Region Pack (countries)">
@@ -889,11 +872,6 @@
                              style="background-color: var(--panel-bg); border-color: var(--panel-border); color: var(--text-main);">
                             <span class="w-1.5 h-1.5 rounded-full inline-block" style="background-color: var(--accent-primary);"></span>
                             <span>MODE: <strong id="map-active-mode-label">HEXAGONAL DATA MATRIX</strong></span>
-                        </div>
-                        <div id="map-dataset-hud" class="px-2.5 py-1 rounded-md border flex items-center space-x-2"
-                             style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-secondary);">
-                            <span class="w-1.5 h-1.5 rounded-full inline-block" style="background-color: var(--accent-secondary);"></span>
-                            <span id="map-dataset-label">TOTAL CHRISTIAN POPULATION (~2.42B)</span>
                         </div>
                         <div id="map-cursor-coords" class="px-2.5 py-1 rounded-md border flex items-center space-x-2 text-[9px]"
                              style="background-color: var(--panel-bg-subtle); border-color: var(--border-subtle); color: var(--text-muted);">
